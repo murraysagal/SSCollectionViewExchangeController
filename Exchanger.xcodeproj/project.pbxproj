@@ -19,6 +19,10 @@
 		722D2FE8183291E300F82D12 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 722D2FCA183291E300F82D12 /* UIKit.framework */; };
 		722D2FF0183291E300F82D12 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 722D2FEE183291E300F82D12 /* InfoPlist.strings */; };
 		722D2FF2183291E300F82D12 /* ExchangerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 722D2FF1183291E300F82D12 /* ExchangerTests.m */; };
+		722D30011832927100F82D12 /* SSSwappableCollectionViewFlowLayout.m in Sources */ = {isa = PBXBuildFile; fileRef = 722D2FFC1832927100F82D12 /* SSSwappableCollectionViewFlowLayout.m */; };
+		722D30021832927100F82D12 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 722D2FFE1832927100F82D12 /* ViewController.m */; };
+		722D30031832927100F82D12 /* ViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 722D2FFF1832927100F82D12 /* ViewController.xib */; };
+		722D30041832927100F82D12 /* ItemCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 722D30001832927100F82D12 /* ItemCell.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -48,6 +52,12 @@
 		722D2FED183291E300F82D12 /* ExchangerTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ExchangerTests-Info.plist"; sourceTree = "<group>"; };
 		722D2FEF183291E300F82D12 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		722D2FF1183291E300F82D12 /* ExchangerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ExchangerTests.m; sourceTree = "<group>"; };
+		722D2FFB1832927100F82D12 /* SSSwappableCollectionViewFlowLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SSSwappableCollectionViewFlowLayout.h; sourceTree = "<group>"; };
+		722D2FFC1832927100F82D12 /* SSSwappableCollectionViewFlowLayout.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SSSwappableCollectionViewFlowLayout.m; sourceTree = "<group>"; };
+		722D2FFD1832927100F82D12 /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		722D2FFE1832927100F82D12 /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		722D2FFF1832927100F82D12 /* ViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ViewController.xib; sourceTree = "<group>"; };
+		722D30001832927100F82D12 /* ItemCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ItemCell.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -107,6 +117,12 @@
 		722D2FCC183291E300F82D12 /* Exchanger */ = {
 			isa = PBXGroup;
 			children = (
+				722D2FFB1832927100F82D12 /* SSSwappableCollectionViewFlowLayout.h */,
+				722D2FFC1832927100F82D12 /* SSSwappableCollectionViewFlowLayout.m */,
+				722D2FFD1832927100F82D12 /* ViewController.h */,
+				722D2FFE1832927100F82D12 /* ViewController.m */,
+				722D2FFF1832927100F82D12 /* ViewController.xib */,
+				722D30001832927100F82D12 /* ItemCell.xib */,
 				722D2FD5183291E300F82D12 /* AppDelegate.h */,
 				722D2FD6183291E300F82D12 /* AppDelegate.m */,
 				722D2FDE183291E300F82D12 /* Images.xcassets */,
@@ -220,7 +236,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				722D30041832927100F82D12 /* ItemCell.xib in Resources */,
 				722D2FDF183291E300F82D12 /* Images.xcassets in Resources */,
+				722D30031832927100F82D12 /* ViewController.xib in Resources */,
 				722D2FD1183291E300F82D12 /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -241,6 +259,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				722D2FD7183291E300F82D12 /* AppDelegate.m in Sources */,
+				722D30011832927100F82D12 /* SSSwappableCollectionViewFlowLayout.m in Sources */,
+				722D30021832927100F82D12 /* ViewController.m in Sources */,
 				722D2FD3183291E300F82D12 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
