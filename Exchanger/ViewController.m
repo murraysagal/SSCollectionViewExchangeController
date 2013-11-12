@@ -58,25 +58,15 @@ typedef enum : NSInteger {
     [super viewDidLoad];
     
     // Get the data...
-    [self setModel];
+    [self model];
     
     // Register the cell with the collection view...
     UINib *cellNib = [UINib nibWithNibName:@"ItemCell" bundle:nil];
     [self.collectionView registerNib:cellNib forCellWithReuseIdentifier:@"itemCell"];
     
-    //register the supplementary view...
-    UINib *nib = [UINib nibWithNibName:@"SupplementaryView" bundle:nil];
-    
-    //when using a header in section 1...
-    [self.collectionView registerNib:nib forSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"header"];
-    
-    //when using a footer in section 0...
-    [self.collectionView registerNib:nib forSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"footer"];
-
-    
     // Set up the layout...
     SSCollectionViewExchangeFlowLayout *layout = [[SSCollectionViewExchangeFlowLayout alloc] init];
-    layout.itemSize = CGSizeMake(145, 30);
+    layout.itemSize = CGSizeMake(150, 30);
     layout.minimumLineSpacing = 1;
     layout.minimumInteritemSpacing = 1;
     layout.sectionInset = UIEdgeInsetsMake(5, 5, 5, 5);
@@ -100,7 +90,7 @@ typedef enum : NSInteger {
 //--------------------------------
 #pragma mark - Instance methods...
 
-- (void)setModel
+- (void)model
 {    
     NSArray *temp1to10 = @[ @"item 1",  @"item 2",  @"item 3",  @"item 4",  @"item 5",
                             @"item 6",  @"item 7",  @"item 8",  @"item 9",  @"item 10" ];
@@ -114,7 +104,7 @@ typedef enum : NSInteger {
 
 - (IBAction)resetModel:(id)sender
 {
-    [self setModel];
+    [self model];
     [self.collectionView reloadData];
 }
 
@@ -141,44 +131,6 @@ typedef enum : NSInteger {
 
 //-----------------------------------------------------------------
 #pragma mark - UICollectionView data source and delegate methods...
-
-- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForHeaderInSection:(NSInteger)section
-{
-    //sizes for when using a header for section 1...
-//    if (section == 0) {
-//        return CGSizeMake(0, 0);
-//    } else {
-//        return CGSizeMake(8, 8);
-//    }
-    
-    //sizes for when using a footer for section 0...
-    return CGSizeMake(0, 0);
-}
-
-- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForFooterInSection:(NSInteger)section
-{
-    //sizes for when using a header for section 1...
-//    return CGSizeMake(0, 0);
-    
-    //sizes for when using a footer for section 0...
-    if (section == 0) {
-        return CGSizeMake(8, 8);
-    } else {
-        return CGSizeMake(0, 0);
-    }
-}
-
-- (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath
-{
-    //when using a header in section 1...
-//    UICollectionReusableView *supplementaryView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"header" forIndexPath:indexPath];
-//    return supplementaryView;
-    
-    //when using a footer in section 0...
-    UICollectionReusableView *supplementaryView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"footer" forIndexPath:indexPath];
-    return supplementaryView;
-    
-}
 
 - (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView
 {
@@ -208,7 +160,7 @@ typedef enum : NSInteger {
 
 
 //----------------------------------------------------------------------------
-#pragma mark - SSSwappableCollectionViewDelegateFlowLayout protocol methods...
+#pragma mark - SSCollectionViewExchangeFlowLayoutDelegate protocol methods...
 
 - (void)exchangeItemAtIndexPath:(NSIndexPath *)indexPath1 withItemAtIndexPath:(NSIndexPath *)indexPath2
 {
@@ -241,7 +193,6 @@ typedef enum : NSInteger {
     } else {
         
         // The sections are not the same. In other words the items being exchanged are not in the same array.
-        
         switch (indexPath1.section) {
                 
             case SSCollectionViewSideLeft:
@@ -276,7 +227,7 @@ typedef enum : NSInteger {
     NSLog(@"[<%@ %p> %@ line= %d]", [self class], self, NSStringFromSelector(_cmd), __LINE__);
 }
 
-- (BOOL)allowsExchange
+- (BOOL)canExchange
 {
     return YES;
 }
