@@ -13,8 +13,6 @@
 		722D2FD1183291E300F82D12 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 722D2FCF183291E300F82D12 /* InfoPlist.strings */; };
 		722D2FD3183291E300F82D12 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 722D2FD2183291E300F82D12 /* main.m */; };
 		722D2FD7183291E300F82D12 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 722D2FD6183291E300F82D12 /* AppDelegate.m */; };
-		722D2FDA183291E300F82D12 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 722D2FD8183291E300F82D12 /* Main.storyboard */; };
-		722D2FDD183291E300F82D12 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 722D2FDC183291E300F82D12 /* ViewController.m */; };
 		722D2FDF183291E300F82D12 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 722D2FDE183291E300F82D12 /* Images.xcassets */; };
 		722D2FE6183291E300F82D12 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 722D2FE5183291E300F82D12 /* XCTest.framework */; };
 		722D2FE7183291E300F82D12 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 722D2FC6183291E300F82D12 /* Foundation.framework */; };
@@ -44,9 +42,6 @@
 		722D2FD4183291E300F82D12 /* Exchanger-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Exchanger-Prefix.pch"; sourceTree = "<group>"; };
 		722D2FD5183291E300F82D12 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		722D2FD6183291E300F82D12 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		722D2FD9183291E300F82D12 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		722D2FDB183291E300F82D12 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		722D2FDC183291E300F82D12 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		722D2FDE183291E300F82D12 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		722D2FE4183291E300F82D12 /* ExchangerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExchangerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		722D2FE5183291E300F82D12 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
@@ -114,9 +109,6 @@
 			children = (
 				722D2FD5183291E300F82D12 /* AppDelegate.h */,
 				722D2FD6183291E300F82D12 /* AppDelegate.m */,
-				722D2FD8183291E300F82D12 /* Main.storyboard */,
-				722D2FDB183291E300F82D12 /* ViewController.h */,
-				722D2FDC183291E300F82D12 /* ViewController.m */,
 				722D2FDE183291E300F82D12 /* Images.xcassets */,
 				722D2FCD183291E300F82D12 /* Supporting Files */,
 			);
@@ -230,7 +222,6 @@
 			files = (
 				722D2FDF183291E300F82D12 /* Images.xcassets in Resources */,
 				722D2FD1183291E300F82D12 /* InfoPlist.strings in Resources */,
-				722D2FDA183291E300F82D12 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -249,7 +240,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				722D2FDD183291E300F82D12 /* ViewController.m in Sources */,
 				722D2FD7183291E300F82D12 /* AppDelegate.m in Sources */,
 				722D2FD3183291E300F82D12 /* main.m in Sources */,
 			);
@@ -280,14 +270,6 @@
 				722D2FD0183291E300F82D12 /* en */,
 			);
 			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
-		722D2FD8183291E300F82D12 /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				722D2FD9183291E300F82D12 /* Base */,
-			);
-			name = Main.storyboard;
 			sourceTree = "<group>";
 		};
 		722D2FEE183291E300F82D12 /* InfoPlist.strings */ = {
