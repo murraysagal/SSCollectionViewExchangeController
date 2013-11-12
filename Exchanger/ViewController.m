@@ -120,13 +120,6 @@ typedef enum : NSInteger {
     NSLog(@" ");
 }
 
-- (void)cancelGestureRecognizer:(UIGestureRecognizer *)gestureRecognizer
-{
-    gestureRecognizer.enabled = NO;
-    gestureRecognizer.enabled = YES;
-    //as per the docs, this triggers a cancel
-}
-
 
 
 //-----------------------------------------------------------------

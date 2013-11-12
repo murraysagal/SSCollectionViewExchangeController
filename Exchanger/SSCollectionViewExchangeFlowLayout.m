@@ -254,7 +254,12 @@
     //  1. The user has moved but not very far and is over the same cell. In this case there's nothing to do.
     //  2. The user has moved over a different cell. In other words currentIndexPath does not equal self.indexPathOfItemLastExchanged
     
-    if ([self isOverNewItemAtIndexPath:currentIndexPath] == YES)  //if the item we're over is not the same as the one we last exchanged...
+    if ([self isOverSameItemAtIndexPath:currentIndexPath]) {
+        NSLog(@"over same cell");
+        return;
+    }
+    
+    if ([self isOverNewItemAtIndexPath:currentIndexPath] == YES)
     {
         NSLog(@"over a new cell");
         
@@ -410,6 +415,11 @@
               
           }];
      }];
+}
+
+- (BOOL)isOverSameItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    return [indexPath isEqual:self.indexPathOfItemLastExchanged];
 }
 
 - (BOOL)isOverNewItemAtIndexPath:(NSIndexPath *)indexPath
