@@ -1,6 +1,6 @@
 //
-//  SSSwappableCollectionViewFlowLayout.h
-//  Swapper
+//  SSCollectionViewExchangeFlowLayout.h
+//  Exchanger
 //
 //  Created by Murray Sagal on 2012-10-31.
 //  Copyright (c) 2012 Signature Software. All rights reserved.
@@ -11,7 +11,7 @@
 
 @protocol SSSwappableCollectionViewDelegateFlowLayout <UICollectionViewDelegate>
 
-// Exchange Transaction and Exchange Event
+// Exchange Transactions and Exchange Events
 // An exchange transaction begins with a long press on a cell and concludes when the user releases. Between
 // the beginning and the end the user may drag over many other items including the position where it started.
 // An exchange event occurs each time the user's finger moves over a different item, including possibly
@@ -42,12 +42,12 @@
 
 
 - (BOOL)allowsExchange;
-//C alled on the delegate to determine if it is ok to allow exchanges.
+// Called on the delegate to determine if it is ok to allow exchanges.
 
 @end
 
 
-@interface SSSwappableCollectionViewFlowLayout : UICollectionViewFlowLayout
+@interface SSCollectionViewExchangeFlowLayout : UICollectionViewFlowLayout
 
 @property (strong, nonatomic) id <SSSwappableCollectionViewDelegateFlowLayout> delegate;
 

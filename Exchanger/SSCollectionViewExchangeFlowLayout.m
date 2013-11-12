@@ -1,17 +1,17 @@
 //
-//  SSSwappableCollectionViewFlowLayout.m
-//  Swapper
+//  SSCollectionViewExchangeFlowLayout.m
+//  Exchanger
 //
 //  Created by Murray Sagal on 2012-10-31.
 //  Copyright (c) 2012 Signature Software. All rights reserved.
 //
 
-#import "SSSwappableCollectionViewFlowLayout.h"
+#import "SSCollectionViewExchangeFlowLayout.h"
 #import <QuartzCore/QuartzCore.h>
 
 
 
-@interface SSSwappableCollectionViewFlowLayout ()
+@interface SSCollectionViewExchangeFlowLayout ()
 
 // This is the view that gets dragged around...
 @property (strong, nonatomic) UIView *viewForItemBeingDragged;
@@ -45,7 +45,7 @@
 
 
 
-@implementation SSSwappableCollectionViewFlowLayout
+@implementation SSCollectionViewExchangeFlowLayout
 
 
 //-----------------------

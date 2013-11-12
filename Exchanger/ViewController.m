@@ -20,7 +20,7 @@
 */
 
 #import "ViewController.h"
-#import "SSSwappableCollectionViewFlowLayout.h"
+#import "SSCollectionViewExchangeFlowLayout.h"
 
 
 typedef enum : NSInteger {
@@ -75,7 +75,7 @@ typedef enum : NSInteger {
 
     
     // Set up the layout...
-    SSSwappableCollectionViewFlowLayout *layout = [[SSSwappableCollectionViewFlowLayout alloc] init];
+    SSCollectionViewExchangeFlowLayout *layout = [[SSCollectionViewExchangeFlowLayout alloc] init];
     layout.itemSize = CGSizeMake(145, 30);
     layout.minimumLineSpacing = 1;
     layout.minimumInteritemSpacing = 1;
