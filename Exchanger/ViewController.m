@@ -1,6 +1,6 @@
 //
 //  ViewController.m
-//  Swapper
+//  Exchanger
 //
 //  Created by Murray Sagal on 2012-10-30.
 //  Copyright (c) 2012 Signature Software. All rights reserved.
@@ -35,7 +35,7 @@ typedef enum : NSInteger {
     UICollectionViewDataSource,
     UICollectionViewDelegate,
     UICollectionViewDelegateFlowLayout,
-    SSSwappableCollectionViewDelegateFlowLayout
+    SSCollectionViewExchangeFlowLayoutDelegate
 >
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;

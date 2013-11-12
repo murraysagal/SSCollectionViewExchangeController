@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 
 
-@protocol SSSwappableCollectionViewDelegateFlowLayout <UICollectionViewDelegate>
+@protocol SSCollectionViewExchangeFlowLayoutDelegate <UICollectionViewDelegate>
 
 // Exchange Transactions and Exchange Events
 // An exchange transaction begins with a long press on a cell and concludes when the user releases. Between
@@ -49,6 +49,6 @@
 
 @interface SSCollectionViewExchangeFlowLayout : UICollectionViewFlowLayout
 
-@property (strong, nonatomic) id <SSSwappableCollectionViewDelegateFlowLayout> delegate;
+@property (strong, nonatomic) id <SSCollectionViewExchangeFlowLayoutDelegate> delegate;
 
 @end
