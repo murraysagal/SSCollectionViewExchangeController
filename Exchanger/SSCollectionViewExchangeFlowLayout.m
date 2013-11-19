@@ -10,7 +10,6 @@
 #import <QuartzCore/QuartzCore.h>
 
 
-
 @interface SSCollectionViewExchangeFlowLayout ()
 
 // This is the view that gets dragged around...
@@ -38,7 +37,7 @@
 @property (strong, nonatomic, readonly) NSIndexPath *indexPathOfItemToHide;
 @property (strong, nonatomic, readonly) NSIndexPath *indexPathOfItemToDim;
 
-- (void)longPress:(UILongPressGestureRecognizer *)sender;
+@property (weak, nonatomic) id <SSCollectionViewExchangeFlowLayoutDelegate> delegate;
 
 @end
 
@@ -47,6 +46,29 @@
 
 @implementation SSCollectionViewExchangeFlowLayout
 
+- (id)initWithDelegate:(id<SSCollectionViewExchangeFlowLayoutDelegate>)delegate
+        collectionView:(UICollectionView *)collectionView
+   longPressRecognizer:(UILongPressGestureRecognizer *)longPressRecognizer
+{
+    self = [super init];
+    if (self) {
+        
+        // Configure the action method for the long press gesture recognizer...
+        [longPressRecognizer addTarget:self action:@selector(longPress:)];
+        
+        // Add the gesture to the collection view...
+        [collectionView addGestureRecognizer:longPressRecognizer];
+        
+        // Set the delegate...
+        self.delegate = delegate;
+        
+        // Set this object (self) to be the collection view's layout...
+        collectionView.collectionViewLayout = self;
+        
+    }
+    return self;
+}
+
 
 //-----------------------
 #pragma mark - Accessors...
@@ -54,15 +76,17 @@
 - (NSIndexPath *)indexPathOfItemToHide
 {
     return self.indexPathOfItemLastExchanged;
-//    return nil;
     
     // Return nil if you don't want to hide.
-    // This can be useful during testing to ensure that the item you're dragging around is properly following.
+    // This can be useful during testing to ensure that the item
+    // you're dragging around is properly following.
 }
 
 - (NSIndexPath *)indexPathOfItemToDim
 {
-    return self.originalIndexPathForItemBeingDragged;  // Return nil if you don't want to dim
+    return self.originalIndexPathForItemBeingDragged;
+    
+    // As above return nil if you don't want to dim.
 }
 
 
@@ -151,9 +175,10 @@
 
 - (void)cancelGestureRecognizer:(UIGestureRecognizer *)gestureRecognizer
 {
+    // As per the docs, this triggers a cancel.
+    
     gestureRecognizer.enabled = NO;
     gestureRecognizer.enabled = YES;
-    // As per the docs, this triggers a cancel.
 }
 
 - (void)setUpForExchangeTransaction:(UIGestureRecognizer *)gestureRecognizer
@@ -177,34 +202,30 @@
         return;
     }
     
-    // Later in the exchange process it is necessary to know where this started. Hang on to the indexPath...
-    self.originalIndexPathForItemBeingDragged = indexPath;
-    
     // Get the cell from the indexPath...
     UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:indexPath];
     
-    // See the comments in the interface block above...
-    self.centerOfCellForLastItemExchanged = itemCell.center;
-    
     // Create an image of the cell. This is what will follow the user's finger...
+    UIColor *originalBackgroundColor = itemCell.backgroundColor;
+    itemCell.backgroundColor = [UIColor darkGrayColor];
+    itemCell.alpha = 0.8;
     UIGraphicsBeginImageContextWithOptions(itemCell.bounds.size, itemCell.opaque, 0.0f);
     [itemCell.layer renderInContext:UIGraphicsGetCurrentContext()];
     UIImage *itemCellImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     UIImageView *itemCellImageView = [[UIImageView alloc] initWithImage:itemCellImage];
+    itemCell.backgroundColor = originalBackgroundColor;
+    itemCell.alpha = 1.0;
     
     // Create a view and add the image...
-    self.viewForItemBeingDragged = [[UIView alloc] initWithFrame:CGRectMake(CGRectGetMinX(itemCell.frame), CGRectGetMinY(itemCell.frame), CGRectGetWidth(itemCellImageView.frame), CGRectGetHeight(itemCellImageView.frame))];
+    self.viewForItemBeingDragged = [[UIView alloc] initWithFrame:CGRectMake(CGRectGetMinX(itemCell.frame),
+                                                                            CGRectGetMinY(itemCell.frame),
+                                                                            CGRectGetWidth(itemCellImageView.frame),
+                                                                            CGRectGetHeight(itemCellImageView.frame))];
     [self.viewForItemBeingDragged addSubview:itemCellImageView];
     
     // Add this view to the collection view...
     [self.collectionView addSubview:self.viewForItemBeingDragged];
-    
-    // Hide the item being dragged...
-    // invalidateLayout kicks of the process of redrawing the layout. This class intervenes in that process
-    // by overriding layoutAttributesForElementsInRect: and layoutAttributesForItemAtIndexPath: to hide
-    // and dim items as required.
-    [self.collectionView.collectionViewLayout invalidateLayout];
     
     // Calculate and keep the offsets from the location of the user's finger to the center of view being dragged...
     CGPoint locationInCellImageView = [gestureRecognizer locationInView:self.viewForItemBeingDragged];
@@ -212,7 +233,7 @@
     self.xOffsetForViewBeingDragged = locationInCellImageView.x - imageViewCenter.x;
     self.yOffsetForViewBeingDragged = locationInCellImageView.y - imageViewCenter.y;
     
-    // Blink...
+    // Blink. This is one of any number of ways to accomplish this.
     [UIView animateWithDuration:0.05 animations:^
      {
          self.viewForItemBeingDragged.transform = CGAffineTransformMakeScale(1.2f, 1.2f);
@@ -225,14 +246,26 @@
           }];
      }];
     
+    // See the comments for this property in the declaration...
+    self.centerOfCellForLastItemExchanged = itemCell.center;
+    
+    // It is necessary to know where this started. Hang on to the indexPath...
+    self.originalIndexPathForItemBeingDragged = indexPath;
+    
     // Managing the values in these properties is critical to tracking the state of the exchange process.
     self.indexPathOfItemLastExchanged = self.originalIndexPathForItemBeingDragged;
     self.mustUndoPriorExchange = NO;
+    
+    // Finally, hide the item being dragged. invalidateLayout kicks off the process of redrawing the layout.
+    // This class intervenes in that process by overriding layoutAttributesForElementsInRect: and
+    // layoutAttributesForItemAtIndexPath: to hide and dim items as required.
+    [self.collectionView.collectionViewLayout invalidateLayout];
 }
 
 - (void)manageExchangeEvent:(UIGestureRecognizer *)gestureRecognizer
 {
     // Control reaches here because the user is dragging, still in the long press...
+    
     NSLog(@"[<%@ %p> %@ line= %d]", [self class], self, NSStringFromSelector(_cmd), __LINE__);
     
     // Update the location of the view the user is dragging around...
@@ -255,6 +288,10 @@
     //  2. The user has moved over a different cell. In other words currentIndexPath does not equal self.indexPathOfItemLastExchanged
     
     if ([self isOverSameItemAtIndexPath:currentIndexPath]) {
+        
+        // This if is not strictly necessary because this condition would simply
+        // fall through the if structure below. It's here only to provide logging
+        // of the condition. 
         NSLog(@"over same cell");
         return;
     }
@@ -366,6 +403,7 @@
 - (void)finishExchangeTransaction
 {
     // Control reaches here when the user lifts his/her finger...
+    
     NSLog(@"[<%@ %p> %@ line= %d]", [self class], self, NSStringFromSelector(_cmd), __LINE__);
     
     if ([self isBackToStartingItemAtIndexPath:self.indexPathOfItemLastExchanged] == YES) {
@@ -392,6 +430,8 @@
     }
     
     // Animate the release...
+    // This is one of any number of ways to accomplish this.
+    // But it's important to do the cleanup at the end.
     [UIView animateWithDuration:0.15 animations:^
      {
          self.viewForItemBeingDragged.center = self.centerOfCellForLastItemExchanged;
