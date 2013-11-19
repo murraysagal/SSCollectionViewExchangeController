@@ -9,6 +9,10 @@
 #import <UIKit/UIKit.h>
 
 
+// This UICollectionViewFlowLayout subclass implements a layout designed to
+// exchange 2 items in a 2 column grid.
+
+
 @protocol SSCollectionViewExchangeFlowLayoutDelegate// <UICollectionViewDelegate>
 
 // Exchange Transactions and Exchange Events
