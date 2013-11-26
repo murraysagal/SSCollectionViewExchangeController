@@ -53,10 +53,10 @@
     if (self) {
         
         // Create and configure the long press gesture recognizer...
-        self.longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] init];
+        self.longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self
+                                                                                        action:@selector(longPress:)];
         self.longPressGestureRecognizer.minimumPressDuration = 0.15;
         self.longPressGestureRecognizer.delaysTouchesBegan = YES;
-        [self.longPressGestureRecognizer addTarget:self action:@selector(longPress:)];
         
         // Add the gesture to the collection view...
         [collectionView addGestureRecognizer:self.longPressGestureRecognizer];
