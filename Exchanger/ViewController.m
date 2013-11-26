@@ -66,16 +66,11 @@ typedef enum : NSInteger {
     UINib *cellNib = [UINib nibWithNibName:@"ItemCell" bundle:nil];
     [self.collectionView registerNib:cellNib forCellWithReuseIdentifier:@"itemCell"];
     
-    // Create and configure the long press recognizer...
-    // The target and action are added in SSCollectionViewExchangeFlowLayout's initializer.
-    UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] init];
-    longPressRecognizer.minimumPressDuration = 0.15;
-
     // Create and configure the collection view layout...
     SSCollectionViewExchangeFlowLayout *collectionViewLayout =
     [[SSCollectionViewExchangeFlowLayout alloc] initWithDelegate:self
-                                                  collectionView:self.collectionView
-                                             longPressRecognizer:longPressRecognizer];
+                                                  collectionView:self.collectionView];
+    
     collectionViewLayout.itemSize = CGSizeMake(150, 30);
     collectionViewLayout.minimumLineSpacing = 1;
     collectionViewLayout.minimumInteritemSpacing = 1;
@@ -145,7 +140,8 @@ typedef enum : NSInteger {
     return sum;
 }
 
-- (void)exchangeItemInArray:(NSMutableArray *)array1 atIndex:(int)index1 withItemInArray:(NSMutableArray *)array2 atIndex:(int)index2
+- (void)exchangeItemInArray:(NSMutableArray *)array1 atIndex:(NSInteger)index1
+            withItemInArray:(NSMutableArray *)array2 atIndex:(NSInteger)index2
 {
     // Exchanges two elements that are in two different arrays.
     

@@ -48,16 +48,18 @@
 
 - (id)initWithDelegate:(id<SSCollectionViewExchangeFlowLayoutDelegate>)delegate
         collectionView:(UICollectionView *)collectionView
-   longPressRecognizer:(UILongPressGestureRecognizer *)longPressRecognizer
 {
     self = [super init];
     if (self) {
         
-        // Configure the action method for the long press gesture recognizer...
-        [longPressRecognizer addTarget:self action:@selector(longPress:)];
+        // Create and configure the long press gesture recognizer...
+        self.longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] init];
+        self.longPressGestureRecognizer.minimumPressDuration = 0.15;
+        self.longPressGestureRecognizer.delaysTouchesBegan = YES;
+        [self.longPressGestureRecognizer addTarget:self action:@selector(longPress:)];
         
         // Add the gesture to the collection view...
-        [collectionView addGestureRecognizer:longPressRecognizer];
+        [collectionView addGestureRecognizer:self.longPressGestureRecognizer];
         
         // Set the delegate...
         self.delegate = delegate;
@@ -371,7 +373,7 @@
                  
         } else {
             
-            // There is not a prior exchange to undo (it might be the first time through or it might be
+            // There is not a prior exchange to undo. It might be the first time through or it might be
             // that the user recently dragged back to the starting position...
             NSLog(@"dragged from home to new item.");
             
