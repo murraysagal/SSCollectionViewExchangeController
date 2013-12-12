@@ -19,8 +19,9 @@
 //
 // An exchange transaction begins with a long press on an item and concludes when the user releases,
 // normally over another item, causing the two to be exchanged. However, between the beginning and
-// the end the user may drag over many other items including, possibly, the starting position. An
-// exchange event occurs each time the user's finger moves to a different item. If it is the first
+// the end the user may drag over many items including, possibly, the starting position.
+//
+// An exchange event occurs each time the user's finger moves to a different item. If it is the first
 // exchange event it is a simple exchange between the item being dragged and the item dragged to.
 // If the user keeps dragging to new items subsequent exchange events include undoing the previous
 // exchange and then performing the new exchange.
@@ -55,8 +56,8 @@
 
 @interface SSCollectionViewExchangeFlowLayout : UICollectionViewFlowLayout
 
-// Exposed to allow configuration if required. The default is configured with a minimumPressDuration
-// of 0.15 and delaysTouchesBegain is set to YES.
+// Exposed to allow configuration if required. The default is configured with a
+// minimumPressDuration of 0.15 and delaysTouchesBegan is set to YES.
 @property (strong, nonatomic) UILongPressGestureRecognizer *longPressGestureRecognizer;
 
 - (id)initWithDelegate:(id<SSCollectionViewExchangeFlowLayoutDelegate>)delegate

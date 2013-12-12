@@ -10,7 +10,18 @@
 #import <QuartzCore/QuartzCore.h>
 
 
+typedef NS_ENUM(NSInteger, ExchangeEventType) {
+    ExchangeEventTypeDraggedFromStartingItem,
+    ExchangeEventTypeDraggedToOtherItem,
+    ExchangeEventTypeDraggedToStartingItem,
+    ExchangeEventTypeNothingToExchange
+};
+
 @interface SSCollectionViewExchangeFlowLayout ()
+
+
+//@property (nonatomic, assign) ExchangeType exchangeType;
+
 
 // This is the view that gets dragged around...
 @property (strong, nonatomic) UIView *viewForItemBeingDragged;
@@ -28,9 +39,9 @@
 // As an optimization, the collection view might not create the corresponding view
 // if the hidden property (UICollectionViewLayoutAttributes) is set to YES. In the
 // gesture recognizer's recognized state we always need the cell for the item that
-// was hidden so we can animate to its center. So we use this property to hold the
-// center of the cell at indexPathOfItemLastExchanged and we capture it just before
-// it is hidden.
+// was hidden so we can animate to its center when the user releases. So we use this
+// property to hold the center of the cell at indexPathOfItemLastExchanged but it must
+// be captured just before it is hidden.
 @property (nonatomic) CGPoint centerOfCellForLastItemExchanged;
 
 // These readonly properties just make the code a bit more readable...
@@ -100,9 +111,9 @@
 // another item, that item moves to the original location of the item being dragged. That cell is dimmed, marking
 // the original location of the item being moved. The cell at the position of the displaced item is hidden giving
 // the user the sense that the item being dragged will land there if their finger is released.
-
+//
 // This is accomplished by overriding layoutAttributesForElementsInRect: and layoutAttributesForItemAtIndexPath:.
-
+//
 // It can happen that the item to hide and the item to dim will be the same. This happens when the user drags back
 // to the starting location. This collision is irrelevant because there are two separate properties: one tracking
 // the item to hide and one tracking the item to dim. In layoutAttributesForItem: the hidden property is set first
@@ -185,21 +196,11 @@
 
 - (void)setUpForExchangeTransaction:(UIGestureRecognizer *)gestureRecognizer
 {
-    NSLog(@"[<%@ %p> %@ line= %d]", [self class], self, NSStringFromSelector(_cmd), __LINE__);
-    
-    if ([self.delegate canExchange] == NO)
-    {
-        [self cancelGestureRecognizer:gestureRecognizer];
-        return;
-    }
-    
-    // Get the indexPath from the location...
     CGPoint locationInCollectionView = [gestureRecognizer locationInView:self.collectionView];
     NSIndexPath *indexPath = [self.collectionView indexPathForItemAtPoint:locationInCollectionView];
     
-    if (indexPath == nil)
+    if ([self.delegate canExchange] == NO || indexPath == nil)
     {
-        // The user is not on a cell. There's nothing to do so exit stage left...
         [self cancelGestureRecognizer:gestureRecognizer];
         return;
     }
@@ -220,10 +221,7 @@
     itemCell.alpha = 1.0;
     
     // Create a view and add the image...
-    self.viewForItemBeingDragged = [[UIView alloc] initWithFrame:CGRectMake(CGRectGetMinX(itemCell.frame),
-                                                                            CGRectGetMinY(itemCell.frame),
-                                                                            CGRectGetWidth(itemCellImageView.frame),
-                                                                            CGRectGetHeight(itemCellImageView.frame))];
+    self.viewForItemBeingDragged = [[UIView alloc] initWithFrame:itemCell.frame];
     [self.viewForItemBeingDragged addSubview:itemCellImageView];
     
     // Add this view to the collection view...
@@ -231,22 +229,25 @@
     
     // Calculate and keep the offsets from the location of the user's finger to the center of view being dragged...
     CGPoint locationInCellImageView = [gestureRecognizer locationInView:self.viewForItemBeingDragged];
+    
+    // TODO: look at anchorPoint!!!
     CGPoint imageViewCenter = CGPointMake(self.viewForItemBeingDragged.frame.size.width/2, self.viewForItemBeingDragged.frame.size.height/2);
+//    self.viewForItemBeingDragged.layer.anchorPoint
+    
+    // ???: could these two just be a point???
     self.xOffsetForViewBeingDragged = locationInCellImageView.x - imageViewCenter.x;
     self.yOffsetForViewBeingDragged = locationInCellImageView.y - imageViewCenter.y;
     
     // Blink. This is one of any number of ways to accomplish this.
-    [UIView animateWithDuration:0.05 animations:^
-     {
+    [UIView animateWithDuration:0.15 animations:^{
          self.viewForItemBeingDragged.transform = CGAffineTransformMakeScale(1.2f, 1.2f);
-     }
-                     completion:^(BOOL finished)
-     {
-         [UIView animateWithDuration:0.25 animations:^
-          {
-              self.viewForItemBeingDragged.transform = CGAffineTransformMakeScale(1.00f, 1.00f);
+     } completion:^(BOOL finished){
+         [UIView animateWithDuration:0.25 animations:^{
+              self.viewForItemBeingDragged.transform = CGAffineTransformMakeScale(1.05f, 1.05f);
           }];
      }];
+    
+    
     
     // See the comments for this property in the declaration...
     self.centerOfCellForLastItemExchanged = itemCell.center;
@@ -266,140 +267,144 @@
 
 - (void)manageExchangeEvent:(UIGestureRecognizer *)gestureRecognizer
 {
-    // Control reaches here because the user is dragging, still in the long press...
-    
-    NSLog(@"[<%@ %p> %@ line= %d]", [self class], self, NSStringFromSelector(_cmd), __LINE__);
-    
     // Update the location of the view the user is dragging around...
     CGPoint locationInCollectionView = [gestureRecognizer locationInView:self.collectionView]; //this is where the finger is in the collection view's coordinate system
     CGPoint offsetLocationInCollectionView = CGPointMake(locationInCollectionView.x - self.xOffsetForViewBeingDragged, locationInCollectionView.y - self.yOffsetForViewBeingDragged);
     self.viewForItemBeingDragged.center = offsetLocationInCollectionView;
     
-    // Where has the user dragged on the collection view? What indexPath...
+    // Where has the user dragged to on the collection view? What indexPath...
     NSIndexPath *currentIndexPath = [self.collectionView indexPathForItemAtPoint:locationInCollectionView];
     
-    if (currentIndexPath == nil)
+    ExchangeEventType exchangeEventType = [self exchangeEventTypeForCurrentIndexPath:currentIndexPath];
+    
+    switch (exchangeEventType) {
+            
+        case ExchangeEventTypeNothingToExchange:
+            return;
+            break;
+            
+        case ExchangeEventTypeDraggedFromStartingItem:
+            [self performExchangeForDraggedFromStartingItemToIndexPath:currentIndexPath];
+            return;
+            break;
+            
+        case ExchangeEventTypeDraggedToOtherItem:
+            [self performExchangeForDraggedToOtherItemAtIndexPath:currentIndexPath];
+            return;
+            break;
+            
+        case ExchangeEventTypeDraggedToStartingItem:
+            [self performExchangeForDraggedToStartingItemAtIndexPath:currentIndexPath];
+            return;
+            break;
+    }
+    
+}
+
+- (ExchangeEventType)exchangeEventTypeForCurrentIndexPath:(NSIndexPath *)currentIndexPath
+{
+    // The user is still dragging in the long press. Determine the exchange event type.
+    
+    if  (currentIndexPath == nil || [self isOverSameItemAtIndexPath:currentIndexPath] == YES)
+        return ExchangeEventTypeNothingToExchange;
+    
+    
+    // Otherwise there is an exchange event to perform. What kind?
+    
+    if (self.mustUndoPriorExchange)
     {
-        // The user is not over a cell. There's nothing to do so exit stage left...
-        NSLog(@"not over a cell");
-        return;
+        return ([self isBackToStartingItemAtIndexPath:currentIndexPath])? ExchangeEventTypeDraggedToStartingItem : ExchangeEventTypeDraggedToOtherItem;
     }
-    
-    // The user has moved and is over a cell. There are two cases:
-    //  1. The user has moved but not very far and is over the same cell. In this case there's nothing to do.
-    //  2. The user has moved over a different cell. In other words currentIndexPath does not equal self.indexPathOfItemLastExchanged
-    
-    if ([self isOverSameItemAtIndexPath:currentIndexPath]) {
-        
-        // This if is not strictly necessary because this condition would simply
-        // fall through the if structure below. It's here only to provide logging
-        // of the condition. 
-        NSLog(@"over same cell");
-        return;
-    }
-    
-    if ([self isOverNewItemAtIndexPath:currentIndexPath] == YES)
+    else
     {
-        NSLog(@"over a new cell");
-        
-        // The user has dragged over a new cell.
-        // First, determine if there was a prior exchange that must be undone.
-        
-        if (self.mustUndoPriorExchange)
-        {
-            // When undoing a prior exchange there are two subcases:
-            //  1. The user has dragged back to the starting item
-            //  2. The user is over any other item
-            // Both require different actions and different state settings.
-            
-            if ([self isBackToStartingItemAtIndexPath:currentIndexPath] == YES)
-            {
-                // The user has dragged back to the starting position...
-                NSLog(@"dragged back home");
-                
-                [self.collectionView performBatchUpdates:^ {
-                    
-                    // Put the previously exchanged item back to its original location...
-                    [self.collectionView moveItemAtIndexPath:self.originalIndexPathForItemBeingDragged toIndexPath:self.indexPathOfItemLastExchanged];
-                    
-                    // Put the item we're dragging back into its origingal location...
-                    [self.collectionView moveItemAtIndexPath:self.indexPathOfItemLastExchanged toIndexPath:self.originalIndexPathForItemBeingDragged];
-                    
-                    // Let the delegate know.
-                    [self.delegate exchangeItemAtIndexPath:self.originalIndexPathForItemBeingDragged withItemAtIndexPath:self.indexPathOfItemLastExchanged];
-                    [self.delegate didFinishExchangeEvent];
-                    
-                    // Set state. This is the same state as when the gesture began.
-                    self.indexPathOfItemLastExchanged = self.originalIndexPathForItemBeingDragged;
-                    self.mustUndoPriorExchange = NO;
-                    
-                    // Grab the center of the cell...
-                    UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:currentIndexPath];
-                    self.centerOfCellForLastItemExchanged = itemCell.center;
-                }
-                                              completion:nil];
-                
-            } else {
-                
-                // The user has dragged over a new item and it's not where the process started...
-                NSLog(@"dragged over a new item.");
-                
-                [self.collectionView performBatchUpdates:^ {
-                    
-                    // Put the previously exchanged item back to its original location...
-                    [self.collectionView moveItemAtIndexPath:self.originalIndexPathForItemBeingDragged toIndexPath:self.indexPathOfItemLastExchanged];
-                    
-                    // Move the item being dragged to the current postion...
-                    [self.collectionView moveItemAtIndexPath:self.indexPathOfItemLastExchanged toIndexPath:currentIndexPath];
-                    
-                    // Move the item we're over to the original location of the item being dragged...
-                    [self.collectionView moveItemAtIndexPath:currentIndexPath toIndexPath:self.originalIndexPathForItemBeingDragged];
-                    
-                    // Let the delegate know. First undo the prior exchange then do the new exchange...
-                    [self.delegate exchangeItemAtIndexPath:self.originalIndexPathForItemBeingDragged withItemAtIndexPath:self.indexPathOfItemLastExchanged];
-                    [self.delegate exchangeItemAtIndexPath:currentIndexPath withItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
-                    [self.delegate didFinishExchangeEvent];
-                    
-                    // Set state.
-                    self.indexPathOfItemLastExchanged = currentIndexPath;
-                    self.mustUndoPriorExchange = YES;
-                    
-                    // Grab the center of the cell...
-                    UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:currentIndexPath];
-                    self.centerOfCellForLastItemExchanged = itemCell.center;
-                }
-                                              completion:nil];
-            }
-                 
-        } else {
-            
-            // There is not a prior exchange to undo. It might be the first time through or it might be
-            // that the user recently dragged back to the starting position...
-            NSLog(@"dragged from home to new item.");
-            
-            [self.collectionView performBatchUpdates:^
-             {
-                 // Move the item being dragged to the current postion...
-                 [self.collectionView moveItemAtIndexPath:self.originalIndexPathForItemBeingDragged toIndexPath:currentIndexPath];
-                 
-                 // Move the item in the current postion to the original location of the item being moved...
-                 [self.collectionView moveItemAtIndexPath:currentIndexPath toIndexPath:self.originalIndexPathForItemBeingDragged];
-                 
-                 // Let the delegate know.
-                 [self.delegate exchangeItemAtIndexPath:currentIndexPath withItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
-                 [self.delegate didFinishExchangeEvent];
-                 
-                 // Set state.
-                 self.indexPathOfItemLastExchanged = currentIndexPath;
-                 self.mustUndoPriorExchange = YES;
-                 
-                 // Grab the center of the cell...
-                 UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:currentIndexPath];
-                 self.centerOfCellForLastItemExchanged = itemCell.center;
-             }
-                                          completion:nil];
-        }
+        return ExchangeEventTypeDraggedFromStartingItem;
     }
+}
+
+- (void)performExchangeForDraggedFromStartingItemToIndexPath:(NSIndexPath *)indexPath
+{
+    [self.collectionView performBatchUpdates:^{
+        
+        // Move the item being dragged to indexPath...
+        [self.collectionView moveItemAtIndexPath:self.originalIndexPathForItemBeingDragged toIndexPath:indexPath];
+        
+        // Move the item at indexPath to the starting position...
+        [self.collectionView moveItemAtIndexPath:indexPath toIndexPath:self.originalIndexPathForItemBeingDragged];
+        
+        // Let the delegate know.
+        [self.delegate exchangeItemAtIndexPath:indexPath withItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
+        [self.delegate didFinishExchangeEvent];
+        
+        // Set state.
+        self.indexPathOfItemLastExchanged = indexPath;
+        self.mustUndoPriorExchange = YES;
+        
+        // Grab the center of the cell...
+        UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:indexPath];
+        self.centerOfCellForLastItemExchanged = itemCell.center;
+        
+    } completion:nil];
+}
+
+- (void)performExchangeForDraggedToOtherItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    [self.collectionView performBatchUpdates:^{
+        
+        // Put the previously exchanged item back to its original location...
+        [self.collectionView moveItemAtIndexPath:self.originalIndexPathForItemBeingDragged toIndexPath:self.indexPathOfItemLastExchanged];
+        
+        // Move the item being dragged to the current postion...
+        [self.collectionView moveItemAtIndexPath:self.indexPathOfItemLastExchanged toIndexPath:indexPath];
+        
+        // Move the item we're over to the original location of the item being dragged...
+        [self.collectionView moveItemAtIndexPath:indexPath toIndexPath:self.originalIndexPathForItemBeingDragged];
+        
+        // Let the delegate know. First undo the prior exchange then do the new exchange...
+        [self.delegate exchangeItemAtIndexPath:self.originalIndexPathForItemBeingDragged withItemAtIndexPath:self.indexPathOfItemLastExchanged];
+        [self.delegate exchangeItemAtIndexPath:indexPath withItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
+        [self.delegate didFinishExchangeEvent];
+        
+        // Set state.
+        self.indexPathOfItemLastExchanged = indexPath;
+        self.mustUndoPriorExchange = YES;
+        
+        // Grab the center of the cell...
+        // TODO: the next 2 lines can go to sepereate method
+        UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:indexPath];
+        self.centerOfCellForLastItemExchanged = itemCell.center;
+        
+    } completion:nil];
+}
+
+- (void)performExchangeForDraggedToStartingItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    [self.collectionView performBatchUpdates:^{
+        
+        // Put the previously exchanged item back to its original location...
+        [self.collectionView moveItemAtIndexPath:self.originalIndexPathForItemBeingDragged toIndexPath:self.indexPathOfItemLastExchanged];
+        
+        // Put the item we're dragging back into its origingal location...
+        [self.collectionView moveItemAtIndexPath:self.indexPathOfItemLastExchanged toIndexPath:self.originalIndexPathForItemBeingDragged];
+        
+        // Let the delegate know.
+        [self.delegate exchangeItemAtIndexPath:self.originalIndexPathForItemBeingDragged withItemAtIndexPath:self.indexPathOfItemLastExchanged];
+        [self.delegate didFinishExchangeEvent];
+        
+        // Set state. This is the same state as when the gesture began.
+        self.indexPathOfItemLastExchanged = self.originalIndexPathForItemBeingDragged;
+        self.mustUndoPriorExchange = NO;
+        
+        // Grab the center of the cell...
+        UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:indexPath];
+        self.centerOfCellForLastItemExchanged = itemCell.center;
+        
+    } completion:nil];
+}
+
+- (void)keepCenterOfCellForLastItemExchangedAtIndexPath:(NSIndexPath *)indexPath
+{
+    UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:indexPath];
+    self.centerOfCellForLastItemExchanged = itemCell.center;
 }
 
 - (void)finishExchangeTransaction
@@ -424,9 +429,8 @@
         UICollectionViewCell *cellForOriginalLocation = [self.collectionView cellForItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
         
         // Animate the undimming...
-        [UIView animateWithDuration:0.4 animations:^
-         {
-             cellForOriginalLocation.alpha = 0.1;
+        [UIView animateWithDuration:0.4 animations:^{
+//             cellForOriginalLocation.alpha = 0.1;
              cellForOriginalLocation.alpha = 1.0;
          }];
     }
@@ -434,19 +438,13 @@
     // Animate the release...
     // This is one of any number of ways to accomplish this.
     // But it's important to do the cleanup at the end.
-    [UIView animateWithDuration:0.15 animations:^
-     {
+    [UIView animateWithDuration:0.15 animations:^{
          self.viewForItemBeingDragged.center = self.centerOfCellForLastItemExchanged;
-     }
-                     completion:^(BOOL finished)
-     {
+     } completion:^(BOOL finished){
          // Blink...
-         [UIView animateWithDuration:0.3 animations:^
-          {
+         [UIView animateWithDuration:0.3 animations:^{
               self.viewForItemBeingDragged.transform = CGAffineTransformMakeScale(1.08f, 1.08f);
-          }
-                          completion:^(BOOL finished)
-          {
+          } completion:^(BOOL finished) {
               // Clean up...
               [self.viewForItemBeingDragged removeFromSuperview];
               
