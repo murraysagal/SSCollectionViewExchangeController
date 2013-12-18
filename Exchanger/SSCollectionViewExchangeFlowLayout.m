@@ -339,9 +339,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         self.indexPathOfItemLastExchanged = indexPath;
         self.mustUndoPriorExchange = YES;
         
-        // Grab the center of the cell...
-        UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:indexPath];
-        self.centerOfCellForLastItemExchanged = itemCell.center;
+        [self keepCenterOfCellForLastItemExchangedAtIndexPath:indexPath];
         
     } completion:nil];
 }
@@ -368,10 +366,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         self.indexPathOfItemLastExchanged = indexPath;
         self.mustUndoPriorExchange = YES;
         
-        // Grab the center of the cell...
-        // TODO: the next 2 lines can go to sepereate method
-        UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:indexPath];
-        self.centerOfCellForLastItemExchanged = itemCell.center;
+        [self keepCenterOfCellForLastItemExchangedAtIndexPath:indexPath];
         
     } completion:nil];
 }
@@ -394,9 +389,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         self.indexPathOfItemLastExchanged = self.originalIndexPathForItemBeingDragged;
         self.mustUndoPriorExchange = NO;
         
-        // Grab the center of the cell...
-        UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:indexPath];
-        self.centerOfCellForLastItemExchanged = itemCell.center;
+        [self keepCenterOfCellForLastItemExchangedAtIndexPath:indexPath];
         
     } completion:nil];
 }
@@ -428,6 +421,9 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         // Get the cell...
         UICollectionViewCell *cellForOriginalLocation = [self.collectionView cellForItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
         
+        
+        // TODO: these animations are colliding!
+        
         // Animate the undimming...
         [UIView animateWithDuration:0.4 animations:^{
 //             cellForOriginalLocation.alpha = 0.1;
@@ -445,6 +441,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
          [UIView animateWithDuration:0.3 animations:^{
               self.viewForItemBeingDragged.transform = CGAffineTransformMakeScale(1.08f, 1.08f);
           } completion:^(BOOL finished) {
+              
               // Clean up...
               [self.viewForItemBeingDragged removeFromSuperview];
               
@@ -462,7 +459,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     return [indexPath isEqual:self.indexPathOfItemLastExchanged];
 }
 
-- (BOOL)isOverNewItemAtIndexPath:(NSIndexPath *)indexPath
+- (BOOL)isOverNewItemAtIndexPath:(NSIndexPath *)indexPath // TODO: not called
 {
     return ![indexPath isEqual:self.indexPathOfItemLastExchanged];
 }

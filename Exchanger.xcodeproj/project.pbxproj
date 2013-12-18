@@ -462,6 +462,7 @@
 				722D2FF7183291E300F82D12 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		722D2FF8183291E300F82D12 /* Build configuration list for PBXNativeTarget "ExchangerTests" */ = {
 			isa = XCConfigurationList;
@@ -470,6 +471,7 @@
 				722D2FFA183291E300F82D12 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

@@ -49,7 +49,8 @@
 
 
 - (BOOL)canExchange;
-// Called on the delegate before beginning the exchange transaction to determine if it is ok to allow exchanges.
+// Called on the delegate before beginning the exchange transaction to
+// determine if it is ok to allow exchanges.
 
 @end
 
