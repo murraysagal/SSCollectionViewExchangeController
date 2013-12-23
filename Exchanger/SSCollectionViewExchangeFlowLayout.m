@@ -195,20 +195,18 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (void)setUpForExchangeTransaction:(UIGestureRecognizer *)gestureRecognizer
 {
-    if ([self.delegate canExchange] == NO)
-    {
-        [self cancelGestureRecognizer:gestureRecognizer];
-        return;
-    }
-
-    CGPoint locationInCollectionView = [gestureRecognizer locationInView:self.collectionView];
-    NSIndexPath *indexPath = [self.collectionView indexPathForItemAtPoint:locationInCollectionView];
+    CGPoint locationInCollectionView;
+    NSIndexPath *indexPath;
+    BOOL cancel = YES;
     
-    if (indexPath == nil)
+    if ([self.delegate canExchange])
     {
-        [self cancelGestureRecognizer:gestureRecognizer];
-        return;
+        locationInCollectionView = [gestureRecognizer locationInView:self.collectionView];
+        indexPath = [self.collectionView indexPathForItemAtPoint:locationInCollectionView];
+        if (indexPath != nil) cancel = NO;
     }
+    
+    if (cancel) { [self cancelGestureRecognizer:gestureRecognizer]; return; }
     
     UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:indexPath];
     
@@ -277,26 +275,6 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         case ExchangeEventTypeDraggedToStartingItem:
             [self performExchangeForDraggedToStartingItemAtIndexPath:currentIndexPath];
             break;
-    }
-}
-
-- (ExchangeEventType)exchangeEventTypeForCurrentIndexPath:(NSIndexPath *)currentIndexPath
-{
-    // The user is still dragging in the long press. Determine the exchange event type.
-    
-    if  (currentIndexPath == nil || [self isOverSameItemAtIndexPath:currentIndexPath] == YES)
-        return ExchangeEventTypeNothingToExchange;
-    
-    
-    // Otherwise there is an exchange event to perform. What kind?
-    
-    if (self.mustUndoPriorExchange)
-    {
-        return ([self isBackToStartingItemAtIndexPath:currentIndexPath])? ExchangeEventTypeDraggedToStartingItem : ExchangeEventTypeDraggedToOtherItem;
-    }
-    else
-    {
-        return ExchangeEventTypeDraggedFromStartingItem;
     }
 }
 
@@ -466,6 +444,25 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     cell.alpha = originialAlpha;
     
     return cellImage;
+}
+
+- (ExchangeEventType)exchangeEventTypeForCurrentIndexPath:(NSIndexPath *)currentIndexPath
+{
+    // The user is still dragging in the long press. Determine the exchange event type.
+    
+    if  (currentIndexPath == nil || [self isOverSameItemAtIndexPath:currentIndexPath] == YES) return ExchangeEventTypeNothingToExchange;
+    
+    
+    // Otherwise there is an exchange event to perform. What kind?
+    
+    if (self.mustUndoPriorExchange)
+    {
+        return ([self isBackToStartingItemAtIndexPath:currentIndexPath])? ExchangeEventTypeDraggedToStartingItem : ExchangeEventTypeDraggedToOtherItem;
+    }
+    else
+    {
+        return ExchangeEventTypeDraggedFromStartingItem;
+    }
 }
 
 @end
