@@ -24,11 +24,10 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 
 // This is the view that gets dragged around...
-@property (strong, nonatomic) UIView *viewForItemBeingDragged;
+@property (strong, nonatomic) UIImageView *viewForImageBeingDragged;
 
-// These contain the offset to the view's center...
-@property (nonatomic) float xOffsetForViewBeingDragged;
-@property (nonatomic) float yOffsetForViewBeingDragged;
+// The offset from the location of the finger to the view's center...
+@property (nonatomic) CGPoint offset;
 
 // These manage the state of the exchange process...
 @property (strong, nonatomic) NSIndexPath *originalIndexPathForItemBeingDragged;
@@ -58,8 +57,8 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 @implementation SSCollectionViewExchangeFlowLayout
 
 - (id)initWithDelegate:(id<SSCollectionViewExchangeFlowLayoutDelegate>)delegate
-        collectionView:(UICollectionView *)collectionView
-{
+        collectionView:(UICollectionView *)collectionView {
+    
     self = [super init];
     if (self) {
         
@@ -151,16 +150,16 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 //-------------------------------------------------
 #pragma mark - UIGestureRecognizer action method...
 
-- (void)longPress:(UILongPressGestureRecognizer *)sender
+- (void)longPress:(UILongPressGestureRecognizer *)recognizer
 {
-    switch (sender.state) {
+    switch (recognizer.state) {
             
         case UIGestureRecognizerStateBegan:
-            [self setUpForExchangeTransaction:sender];
+            [self setUpForExchangeTransaction:recognizer];
             break;
             
         case UIGestureRecognizerStateChanged:
-            [self manageExchangeEvent:sender];
+            [self manageExchangeEvent:recognizer];
             break;
             
         case UIGestureRecognizerStateEnded:
@@ -196,71 +195,56 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (void)setUpForExchangeTransaction:(UIGestureRecognizer *)gestureRecognizer
 {
+    if ([self.delegate canExchange] == NO)
+    {
+        [self cancelGestureRecognizer:gestureRecognizer];
+        return;
+    }
+
     CGPoint locationInCollectionView = [gestureRecognizer locationInView:self.collectionView];
     NSIndexPath *indexPath = [self.collectionView indexPathForItemAtPoint:locationInCollectionView];
     
-    if ([self.delegate canExchange] == NO || indexPath == nil)
+    if (indexPath == nil)
     {
         [self cancelGestureRecognizer:gestureRecognizer];
         return;
     }
     
-    // Get the cell from the indexPath...
-    UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:indexPath];
+    UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:indexPath];
     
-    // Create an image of the cell. This is what will follow the user's finger...
-    UIColor *originalBackgroundColor = itemCell.backgroundColor;
-    float originialAlpha = itemCell.alpha;
-    itemCell.backgroundColor = [UIColor darkGrayColor];
-    itemCell.alpha = 0.8;
-    UIGraphicsBeginImageContextWithOptions(itemCell.bounds.size, itemCell.opaque, 0.0f);
-    [itemCell.layer renderInContext:UIGraphicsGetCurrentContext()];
-    UIImage *itemCellImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    UIImageView *itemCellImageView = [[UIImageView alloc] initWithImage:itemCellImage];
-    itemCell.backgroundColor = originalBackgroundColor;
-    itemCell.alpha = originialAlpha;
-    
-    // Create a view and add the image...
-    self.viewForItemBeingDragged = [[UIView alloc] initWithFrame:itemCell.frame];
-    [self.viewForItemBeingDragged addSubview:itemCellImageView];
-    
-    // Add this view to the collection view...
-    [self.collectionView addSubview:self.viewForItemBeingDragged];
-    
-    // Calculate and keep the offsets from the location of the user's finger to the center of view being dragged...
-    CGPoint locationInCellImageView = [gestureRecognizer locationInView:self.viewForItemBeingDragged];
+    // Create an image of the cell, stuff it in an image view, and stick it under the user's finger...
+    UIImage *cellImage = [self imageFromCell:cell withBackgroundColor:[UIColor darkGrayColor] alpha:0.8];
+    UIImageView *cellImageView = [[UIImageView alloc] initWithImage:cellImage];
+    cellImageView.frame = cell.frame;
+    [self.collectionView addSubview:cellImageView];
     
     // TODO: look at anchorPoint!!!
-    CGPoint imageViewCenter = CGPointMake(self.viewForItemBeingDragged.frame.size.width/2, self.viewForItemBeingDragged.frame.size.height/2);
-//    self.viewForItemBeingDragged.layer.anchorPoint
-    
-    // ???: could these two just be a point???
-    self.xOffsetForViewBeingDragged = locationInCellImageView.x - imageViewCenter.x;
-    self.yOffsetForViewBeingDragged = locationInCellImageView.y - imageViewCenter.y;
+
+    // Calculate the offset from the location of the user's finger to the center of view being dragged...
+    CGPoint locationInCellImageView = [gestureRecognizer locationInView:cellImageView];
+    CGPoint cellImageViewCenter = CGPointMake(cellImageView.frame.size.width/2, cellImageView.frame.size.height/2);
+    CGPoint offset = CGPointMake(locationInCellImageView.x - cellImageViewCenter.x, locationInCellImageView.y - cellImageViewCenter.y);
     
     // Blink. This is one of any number of ways to accomplish this.
-    [UIView animateWithDuration:0.15 animations:^{
-         self.viewForItemBeingDragged.transform = CGAffineTransformMakeScale(1.2f, 1.2f);
-     } completion:^(BOOL finished){
-         [UIView animateWithDuration:0.25 animations:^{
-              self.viewForItemBeingDragged.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
+    NSTimeInterval animationDuration = 0.20f;
+    CGFloat blinkToScale = 1.2f;
+    CGFloat finalScale = 1.0f;
+    [UIView animateWithDuration:animationDuration animations:^ {
+         cellImageView.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
+     } completion:^(BOOL finished) {
+         [UIView animateWithDuration:animationDuration animations:^ {
+              cellImageView.transform = CGAffineTransformMakeScale(finalScale, finalScale);
           }];
      }];
     
-    
-    
-    // See the comments for this property in the declaration...
-    self.centerOfCellForLastItemExchanged = itemCell.center;
-    
-    // It is necessary to know where this started. Hang on to the indexPath...
+    self.offset = offset;
+    self.viewForImageBeingDragged = cellImageView;
+    self.centerOfCellForLastItemExchanged = cell.center;
     self.originalIndexPathForItemBeingDragged = indexPath;
-    
-    // Managing the values in these properties is critical to tracking the state of the exchange process.
-    self.indexPathOfItemLastExchanged = self.originalIndexPathForItemBeingDragged;
+    self.indexPathOfItemLastExchanged = indexPath;
     self.mustUndoPriorExchange = NO;
     
-    // Finally, hide the item being dragged. invalidateLayout kicks off the process of redrawing the layout.
+    // InvalidateLayout kicks off the process of redrawing the layout.
     // This class intervenes in that process by overriding layoutAttributesForElementsInRect: and
     // layoutAttributesForItemAtIndexPath: to hide and dim items as required.
     [self.collectionView.collectionViewLayout invalidateLayout];
@@ -269,11 +253,10 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 - (void)manageExchangeEvent:(UIGestureRecognizer *)gestureRecognizer
 {
     // Update the location of the view the user is dragging around...
-    CGPoint locationInCollectionView = [gestureRecognizer locationInView:self.collectionView]; //this is where the finger is in the collection view's coordinate system
-    CGPoint offsetLocationInCollectionView = CGPointMake(locationInCollectionView.x - self.xOffsetForViewBeingDragged, locationInCollectionView.y - self.yOffsetForViewBeingDragged);
-    self.viewForItemBeingDragged.center = offsetLocationInCollectionView;
+    CGPoint locationInCollectionView = [gestureRecognizer locationInView:self.collectionView];
+    CGPoint offsetLocationInCollectionView = CGPointMake(locationInCollectionView.x - self.offset.x, locationInCollectionView.y - self.offset.y);
+    self.viewForImageBeingDragged.center = offsetLocationInCollectionView;
     
-    // Where has the user dragged to on the collection view? What indexPath...
     NSIndexPath *currentIndexPath = [self.collectionView indexPathForItemAtPoint:locationInCollectionView];
     
     ExchangeEventType exchangeEventType = [self exchangeEventTypeForCurrentIndexPath:currentIndexPath];
@@ -281,25 +264,20 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     switch (exchangeEventType) {
             
         case ExchangeEventTypeNothingToExchange:
-            return;
             break;
             
         case ExchangeEventTypeDraggedFromStartingItem:
             [self performExchangeForDraggedFromStartingItemToIndexPath:currentIndexPath];
-            return;
             break;
             
         case ExchangeEventTypeDraggedToOtherItem:
             [self performExchangeForDraggedToOtherItemAtIndexPath:currentIndexPath];
-            return;
             break;
             
         case ExchangeEventTypeDraggedToStartingItem:
             [self performExchangeForDraggedToStartingItemAtIndexPath:currentIndexPath];
-            return;
             break;
     }
-    
 }
 
 - (ExchangeEventType)exchangeEventTypeForCurrentIndexPath:(NSIndexPath *)currentIndexPath
@@ -406,20 +384,22 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     // You can change the animation as you see fit but you must call
     // performPostReleaseCleanupWithAnimationDuration: in the final completion block.
 
-    float animationDuration = 0.20f;
-    float blinkToScale = 1.05f;
-    float finalScale = 1.0f;
+    NSTimeInterval animationDuration = 0.20f;
+    CGFloat blinkToScale = 1.05f;
+    CGFloat finalScale = 1.0f;
     UICollectionViewCell *cellForOriginalLocation = [self.collectionView cellForItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
     
+    // FIX: There is a stall after the release???
+    
     [UIView animateWithDuration:animationDuration animations:^ {
-        self.viewForItemBeingDragged.center = self.centerOfCellForLastItemExchanged;
+        self.viewForImageBeingDragged.center = self.centerOfCellForLastItemExchanged;
         cellForOriginalLocation.alpha = 1.0;
     } completion:^(BOOL finished) {
         [UIView animateWithDuration:animationDuration animations:^ {
-            self.viewForItemBeingDragged.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
+            self.viewForImageBeingDragged.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
         } completion:^(BOOL finished) {
             [UIView animateWithDuration:animationDuration animations:^ {
-                self.viewForItemBeingDragged.transform = CGAffineTransformMakeScale(finalScale, finalScale);
+                self.viewForImageBeingDragged.transform = CGAffineTransformMakeScale(finalScale, finalScale);
             } completion:^(BOOL finished) {
                 
                 [self performPostReleaseCleanupWithAnimationDuration:animationDuration];
@@ -440,9 +420,9 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         [CATransaction setCompletionBlock:^{
             
             [UIView animateWithDuration:animationDuration animations:^{
-                self.viewForItemBeingDragged.alpha = 0.0;
+                self.viewForImageBeingDragged.alpha = 0.0;
             } completion:^(BOOL finished) {
-                [self.viewForItemBeingDragged removeFromSuperview];
+                [self.viewForImageBeingDragged removeFromSuperview];
             }];
         }];
     }
@@ -468,6 +448,24 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 - (BOOL)itemsWereExchanged
 {
     return ![self isBackToStartingItemAtIndexPath:self.indexPathOfItemLastExchanged];
+}
+
+- (UIImage *)imageFromCell:(UICollectionViewCell *)cell
+       withBackgroundColor:(UIColor *)backgroundColor
+                     alpha:(float)alpha {
+    
+    UIColor *originalBackgroundColor = cell.backgroundColor;
+    float originialAlpha = cell.alpha;
+    cell.backgroundColor = backgroundColor;
+    cell.alpha = alpha;
+    UIGraphicsBeginImageContextWithOptions(cell.bounds.size, cell.opaque, 0.0f);
+    [cell.layer renderInContext:UIGraphicsGetCurrentContext()];
+    UIImage *cellImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    cell.backgroundColor = originalBackgroundColor;
+    cell.alpha = originialAlpha;
+    
+    return cellImage;
 }
 
 @end
