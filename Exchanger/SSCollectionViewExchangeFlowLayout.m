@@ -210,6 +210,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     
     // Create an image of the cell. This is what will follow the user's finger...
     UIColor *originalBackgroundColor = itemCell.backgroundColor;
+    float originialAlpha = itemCell.alpha;
     itemCell.backgroundColor = [UIColor darkGrayColor];
     itemCell.alpha = 0.8;
     UIGraphicsBeginImageContextWithOptions(itemCell.bounds.size, itemCell.opaque, 0.0f);
@@ -218,7 +219,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     UIGraphicsEndImageContext();
     UIImageView *itemCellImageView = [[UIImageView alloc] initWithImage:itemCellImage];
     itemCell.backgroundColor = originalBackgroundColor;
-    itemCell.alpha = 1.0;
+    itemCell.alpha = originialAlpha;
     
     // Create a view and add the image...
     self.viewForItemBeingDragged = [[UIView alloc] initWithFrame:itemCell.frame];
@@ -243,7 +244,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
          self.viewForItemBeingDragged.transform = CGAffineTransformMakeScale(1.2f, 1.2f);
      } completion:^(BOOL finished){
          [UIView animateWithDuration:0.25 animations:^{
-              self.viewForItemBeingDragged.transform = CGAffineTransformMakeScale(1.05f, 1.05f);
+              self.viewForItemBeingDragged.transform = CGAffineTransformMakeScale(1.0f, 1.0f);
           }];
      }];
     
@@ -394,64 +395,58 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     } completion:nil];
 }
 
-- (void)keepCenterOfCellForLastItemExchangedAtIndexPath:(NSIndexPath *)indexPath
-{
-    UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:indexPath];
-    self.centerOfCellForLastItemExchanged = itemCell.center;
-}
-
 - (void)finishExchangeTransaction
 {
-    // Control reaches here when the user lifts his/her finger...
+    // Let the delegate know...
+    NSIndexPath *indexPath1 = ([self itemsWereExchanged])? self.indexPathOfItemLastExchanged : nil;
+    NSIndexPath *indexPath2 = ([self itemsWereExchanged])? self.originalIndexPathForItemBeingDragged : nil;
+    [self.delegate didFinishExchangeTransactionWithItemAtIndexPath:indexPath1 andItemAtIndexPath:indexPath2];
     
-    NSLog(@"[<%@ %p> %@ line= %d]", [self class], self, NSStringFromSelector(_cmd), __LINE__);
+    // Animate the release. This is one of any number of ways to accomplish this.
+    // You can change the animation as you see fit but you must call
+    // performPostReleaseCleanupWithAnimationDuration: in the final completion block.
+
+    float animationDuration = 0.20f;
+    float blinkToScale = 1.05f;
+    float finalScale = 1.0f;
+    UICollectionViewCell *cellForOriginalLocation = [self.collectionView cellForItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
     
-    if ([self isBackToStartingItemAtIndexPath:self.indexPathOfItemLastExchanged] == YES) {
+    [UIView animateWithDuration:animationDuration animations:^ {
+        self.viewForItemBeingDragged.center = self.centerOfCellForLastItemExchanged;
+        cellForOriginalLocation.alpha = 1.0;
+    } completion:^(BOOL finished) {
+        [UIView animateWithDuration:animationDuration animations:^ {
+            self.viewForItemBeingDragged.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
+        } completion:^(BOOL finished) {
+            [UIView animateWithDuration:animationDuration animations:^ {
+                self.viewForItemBeingDragged.transform = CGAffineTransformMakeScale(finalScale, finalScale);
+            } completion:^(BOOL finished) {
+                
+                [self performPostReleaseCleanupWithAnimationDuration:animationDuration];
+            
+            }];
+        }];
+    }];
+}
+
+- (void)performPostReleaseCleanupWithAnimationDuration:(float)animationDuration
+{
+    [CATransaction begin];
+    {
+        self.indexPathOfItemLastExchanged = nil;
+        self.originalIndexPathForItemBeingDragged = nil;
+        [self.collectionView.collectionViewLayout invalidateLayout];
         
-        // The user released after dragging back to the starting location.
-        // So, in the end, nothing was exchanged.
-        // Let the delegate know by passing nil in the indexPaths.
-        [self.delegate didFinishExchangeTransactionWithItemAtIndexPath:nil andItemAtIndexPath:nil];
-        
-    } else {
-        
-        // There was an exchange. Let the delegate know that the transaction is finished.
-        [self.delegate didFinishExchangeTransactionWithItemAtIndexPath:self.indexPathOfItemLastExchanged andItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
-        
-        // Get the cell...
-        UICollectionViewCell *cellForOriginalLocation = [self.collectionView cellForItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
-        
-        
-        // TODO: these animations are colliding!
-        
-        // Animate the undimming...
-        [UIView animateWithDuration:0.4 animations:^{
-//             cellForOriginalLocation.alpha = 0.1;
-             cellForOriginalLocation.alpha = 1.0;
-         }];
+        [CATransaction setCompletionBlock:^{
+            
+            [UIView animateWithDuration:animationDuration animations:^{
+                self.viewForItemBeingDragged.alpha = 0.0;
+            } completion:^(BOOL finished) {
+                [self.viewForItemBeingDragged removeFromSuperview];
+            }];
+        }];
     }
-    
-    // Animate the release...
-    // This is one of any number of ways to accomplish this.
-    // But it's important to do the cleanup at the end.
-    [UIView animateWithDuration:0.15 animations:^{
-         self.viewForItemBeingDragged.center = self.centerOfCellForLastItemExchanged;
-     } completion:^(BOOL finished){
-         // Blink...
-         [UIView animateWithDuration:0.3 animations:^{
-              self.viewForItemBeingDragged.transform = CGAffineTransformMakeScale(1.08f, 1.08f);
-          } completion:^(BOOL finished) {
-              
-              // Clean up...
-              [self.viewForItemBeingDragged removeFromSuperview];
-              
-              // Set state so nothing is hidden or dimmed now...
-              self.indexPathOfItemLastExchanged = nil;
-              self.originalIndexPathForItemBeingDragged = nil;
-              [self.collectionView.collectionViewLayout invalidateLayout];
-              
-          }];
-     }];
+    [CATransaction commit];
 }
 
 - (BOOL)isOverSameItemAtIndexPath:(NSIndexPath *)indexPath
@@ -459,14 +454,20 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     return [indexPath isEqual:self.indexPathOfItemLastExchanged];
 }
 
-- (BOOL)isOverNewItemAtIndexPath:(NSIndexPath *)indexPath // TODO: not called
-{
-    return ![indexPath isEqual:self.indexPathOfItemLastExchanged];
-}
-
 - (BOOL)isBackToStartingItemAtIndexPath:(NSIndexPath *)indexPath
 {
     return [indexPath isEqual:self.originalIndexPathForItemBeingDragged];
+}
+
+- (void)keepCenterOfCellForLastItemExchangedAtIndexPath:(NSIndexPath *)indexPath
+{
+    UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:indexPath];
+    self.centerOfCellForLastItemExchanged = itemCell.center;
+}
+
+- (BOOL)itemsWereExchanged
+{
+    return ![self isBackToStartingItemAtIndexPath:self.indexPathOfItemLastExchanged];
 }
 
 @end
