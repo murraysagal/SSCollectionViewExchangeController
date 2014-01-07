@@ -8,8 +8,8 @@
 
 /*
  
- This app demonstrates the capabilities of a UICollectionViewFlowLayout subclass
- designed to exchange items in a 2 column grid.
+ This app demonstrates the capabilities of the SSCollectionViewExchangeFlowLayout class, 
+ a subclass of UICollectionViewFlowLayout designed to exchange items in a 2 column grid.
  
  */
 
@@ -17,10 +17,10 @@
 #import "SSCollectionViewExchangeFlowLayout.h"
 
 
-typedef enum : NSInteger {
+typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
     SSCollectionViewSideLeft = 0,
     SSCollectionViewSideRight = 1
-} SSCollectionViewSide;
+};
 
 
 @interface ViewController ()
@@ -110,6 +110,7 @@ typedef enum : NSInteger {
         
         // Model...
         [self exchangeItemAtIndexPath:self.indexPath1ForLastExchange withItemAtIndexPath:self.indexPath2ForLastExchange];
+        [self updateSumLabels];
         [self logModel];
         
         // View...
@@ -269,7 +270,7 @@ typedef enum : NSInteger {
 - (void)didFinishExchangeTransactionWithItemAtIndexPath:(NSIndexPath *)firstItem andItemAtIndexPath:(NSIndexPath *)secondItem
 {
     // Called on the delegate at the end of the exchange transaction. Refer to the comments in the protocol.
-    // Allows the delegate to set any state required when the user completes the exchange.
+    // Allows the delegate to perform any required when the user completes the exchange.
     
     // In this example, prepare for undo...
     if (firstItem && secondItem) {

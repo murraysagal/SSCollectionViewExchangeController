@@ -17,22 +17,23 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     ExchangeEventTypeNothingToExchange
 };
 
+static CFTimeInterval const minimumPressDuration = 0.15;
+static CGFloat const alphaForDimmedItem = 0.6;
+
+
 @interface SSCollectionViewExchangeFlowLayout ()
 
+@property (weak, nonatomic) id <SSCollectionViewExchangeFlowLayoutDelegate> delegate;
 
-//@property (nonatomic, assign) ExchangeType exchangeType;
-
-
-// This is the view that gets dragged around...
 @property (strong, nonatomic) UIImageView *viewForImageBeingDragged;
-
-// The offset from the location of the finger to the view's center...
-@property (nonatomic) CGPoint offset;
-
-// These manage the state of the exchange process...
+@property (nonatomic) CGPoint locationInCollectionView;
 @property (strong, nonatomic) NSIndexPath *originalIndexPathForItemBeingDragged;
 @property (strong, nonatomic) NSIndexPath *indexPathOfItemLastExchanged;
+@property (strong, nonatomic) NSIndexPath *currentIndexPath;
 @property (nonatomic) BOOL mustUndoPriorExchange;
+
+// This is the offset from the location of the long press to the view's center...
+@property (nonatomic) CGPoint offset;
 
 // This helps safeguard against the documented behaviour regarding items that are hidden.
 // As an optimization, the collection view might not create the corresponding view
@@ -47,10 +48,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 @property (strong, nonatomic, readonly) NSIndexPath *indexPathOfItemToHide;
 @property (strong, nonatomic, readonly) NSIndexPath *indexPathOfItemToDim;
 
-@property (weak, nonatomic) id <SSCollectionViewExchangeFlowLayoutDelegate> delegate;
-
 @end
-
 
 
 
@@ -62,19 +60,12 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     self = [super init];
     if (self) {
         
-        // Create and configure the long press gesture recognizer...
-        self.longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self
-                                                                                        action:@selector(longPress:)];
-        self.longPressGestureRecognizer.minimumPressDuration = 0.15;
-        self.longPressGestureRecognizer.delaysTouchesBegan = YES;
-        
-        // Add the gesture to the collection view...
-        [collectionView addGestureRecognizer:self.longPressGestureRecognizer];
-        
-        // Set the delegate...
-        self.delegate = delegate;
-        
-        // Set this object (self) to be the collection view's layout...
+        _longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self
+                                                                                    action:@selector(longPress)];
+        _longPressGestureRecognizer.minimumPressDuration = minimumPressDuration;
+        _longPressGestureRecognizer.delaysTouchesBegan = YES;
+        [collectionView addGestureRecognizer:_longPressGestureRecognizer];
+        _delegate = delegate;
         collectionView.collectionViewLayout = self;
         
     }
@@ -82,29 +73,9 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 }
 
 
-//-----------------------
-#pragma mark - Accessors...
 
-- (NSIndexPath *)indexPathOfItemToHide
-{
-    return self.indexPathOfItemLastExchanged;
-    
-    // Return nil if you don't want to hide.
-    // This can be useful during testing to ensure that the item
-    // you're dragging around is properly following.
-}
-
-- (NSIndexPath *)indexPathOfItemToDim
-{
-    return self.originalIndexPathForItemBeingDragged;
-    
-    // As above return nil if you don't want to dim.
-}
-
-
-
-//--------------------------------
-#pragma mark - Layout attributes...
+//-----------------------------------------------------
+#pragma mark - Override the layout attribute methods...
 
 // There is one item that needs hiding and one that needs dimming. As the user drags the item being moved over
 // another item, that item moves to the original location of the item being dragged. That cell is dimmed, marking
@@ -118,8 +89,8 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 // the item to hide and one tracking the item to dim. In layoutAttributesForItem: the hidden property is set first
 // then the alpha. If the items are the same setting the alpha for an item that is hidden has no effect.
 
-- (NSArray *)layoutAttributesForElementsInRect:(CGRect)rect
-{
+- (NSArray *)layoutAttributesForElementsInRect:(CGRect)rect {
+    
     NSArray *layoutAttributes = [super layoutAttributesForElementsInRect:rect];
     
     for (UICollectionViewLayoutAttributes *attributesForItem in layoutAttributes)
@@ -130,36 +101,37 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     return layoutAttributes;
 }
 
-- (UICollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)indexPath
-{
+- (UICollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)indexPath {
+    
     UICollectionViewLayoutAttributes *attributesForItem = [super layoutAttributesForItemAtIndexPath:indexPath];
     
     return [self layoutAttributesForItem:attributesForItem];
 }
 
-- (UICollectionViewLayoutAttributes *)layoutAttributesForItem:(UICollectionViewLayoutAttributes *)attributesForItem
-{
+- (UICollectionViewLayoutAttributes *)layoutAttributesForItem:(UICollectionViewLayoutAttributes *)attributesForItem {
+    
     attributesForItem.hidden = ([attributesForItem.indexPath isEqual:self.indexPathOfItemToHide])? YES : NO;
-    attributesForItem.alpha =  ([attributesForItem.indexPath isEqual:self.indexPathOfItemToDim])?  0.6 : 1.0;
+    attributesForItem.alpha =  ([attributesForItem.indexPath isEqual:self.indexPathOfItemToDim])?  alphaForDimmedItem : 1.0;
 
     return attributesForItem;
 }
 
 
 
-//-------------------------------------------------
-#pragma mark - UIGestureRecognizer action method...
+//----------------------------------------------------------
+#pragma mark - UILongPressGestureRecognizer action method...
 
-- (void)longPress:(UILongPressGestureRecognizer *)recognizer
-{
-    switch (recognizer.state) {
+- (void)longPress {
+    
+    switch (self.longPressGestureRecognizer.state) {
             
         case UIGestureRecognizerStateBegan:
-            [self setUpForExchangeTransaction:recognizer];
+            [self beginExchangeTransaction];
             break;
             
         case UIGestureRecognizerStateChanged:
-            [self manageExchangeEvent:recognizer];
+            [self updateCellImageLocation];
+            [self performExchangeEventType];
             break;
             
         case UIGestureRecognizerStateEnded:
@@ -185,28 +157,29 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 //--------------------------------
 #pragma mark - Instance methods...
 
-- (void)cancelGestureRecognizer:(UIGestureRecognizer *)gestureRecognizer
-{
+- (void)cancelLongPressRecognizer {
+    
     // As per the docs, this triggers a cancel.
     
-    gestureRecognizer.enabled = NO;
-    gestureRecognizer.enabled = YES;
+    self.longPressGestureRecognizer.enabled = NO;
+    self.longPressGestureRecognizer.enabled = YES;
 }
 
-- (void)setUpForExchangeTransaction:(UIGestureRecognizer *)gestureRecognizer
-{
-    CGPoint locationInCollectionView;
+- (void)beginExchangeTransaction {
+ 
     NSIndexPath *indexPath;
     BOOL cancel = YES;
     
     if ([self.delegate canExchange])
     {
-        locationInCollectionView = [gestureRecognizer locationInView:self.collectionView];
-        indexPath = [self.collectionView indexPathForItemAtPoint:locationInCollectionView];
+        indexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
         if (indexPath != nil) cancel = NO;
     }
     
-    if (cancel) { [self cancelGestureRecognizer:gestureRecognizer]; return; }
+    if (cancel) {
+        [self cancelLongPressRecognizer];
+        return;
+    }
     
     UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:indexPath];
     
@@ -219,7 +192,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     // TODO: look at anchorPoint!!!
 
     // Calculate the offset from the location of the user's finger to the center of view being dragged...
-    CGPoint locationInCellImageView = [gestureRecognizer locationInView:cellImageView];
+    CGPoint locationInCellImageView = [self.longPressGestureRecognizer locationInView:cellImageView];
     CGPoint cellImageViewCenter = CGPointMake(cellImageView.frame.size.width/2, cellImageView.frame.size.height/2);
     CGPoint offset = CGPointMake(locationInCellImageView.x - cellImageViewCenter.x, locationInCellImageView.y - cellImageViewCenter.y);
     
@@ -248,88 +221,87 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     [self.collectionView.collectionViewLayout invalidateLayout];
 }
 
-- (void)manageExchangeEvent:(UIGestureRecognizer *)gestureRecognizer
-{
-    // Update the location of the view the user is dragging around...
-    CGPoint locationInCollectionView = [gestureRecognizer locationInView:self.collectionView];
-    CGPoint offsetLocationInCollectionView = CGPointMake(locationInCollectionView.x - self.offset.x, locationInCollectionView.y - self.offset.y);
+- (void)updateCellImageLocation {
+
+    CGPoint offsetLocationInCollectionView = CGPointMake(self.locationInCollectionView.x - self.offset.x, self.locationInCollectionView.y - self.offset.y);
     self.viewForImageBeingDragged.center = offsetLocationInCollectionView;
+}
+
+- (void)performExchangeEventType {
     
-    NSIndexPath *currentIndexPath = [self.collectionView indexPathForItemAtPoint:locationInCollectionView];
-    
-    ExchangeEventType exchangeEventType = [self exchangeEventTypeForCurrentIndexPath:currentIndexPath];
-    
+    ExchangeEventType exchangeEventType = [self exchangeEventTypeForCurrentIndexPath];
+
     switch (exchangeEventType) {
             
         case ExchangeEventTypeNothingToExchange:
             break;
             
         case ExchangeEventTypeDraggedFromStartingItem:
-            [self performExchangeForDraggedFromStartingItemToIndexPath:currentIndexPath];
+            [self performExchangeEventTypeDraggedFromStartingItem];
             break;
             
         case ExchangeEventTypeDraggedToOtherItem:
-            [self performExchangeForDraggedToOtherItemAtIndexPath:currentIndexPath];
+            [self performExchangeEventTypeDraggedToOtherItem];
             break;
             
         case ExchangeEventTypeDraggedToStartingItem:
-            [self performExchangeForDraggedToStartingItemAtIndexPath:currentIndexPath];
+            [self performExchangeEventTypeDraggedToStartingItem];
             break;
     }
 }
 
-- (void)performExchangeForDraggedFromStartingItemToIndexPath:(NSIndexPath *)indexPath
-{
+- (void)performExchangeEventTypeDraggedFromStartingItem {
+    
     [self.collectionView performBatchUpdates:^{
         
         // Move the item being dragged to indexPath...
-        [self.collectionView moveItemAtIndexPath:self.originalIndexPathForItemBeingDragged toIndexPath:indexPath];
+        [self.collectionView moveItemAtIndexPath:self.originalIndexPathForItemBeingDragged toIndexPath:self.currentIndexPath];
         
         // Move the item at indexPath to the starting position...
-        [self.collectionView moveItemAtIndexPath:indexPath toIndexPath:self.originalIndexPathForItemBeingDragged];
+        [self.collectionView moveItemAtIndexPath:self.currentIndexPath toIndexPath:self.originalIndexPathForItemBeingDragged];
         
         // Let the delegate know.
-        [self.delegate exchangeItemAtIndexPath:indexPath withItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
+        [self.delegate exchangeItemAtIndexPath:self.currentIndexPath withItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
         [self.delegate didFinishExchangeEvent];
         
         // Set state.
-        self.indexPathOfItemLastExchanged = indexPath;
+        self.indexPathOfItemLastExchanged = self.currentIndexPath;
         self.mustUndoPriorExchange = YES;
         
-        [self keepCenterOfCellForLastItemExchangedAtIndexPath:indexPath];
+        [self keepCenterOfCellForLastItemExchangedAtIndexPath:self.currentIndexPath];
         
     } completion:nil];
 }
 
-- (void)performExchangeForDraggedToOtherItemAtIndexPath:(NSIndexPath *)indexPath
-{
+- (void)performExchangeEventTypeDraggedToOtherItem {
+    
     [self.collectionView performBatchUpdates:^{
         
         // Put the previously exchanged item back to its original location...
         [self.collectionView moveItemAtIndexPath:self.originalIndexPathForItemBeingDragged toIndexPath:self.indexPathOfItemLastExchanged];
         
         // Move the item being dragged to the current postion...
-        [self.collectionView moveItemAtIndexPath:self.indexPathOfItemLastExchanged toIndexPath:indexPath];
+        [self.collectionView moveItemAtIndexPath:self.indexPathOfItemLastExchanged toIndexPath:self.currentIndexPath];
         
         // Move the item we're over to the original location of the item being dragged...
-        [self.collectionView moveItemAtIndexPath:indexPath toIndexPath:self.originalIndexPathForItemBeingDragged];
+        [self.collectionView moveItemAtIndexPath:self.currentIndexPath toIndexPath:self.originalIndexPathForItemBeingDragged];
         
         // Let the delegate know. First undo the prior exchange then do the new exchange...
         [self.delegate exchangeItemAtIndexPath:self.originalIndexPathForItemBeingDragged withItemAtIndexPath:self.indexPathOfItemLastExchanged];
-        [self.delegate exchangeItemAtIndexPath:indexPath withItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
+        [self.delegate exchangeItemAtIndexPath:self.currentIndexPath withItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
         [self.delegate didFinishExchangeEvent];
         
         // Set state.
-        self.indexPathOfItemLastExchanged = indexPath;
+        self.indexPathOfItemLastExchanged = self.currentIndexPath;
         self.mustUndoPriorExchange = YES;
         
-        [self keepCenterOfCellForLastItemExchangedAtIndexPath:indexPath];
+        [self keepCenterOfCellForLastItemExchangedAtIndexPath:self.currentIndexPath];
         
     } completion:nil];
 }
 
-- (void)performExchangeForDraggedToStartingItemAtIndexPath:(NSIndexPath *)indexPath
-{
+- (void)performExchangeEventTypeDraggedToStartingItem {
+    
     [self.collectionView performBatchUpdates:^{
         
         // Put the previously exchanged item back to its original location...
@@ -346,13 +318,13 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         self.indexPathOfItemLastExchanged = self.originalIndexPathForItemBeingDragged;
         self.mustUndoPriorExchange = NO;
         
-        [self keepCenterOfCellForLastItemExchangedAtIndexPath:indexPath];
+        [self keepCenterOfCellForLastItemExchangedAtIndexPath:self.currentIndexPath];
         
     } completion:nil];
 }
 
-- (void)finishExchangeTransaction
-{
+- (void)finishExchangeTransaction {
+    
     // Let the delegate know...
     NSIndexPath *indexPath1 = ([self itemsWereExchanged])? self.indexPathOfItemLastExchanged : nil;
     NSIndexPath *indexPath2 = ([self itemsWereExchanged])? self.originalIndexPathForItemBeingDragged : nil;
@@ -360,35 +332,31 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     
     // Animate the release. This is one of any number of ways to accomplish this.
     // You can change the animation as you see fit but you must call
-    // performPostReleaseCleanupWithAnimationDuration: in the final completion block.
+    // performPostReleaseCleanupWithAnimationDuration: in your final completion block.
 
-    NSTimeInterval animationDuration = 0.20f;
+    NSTimeInterval duration = 0.20;
     CGFloat blinkToScale = 1.05f;
     CGFloat finalScale = 1.0f;
     UICollectionViewCell *cellForOriginalLocation = [self.collectionView cellForItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
     
-    // FIX: There is a stall after the release???
-    
-    [UIView animateWithDuration:animationDuration animations:^ {
+    [UIView animateWithDuration:duration animations:^ {
         self.viewForImageBeingDragged.center = self.centerOfCellForLastItemExchanged;
         cellForOriginalLocation.alpha = 1.0;
     } completion:^(BOOL finished) {
-        [UIView animateWithDuration:animationDuration animations:^ {
+        [UIView animateWithDuration:duration animations:^ {
             self.viewForImageBeingDragged.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
         } completion:^(BOOL finished) {
-            [UIView animateWithDuration:animationDuration animations:^ {
+            [UIView animateWithDuration:duration animations:^ {
                 self.viewForImageBeingDragged.transform = CGAffineTransformMakeScale(finalScale, finalScale);
             } completion:^(BOOL finished) {
-                
-                [self performPostReleaseCleanupWithAnimationDuration:animationDuration];
-            
+                [self performPostReleaseCleanupWithAnimationDuration:duration];
             }];
         }];
     }];
 }
 
-- (void)performPostReleaseCleanupWithAnimationDuration:(float)animationDuration
-{
+- (void)performPostReleaseCleanupWithAnimationDuration:(float)animationDuration {
+    
     [CATransaction begin];
     {
         self.indexPathOfItemLastExchanged = nil;
@@ -407,24 +375,24 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     [CATransaction commit];
 }
 
-- (BOOL)isOverSameItemAtIndexPath:(NSIndexPath *)indexPath
-{
+- (BOOL)isOverSameItemAtIndexPath:(NSIndexPath *)indexPath {
+    
     return [indexPath isEqual:self.indexPathOfItemLastExchanged];
 }
 
-- (BOOL)isBackToStartingItemAtIndexPath:(NSIndexPath *)indexPath
-{
+- (BOOL)isBackToStartingItemAtIndexPath:(NSIndexPath *)indexPath {
+    
     return [indexPath isEqual:self.originalIndexPathForItemBeingDragged];
 }
 
-- (void)keepCenterOfCellForLastItemExchangedAtIndexPath:(NSIndexPath *)indexPath
-{
+- (void)keepCenterOfCellForLastItemExchangedAtIndexPath:(NSIndexPath *)indexPath {
+    
     UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:indexPath];
     self.centerOfCellForLastItemExchanged = itemCell.center;
 }
 
-- (BOOL)itemsWereExchanged
-{
+- (BOOL)itemsWereExchanged {
+    
     return ![self isBackToStartingItemAtIndexPath:self.indexPathOfItemLastExchanged];
 }
 
@@ -446,23 +414,49 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     return cellImage;
 }
 
-- (ExchangeEventType)exchangeEventTypeForCurrentIndexPath:(NSIndexPath *)currentIndexPath
-{
-    // The user is still dragging in the long press. Determine the exchange event type.
+- (ExchangeEventType)exchangeEventTypeForCurrentIndexPath {
     
-    if  (currentIndexPath == nil || [self isOverSameItemAtIndexPath:currentIndexPath] == YES) return ExchangeEventTypeNothingToExchange;
+    // The user is still dragging in the long press. Determine the exchange event type.
+    self.currentIndexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
+
+    if  (self.currentIndexPath == nil || [self isOverSameItemAtIndexPath:self.currentIndexPath]) return ExchangeEventTypeNothingToExchange;
     
     
     // Otherwise there is an exchange event to perform. What kind?
     
     if (self.mustUndoPriorExchange)
     {
-        return ([self isBackToStartingItemAtIndexPath:currentIndexPath])? ExchangeEventTypeDraggedToStartingItem : ExchangeEventTypeDraggedToOtherItem;
+        return ([self isBackToStartingItemAtIndexPath:self.currentIndexPath])? ExchangeEventTypeDraggedToStartingItem : ExchangeEventTypeDraggedToOtherItem;
     }
     else
     {
         return ExchangeEventTypeDraggedFromStartingItem;
     }
+}
+
+- (CGPoint)locationInCollectionView {
+    
+    return [self.longPressGestureRecognizer locationInView:self.collectionView];
+}
+
+
+//-----------------------
+#pragma mark - Accessors...
+
+- (NSIndexPath *)indexPathOfItemToHide {
+    
+    return self.indexPathOfItemLastExchanged;
+    
+    // Return nil if you don't want to hide.
+    // This can be useful during testing to ensure that the item
+    // you're dragging around is properly following.
+}
+
+- (NSIndexPath *)indexPathOfItemToDim {
+    
+    return self.originalIndexPathForItemBeingDragged;
+    
+    // As above return nil if you don't want to dim.
 }
 
 @end
