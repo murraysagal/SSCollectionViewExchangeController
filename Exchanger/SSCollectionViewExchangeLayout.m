@@ -6,7 +6,7 @@
 //  Copyright (c) 2012 Signature Software. All rights reserved.
 //
 
-#import "SSCollectionViewExchangeFlowLayout.h"
+#import "SSCollectionViewExchangeLayout.h"
 #import <QuartzCore/QuartzCore.h>
 
 
@@ -21,7 +21,7 @@ static CFTimeInterval const minimumPressDuration = 0.15;
 static CGFloat const alphaForDimmedItem = 0.6;
 
 
-@interface SSCollectionViewExchangeFlowLayout ()
+@interface SSCollectionViewExchangeLayout ()
 
 @property (weak, nonatomic) id <SSCollectionViewExchangeFlowLayoutDelegate> delegate;
 
@@ -52,7 +52,7 @@ static CGFloat const alphaForDimmedItem = 0.6;
 
 
 
-@implementation SSCollectionViewExchangeFlowLayout
+@implementation SSCollectionViewExchangeLayout
 
 - (id)initWithDelegate:(id<SSCollectionViewExchangeFlowLayoutDelegate>)delegate
         collectionView:(UICollectionView *)collectionView {

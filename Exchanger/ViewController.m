@@ -14,7 +14,7 @@
  */
 
 #import "ViewController.h"
-#import "SSCollectionViewExchangeFlowLayout.h"
+#import "SSCollectionViewExchangeLayout.h"
 
 
 typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
@@ -67,8 +67,8 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
     [self.collectionView registerNib:cellNib forCellWithReuseIdentifier:@"itemCell"];
     
     // Create and configure the collection view layout...
-    SSCollectionViewExchangeFlowLayout *collectionViewLayout =
-    [[SSCollectionViewExchangeFlowLayout alloc] initWithDelegate:self
+    SSCollectionViewExchangeLayout *collectionViewLayout =
+    [[SSCollectionViewExchangeLayout alloc] initWithDelegate:self
                                                   collectionView:self.collectionView];
     
     // put these as defaults in the initializer...

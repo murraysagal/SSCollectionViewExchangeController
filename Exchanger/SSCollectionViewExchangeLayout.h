@@ -58,7 +58,7 @@
 @end
 
 
-@interface SSCollectionViewExchangeFlowLayout : UICollectionViewFlowLayout
+@interface SSCollectionViewExchangeLayout : UICollectionViewFlowLayout
 
 // Exposed to allow configuration if required. The default is configured with a
 // minimumPressDuration of 0.15 and delaysTouchesBegan is set to YES.
