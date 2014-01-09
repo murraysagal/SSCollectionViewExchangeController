@@ -23,6 +23,7 @@
 		722D30021832927100F82D12 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 722D2FFE1832927100F82D12 /* ViewController.m */; };
 		722D30031832927100F82D12 /* ViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 722D2FFF1832927100F82D12 /* ViewController.xib */; };
 		722D30041832927100F82D12 /* ItemCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 722D30001832927100F82D12 /* ItemCell.xib */; };
+		72553953187EFBDC000338BB /* SSCollectionViewExchangeController.m in Sources */ = {isa = PBXBuildFile; fileRef = 72553952187EFBDC000338BB /* SSCollectionViewExchangeController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -58,6 +59,8 @@
 		722D2FFE1832927100F82D12 /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		722D2FFF1832927100F82D12 /* ViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ViewController.xib; sourceTree = "<group>"; };
 		722D30001832927100F82D12 /* ItemCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ItemCell.xib; sourceTree = "<group>"; };
+		72553951187EFBDC000338BB /* SSCollectionViewExchangeController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SSCollectionViewExchangeController.h; sourceTree = "<group>"; };
+		72553952187EFBDC000338BB /* SSCollectionViewExchangeController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SSCollectionViewExchangeController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -119,6 +122,8 @@
 			children = (
 				722D2FFB1832927100F82D12 /* SSCollectionViewExchangeFlowLayout.h */,
 				722D2FFC1832927100F82D12 /* SSCollectionViewExchangeFlowLayout.m */,
+				72553951187EFBDC000338BB /* SSCollectionViewExchangeController.h */,
+				72553952187EFBDC000338BB /* SSCollectionViewExchangeController.m */,
 				722D2FFD1832927100F82D12 /* ViewController.h */,
 				722D2FFE1832927100F82D12 /* ViewController.m */,
 				722D2FFF1832927100F82D12 /* ViewController.xib */,
@@ -261,6 +266,7 @@
 				722D2FD7183291E300F82D12 /* AppDelegate.m in Sources */,
 				722D30011832927100F82D12 /* SSCollectionViewExchangeFlowLayout.m in Sources */,
 				722D30021832927100F82D12 /* ViewController.m in Sources */,
+				72553953187EFBDC000338BB /* SSCollectionViewExchangeController.m in Sources */,
 				722D2FD3183291E300F82D12 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

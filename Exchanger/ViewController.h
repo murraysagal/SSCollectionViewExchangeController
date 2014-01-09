@@ -7,7 +7,8 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "SSCollectionViewExchangeController.h"
 
-@interface ViewController : UIViewController
+@interface ViewController : SSCollectionViewExchangeController
 
 @end
