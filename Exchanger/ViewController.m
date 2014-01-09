@@ -18,8 +18,8 @@
 
 
 typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
-    SSCollectionViewSideLeft = 0,
-    SSCollectionViewSideRight = 1
+    SSCollectionViewSideLeft,
+    SSCollectionViewSideRight
 };
 
 
@@ -58,7 +58,7 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
     [super viewDidLoad];
     
     // Prepare...
-    [self model];
+    [self prepareModel];
     [self updateSumLabels];
     [self logModel];
     
@@ -71,6 +71,7 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
     [[SSCollectionViewExchangeFlowLayout alloc] initWithDelegate:self
                                                   collectionView:self.collectionView];
     
+    // put these as defaults in the initializer...
     collectionViewLayout.itemSize = CGSizeMake(150, 30);
     collectionViewLayout.minimumLineSpacing = 1;
     collectionViewLayout.minimumInteritemSpacing = 1;
@@ -83,7 +84,7 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
 //---------------------------------
 #pragma mark - Instance methods...
 
-- (void)model
+- (void)prepareModel
 {    
     NSArray *temp1to10 =    @[  @1,  @2,  @3,  @4,  @5,  @6,  @7,  @8,  @9, @10 ];
     NSArray *temp11to20 =   @[ @11, @12, @13, @14, @15, @16, @17, @18, @19, @20 ];
@@ -124,7 +125,7 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
 
 - (IBAction)reset:(id)sender
 {
-    [self model];
+    [self prepareModel];
     [self.collectionView reloadData];
     [self updateSumLabels];
     self.indexPath1ForLastExchange = nil;
@@ -134,6 +135,7 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
 
 - (NSInteger)sumArray:(NSArray *)array
 {
+    // check out enumerate using block...
     NSInteger sum = 0;
     for (NSNumber *number in array) {
         sum += [number integerValue];
@@ -187,6 +189,9 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
+    // consider using a custom class for this cell
+    // and creating a class method that returns the identifier
+
     UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"itemCell" forIndexPath:indexPath];
     
     UILabel *itemLabel = (UILabel *)[cell viewWithTag:100];
@@ -212,6 +217,7 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
     if ([indexPath1 isEqual:indexPath2])
     {
         // If the index paths are the same there's nothing to exchange...
+        NSLog(@"same");
         return;
     }
     

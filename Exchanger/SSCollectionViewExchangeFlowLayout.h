@@ -13,7 +13,7 @@
 // exchange 2 items in a 2 column grid.
 
 
-@protocol SSCollectionViewExchangeFlowLayoutDelegate// <UICollectionViewDelegate>
+@protocol SSCollectionViewExchangeFlowLayoutDelegate
 
 // Exchange Transactions and Exchange Events
 //
@@ -42,6 +42,9 @@
 
 
 - (void)didFinishExchangeTransactionWithItemAtIndexPath:(NSIndexPath *)firstItem andItemAtIndexPath:(NSIndexPath *)secondItem;
+
+// Consider passing the indexPath instead of nil if the user drags back to home.
+
 // Called on the delegate when the exchange transaction completes (the user lifts his/her finger). The
 // index paths represent the two items that were finally exchanged. If the index paths are nil it means
 // the user dragged back to the starting position and released (so nothing was exchanged). This method
