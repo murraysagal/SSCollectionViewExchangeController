@@ -6,20 +6,67 @@
 //  Copyright (c) 2014 Murray Sagal. All rights reserved.
 //
 
-// This UICollectionViewController subclass is designed to
-// exchange 2 collection view items in a 2 column grid.
+/*
+ 
+ SSCollectionViewExchangeController is designed to exchange 2 collection view items
+ in a 2 column grid. It creates a custom layout object, SSCollectionViewExchangeLayout,
+ that manages the hiding and dimming of items in the collection view.
+ 
+ 
+        ---------------------
+        |                   |       delegate
+        |  ViewController   | <---------------------
+     ---|                   |                       |
+    |   ---------------------                       |
+    |        |                                      |
+    |        |                       -----------------------------------------
+    |        |  @property (strong)   |                                       |
+    |        ----------------------->|   SSCollectionViewExchangeController  |
+    |                                |                                       |
+    |                                -----------------------------------------
+    |                                                   |
+    |                                                   |
+    |                                                   |
+    |   ------------------------        -----------------------------------------
+    |   |                      |        |                                       |
+     -->|   UICollectionView   |<-------|   SSCollectionViewExchangeLayout      |
+        |                      |        |                                       |
+        ------------------------        -----------------------------------------
+ 
+ Exchange Transactions and Exchange Events
+ 
+ An exchange transaction begins with a long press on an item and concludes when the user releases,
+ normally over another item, causing the two to be exchanged. However, between the beginning and
+ the end the user may drag over many items including, possibly, the starting position.
+ 
+ An exchange event occurs each time the user's finger moves to a different item. If it is the first
+ exchange event it is a simple exchange between the item being dragged and the item dragged to.
+ If the user keeps dragging to new items subsequent exchange events include undoing the previous
+ exchange and then performing the new exchange.
+ 
+ 
+ Usage
+ 
+ 1. In your view controller import SSCollectionViewExchangeController like this...
+        #import "SSCollectionViewExchangeController.h"
+ 
+ 2. Adopt the SSCollectionViewExchangeControllerDelegate protocol...
+        <SSCollectionViewExchangeControllerDelegate>
 
+ 3. Create a property for the exchange controller...
+        @property (strong, nonatomic) SSCollectionViewExchangeController *exchangeController;
+ 
+ 4. In viewDidLoad create an instance of SSCollectionViewExchangeController...
+        self.exchangeController = [[SSCollectionViewExchangeController alloc] initWithDelegate:self
+                                                                                collectionView:self.collectionView];
 
-// Exchange Transactions and Exchange Events
-//
-// An exchange transaction begins with a long press on an item and concludes when the user releases,
-// normally over another item, causing the two to be exchanged. However, between the beginning and
-// the end the user may drag over many items including, possibly, the starting position.
-//
-// An exchange event occurs each time the user's finger moves to a different item. If it is the first
-// exchange event it is a simple exchange between the item being dragged and the item dragged to.
-// If the user keeps dragging to new items subsequent exchange events include undoing the previous
-// exchange and then performing the new exchange.
+ 5. Get the layout and configure it as required...
+        UICollectionViewFlowLayout *layout = self.exchangeController.layout;
+        layout.itemSize = CGSizeMake(150, 30);
+        ...
+ 
+ */
+
 
 
 #import <UIKit/UIKit.h>

@@ -8,8 +8,11 @@
 
 /*
  
- This app demonstrates the capabilities of the SSCollectionViewExchangeFlowLayout class, 
- a subclass of UICollectionViewFlowLayout designed to exchange items in a 2 column grid.
+ This app demonstrates the capabilities of the SSCollectionViewExchangeController
+ and SSCollectionViewExchangeLayout classes that are designed to exchange items 
+ in a 2 column grid.
+ 
+ Refer to SSCollectionViewExchangeController.h for more comments. 
  
  */
 
@@ -33,18 +36,17 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
 >
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
-
 @property (weak, nonatomic) IBOutlet UILabel *sumLeft;
 @property (weak, nonatomic) IBOutlet UILabel *sumRight;
+
+- (IBAction)reset:(id)sender;
+- (IBAction)undo:(id)sender;
 
 @property (strong, nonatomic) NSMutableArray *leftSide;
 @property (strong, nonatomic) NSMutableArray *rightSide;
 
 @property (strong, nonatomic) NSIndexPath *indexPath1ForLastExchange;
 @property (strong, nonatomic) NSIndexPath *indexPath2ForLastExchange;
-
-- (IBAction)reset:(id)sender;
-- (IBAction)undo:(id)sender;
 
 @property (strong, nonatomic) SSCollectionViewExchangeController *exchangeController;
 
@@ -189,12 +191,11 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    // consider using a custom class for this cell
-    // and creating a class method that returns the identifier
-
     UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"itemCell" forIndexPath:indexPath];
     
-    UILabel *itemLabel = (UILabel *)[cell viewWithTag:100];
+    // To keep this example simple the custom cell doesn't have a class. So the label is retrieved with a tag...
+    UILabel *itemLabel = (UILabel *)[cell viewWithTag:999];
+    
     NSNumber *itemNumber = (indexPath.section == SSCollectionViewSideLeft)? self.leftSide[ indexPath.item ] : self.rightSide[ indexPath.item ];
     itemLabel.text = [NSString stringWithFormat:@" %@", itemNumber];
     
