@@ -9,6 +9,6 @@
 #import <UIKit/UIKit.h>
 #import "SSCollectionViewExchangeController.h"
 
-@interface ViewController : SSCollectionViewExchangeController
+@interface ViewController : UIViewController
 
 @end

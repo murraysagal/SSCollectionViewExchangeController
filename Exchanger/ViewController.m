@@ -14,7 +14,7 @@
  */
 
 #import "ViewController.h"
-#import "SSCollectionViewExchangeLayout.h"
+#import "SSCollectionViewExchangeController.h"
 
 
 typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
@@ -28,7 +28,7 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
 <
     UICollectionViewDataSource,
     UICollectionViewDelegate,
-    SSCollectionViewExchangeFlowLayoutDelegate
+    SSCollectionViewExchangeControllerDelegate
 >
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
@@ -45,13 +45,14 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
 - (IBAction)reset:(id)sender;
 - (IBAction)undo:(id)sender;
 
+@property (strong, nonatomic) SSCollectionViewExchangeController *exchangeController;
+
 @end
 
 
 
 
 @implementation ViewController
-
 
 - (void)viewDidLoad
 {
@@ -66,17 +67,22 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
     UINib *cellNib = [UINib nibWithNibName:@"ItemCell" bundle:nil];
     [self.collectionView registerNib:cellNib forCellWithReuseIdentifier:@"itemCell"];
     
-    // Create and configure the collection view layout...
-    SSCollectionViewExchangeLayout *collectionViewLayout =
-    [[SSCollectionViewExchangeLayout alloc] initWithDelegate:self
-                                                  collectionView:self.collectionView];
+    self.exchangeController = [[SSCollectionViewExchangeController alloc] initWithDelegate:self
+                                                                            collectionView:self.collectionView];
     
-    // put these as defaults in the initializer...
-    collectionViewLayout.itemSize = CGSizeMake(150, 30);
-    collectionViewLayout.minimumLineSpacing = 1;
-    collectionViewLayout.minimumInteritemSpacing = 1;
-    collectionViewLayout.sectionInset = UIEdgeInsetsMake(5, 5, 5, 5);
-    collectionViewLayout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
+    // The SSCollectionViewExchangeController has created a layout and configured the collection
+    // view to use it. The layout is a subclass of UICollectionViewFlowLayout specifically
+    // designed to manage hiding and dimming items during the exchange process. But it has
+    // not been configured. As a convenience the exchange controller can provide you with the
+    // layout, as a UICollectionViewFlowLayout, which you can configure as required.
+    
+    UICollectionViewFlowLayout *layout = self.exchangeController.layout;
+    layout.itemSize = CGSizeMake(150, 30);
+    layout.minimumLineSpacing = 1;
+    layout.minimumInteritemSpacing = 1;
+    layout.sectionInset = UIEdgeInsetsMake(5, 5, 5, 5);
+    layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
+
 }
 
 
@@ -204,20 +210,19 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
 
 
 //----------------------------------------------------------------------------
-#pragma mark - SSCollectionViewExchangeFlowLayoutDelegate protocol methods...
+#pragma mark - SSCollectionViewExchangeLayoutDelegate protocol methods...
 
 - (void)exchangeItemAtIndexPath:(NSIndexPath *)indexPath1 withItemAtIndexPath:(NSIndexPath *)indexPath2
 {
-    // Called on the delegate either one or two times during an exchange event. Allows the delegate
-    // to keep the model synchronized with the changes occuring on the view. Refer to the comments in
-    // the protocol.
+    // Called either one or two times during an exchange event. Allows the delegate
+    // to keep the model synchronized with the changes occuring on the view. Refer
+    // to the comments in the protocol definition.
     
     // Update the model. Not structured optimally, intention is readability...
     
     if ([indexPath1 isEqual:indexPath2])
     {
         // If the index paths are the same there's nothing to exchange...
-        NSLog(@"same");
         return;
     }
     
@@ -265,7 +270,7 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
 
 - (void)didFinishExchangeEvent
 {
-    // Called on the delegate when an exchange event finishes. Refer to the comments in the protocol.
+    // Called when an exchange event finishes. Refer to the comments in the protocol definition.
     // Allows the delegate to provide "live" updates as the user drags.
     
     // In this example update the sum labels and log the model.
@@ -275,14 +280,12 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
 
 - (void)didFinishExchangeTransactionWithItemAtIndexPath:(NSIndexPath *)firstItem andItemAtIndexPath:(NSIndexPath *)secondItem
 {
-    // Called on the delegate at the end of the exchange transaction. Refer to the comments in the protocol.
-    // Allows the delegate to perform any required when the user completes the exchange.
+    // Called at the end of the exchange transaction. Refer to the comments in the protocol definition.
+    // Allows the delegate to perform any required action when the user completes the exchange.
     
-    // In this example, prepare for undo...
-    if (firstItem && secondItem) {
-        self.indexPath1ForLastExchange = firstItem;
-        self.indexPath2ForLastExchange = secondItem;
-    }
+    // In this example, simply prepare for undo...
+    self.indexPath1ForLastExchange = firstItem;
+    self.indexPath2ForLastExchange = secondItem;
 }
 
 - (BOOL)canExchange
