@@ -15,6 +15,7 @@
 
 #import "ViewController.h"
 #import "SSCollectionViewExchangeController.h"
+#import "NSMutableArray+SSCollectionViewExchangeAdditions.h"
 
 
 typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
@@ -141,24 +142,17 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
 
 - (NSInteger)sumArray:(NSArray *)array
 {
-    // check out enumerate using block...
-    NSInteger sum = 0;
-    for (NSNumber *number in array) {
-        sum += [number integerValue];
-    }
+//    NSInteger sum = 0;
+//    for (NSNumber *number in array) {
+//        sum += [number integerValue];
+//    }
+//    return sum;
+    
+    __block NSInteger sum = 0;
+    [array enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+        sum += [obj integerValue];
+    }];
     return sum;
-}
-
-- (void)exchangeItemInArray:(NSMutableArray *)array1 atIndex:(NSInteger)index1
-            withItemInArray:(NSMutableArray *)array2 atIndex:(NSInteger)index2
-{
-    // Exchanges two elements that are in two different arrays.
-    
-    id item1 = array1[index1];
-    id item2 = array2[index2];
-    
-    [array1 replaceObjectAtIndex:index1 withObject:item2];
-    [array2 replaceObjectAtIndex:index2 withObject:item1];
 }
 
 - (void)logModel
@@ -252,17 +246,17 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
         switch (indexPath1.section) {
                 
             case SSCollectionViewSideLeft:
-                [self exchangeItemInArray:self.leftSide
-                                  atIndex:indexPath1.item
-                          withItemInArray:self.rightSide
-                                  atIndex:indexPath2.item];
+                [NSMutableArray exchangeItemInArray:self.leftSide
+                                            atIndex:indexPath1.item
+                                    withItemInArray:self.rightSide
+                                            atIndex:indexPath2.item];
                 break;
                 
             case SSCollectionViewSideRight:
-                [self exchangeItemInArray:self.rightSide
-                                  atIndex:indexPath1.item
-                          withItemInArray:self.leftSide
-                                  atIndex:indexPath2.item];
+                [NSMutableArray exchangeItemInArray:self.rightSide
+                                            atIndex:indexPath1.item
+                                    withItemInArray:self.leftSide
+                                            atIndex:indexPath2.item];
                 break;
         }
     }
