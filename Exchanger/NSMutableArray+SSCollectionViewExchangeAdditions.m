@@ -13,13 +13,19 @@
 + (void)exchangeItemInArray:(NSMutableArray *)array1 atIndex:(NSUInteger)index1
             withItemInArray:(NSMutableArray *)array2 atIndex:(NSUInteger)index2 {
     
-    // Exchanges two items that are in two different arrays.
+    // Exchanges two items that can be in two different arrays.
     
-    id item1 = array1[index1];
-    id item2 = array2[index2];
-    
-    [array1 replaceObjectAtIndex:index1 withObject:item2];
-    [array2 replaceObjectAtIndex:index2 withObject:item1];
+    if ([array1 isEqual:array2]) {
+        
+        [array1 exchangeObjectAtIndex:index1 withObjectAtIndex:index2];
+        
+    } else {
+        
+        id item1 = array1[index1];
+        
+        [array1 replaceObjectAtIndex:index1 withObject:array2[ index2 ]];
+        [array2 replaceObjectAtIndex:index2 withObject:item1];
+    }
 }
 
 @end

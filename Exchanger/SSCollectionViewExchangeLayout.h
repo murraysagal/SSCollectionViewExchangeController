@@ -17,6 +17,7 @@
 
 - (NSIndexPath *)indexPathForItemToHide;
 - (NSIndexPath *)indexPathForItemToDim;
+- (CGFloat)alphaForDimmedItem;
 
 @end
 

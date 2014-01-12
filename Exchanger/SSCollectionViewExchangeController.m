@@ -18,7 +18,8 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     ExchangeEventTypeNothingToExchange
 };
 
-static CFTimeInterval const minimumPressDuration = 0.15; // ??? should this be exposed???
+static CFTimeInterval   const defaultMinimumPressDuration = 0.15;
+static CGFloat          const defaultAlphaForDimmedItem = 0.60;
 
 
 @interface SSCollectionViewExchangeController () <SSCollectionViewExchangeLayoutDelegate>
@@ -34,12 +35,12 @@ static CFTimeInterval const minimumPressDuration = 0.15; // ??? should this be e
 @property (nonatomic)           BOOL                mustUndoPriorExchange;
 
 // For the view being dragged, this is the offset from the location of the long press to its center...
-@property (nonatomic)           CGPoint             offset;
+@property (nonatomic)           CGPoint             offsetToCenter;
 
 // This helps safeguard against the documented behaviour regarding items that are hidden.
 // As an optimization, the collection view might not create the corresponding view
 // if the hidden property (UICollectionViewLayoutAttributes) is set to YES. In the
-// gesture recognizer's recognized state we always need the cell for the item that
+// gesture recognizer's ended state we always need the cell for the item that
 // is hidden so we can animate to its center when the user releases. So we use this
 // property to hold the center of the cell at indexPathOfItemLastExchanged but it must
 // be captured just before it is hidden.
@@ -58,25 +59,44 @@ static CFTimeInterval const minimumPressDuration = 0.15; // ??? should this be e
     self = [super init];
     if (self) {
         
+        _minimumPressDuration = defaultMinimumPressDuration;
+        _alphaForDimmedItem = defaultAlphaForDimmedItem;
+        
         _longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress)];
-        _longPressGestureRecognizer.minimumPressDuration = minimumPressDuration;
+        _longPressGestureRecognizer.minimumPressDuration = defaultMinimumPressDuration;
         _longPressGestureRecognizer.delaysTouchesBegan = YES;
         [collectionView addGestureRecognizer:_longPressGestureRecognizer];
         
-        SSCollectionViewExchangeLayout *exchangeLayout = [[SSCollectionViewExchangeLayout alloc] initWithDelegate:self];
+        collectionView.collectionViewLayout = [[SSCollectionViewExchangeLayout alloc] initWithDelegate:self];
         
-        collectionView.collectionViewLayout = exchangeLayout;
-        
-        self.collectionView = collectionView;
-        self.delegate = delegate;
+        _collectionView = collectionView;
+        _delegate = delegate;
     }
     return self;
 }
 
+- (UICollectionViewFlowLayout *)layout {
+    
+    return (UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout;
+}
 
 
-//----------------------------------------------------------
-#pragma mark - UILongPressGestureRecognizer action method...
+
+//--------------------------------
+#pragma mark - Accessor methods...
+
+- (void)setMinimumPressDuration:(CFTimeInterval)minimumPressDuration {
+    
+    if (_minimumPressDuration != minimumPressDuration) {
+        _minimumPressDuration = minimumPressDuration;
+        self.longPressGestureRecognizer.minimumPressDuration = minimumPressDuration;
+    }
+}
+
+
+
+//-------------------------------------------------------------------------------
+#pragma mark - UILongPressGestureRecognizer action method and exchange methods...
 
 - (void)longPress {
     
@@ -109,79 +129,38 @@ static CFTimeInterval const minimumPressDuration = 0.15; // ??? should this be e
     }
 }
 
-
-
-//--------------------------------
-#pragma mark - Instance methods...
-
-- (void)cancelLongPressRecognizer {
-    
-    // As per the docs, this triggers a cancel.
-    
-    self.longPressGestureRecognizer.enabled = NO;
-    self.longPressGestureRecognizer.enabled = YES;
-}
-
 - (void)beginExchangeTransaction {
     
-    NSIndexPath *indexPath;
-    BOOL cancel = YES;
+    NSIndexPath *currentIndexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
     
-    if ([self.delegate canExchange])
-    {
-        indexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
-        if (indexPath != nil) cancel = NO;
-    }
-    
-    if (cancel) {
+    if ([self shouldNotContinueExchangeTransactionAtIndexPath:currentIndexPath]) {
         [self cancelLongPressRecognizer];
         return;
     }
     
-    UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:indexPath];
-    
-    // Create an image of the cell, stuff it in an image view, and stick it under the user's finger...
-    UIImage *cellImage = [self imageFromCell:cell withBackgroundColor:[UIColor darkGrayColor] alpha:0.8];
-    UIImageView *cellImageView = [[UIImageView alloc] initWithImage:cellImage];
-    cellImageView.frame = cell.frame;
+    UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:currentIndexPath];
+    UIImageView *cellImageView = [self imageViewForCell:cell];
     [self.collectionView addSubview:cellImageView];
     
-    // TODO: look at anchorPoint!!!
-    
-    // Calculate the offset from the location of the user's finger to the center of view being dragged...
-    CGPoint locationInCellImageView = [self.longPressGestureRecognizer locationInView:cellImageView];
-    CGPoint cellImageViewCenter = CGPointMake(cellImageView.frame.size.width/2, cellImageView.frame.size.height/2);
-    CGPoint offset = CGPointMake(locationInCellImageView.x - cellImageViewCenter.x, locationInCellImageView.y - cellImageViewCenter.y);
-    
-    // Blink. This is one of any number of ways to accomplish this.
-    NSTimeInterval animationDuration = 0.20f;
-    CGFloat blinkToScale = 1.2f;
-    CGFloat finalScale = 1.0f;
-    [UIView animateWithDuration:animationDuration animations:^ {
-        cellImageView.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
-    } completion:^(BOOL finished) {
-        [UIView animateWithDuration:animationDuration animations:^ {
-            cellImageView.transform = CGAffineTransformMakeScale(finalScale, finalScale);
-        }];
-    }];
-    
-    self.offset = offset;
+    self.offsetToCenter = [self offsetToCenterForCellImageView:cellImageView];
     self.viewForImageBeingDragged = cellImageView;
     self.centerOfCellForLastItemExchanged = cell.center;
-    self.originalIndexPathForItemBeingDragged = indexPath;
-    self.indexPathOfItemLastExchanged = indexPath;
+    self.originalIndexPathForItemBeingDragged = currentIndexPath;
+    self.indexPathOfItemLastExchanged = currentIndexPath;
     self.mustUndoPriorExchange = NO;
+    
+    [self blinkCellImage:cellImageView];
     
     // InvalidateLayout kicks off the process of redrawing the layout.
     // SSCollectionViewExchangeLayout intervenes in that process by overriding
     // layoutAttributesForElementsInRect: and layoutAttributesForItemAtIndexPath:
-    // to hide and dim items as required.
+    // to hide and dim collection view items as required.
     [self.collectionView.collectionViewLayout invalidateLayout];
 }
 
 - (void)updateCellImageLocation {
     
-    CGPoint offsetLocationInCollectionView = CGPointMake(self.locationInCollectionView.x - self.offset.x, self.locationInCollectionView.y - self.offset.y);
+    CGPoint offsetLocationInCollectionView = CGPointMake(self.locationInCollectionView.x - self.offsetToCenter.x, self.locationInCollectionView.y - self.offsetToCenter.y);
     self.viewForImageBeingDragged.center = offsetLocationInCollectionView;
 }
 
@@ -203,6 +182,26 @@ static CFTimeInterval const minimumPressDuration = 0.15; // ??? should this be e
         case ExchangeEventTypeDraggedToStartingItem:
             [self performExchangeEventTypeDraggedToStartingItem];
             break;
+    }
+}
+
+- (ExchangeEventType)exchangeEventType {
+    
+    // The user is still dragging in the long press. Determine the exchange event type.
+    self.currentIndexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
+    
+    if  (self.currentIndexPath == nil || [self isOverSameItemAtIndexPath:self.currentIndexPath]) return ExchangeEventTypeNothingToExchange;
+    
+    
+    // Otherwise there is an exchange event to perform. What kind?
+    
+    if (self.mustUndoPriorExchange)
+    {
+        return ([self isBackToStartingItemAtIndexPath:self.currentIndexPath])? ExchangeEventTypeDraggedToStartingItem : ExchangeEventTypeDraggedToOtherItem;
+    }
+    else
+    {
+        return ExchangeEventTypeDraggedFromStartingItem;
     }
 }
 
@@ -301,6 +300,19 @@ static CFTimeInterval const minimumPressDuration = 0.15; // ??? should this be e
     }];
 }
 
+
+
+//---------------------------------------
+#pragma mark - Exchange helper methods...
+
+- (void)cancelLongPressRecognizer {
+    
+    // As per the docs, this triggers a cancel.
+    
+    self.longPressGestureRecognizer.enabled = NO;
+    self.longPressGestureRecognizer.enabled = YES;
+}
+
 - (void)performPostReleaseCleanupWithAnimationDuration:(float)animationDuration {
     
     [CATransaction begin];
@@ -319,6 +331,55 @@ static CFTimeInterval const minimumPressDuration = 0.15; // ??? should this be e
         }];
     }
     [CATransaction commit];
+}
+
+- (BOOL)shouldNotContinueExchangeTransactionAtIndexPath:(NSIndexPath *)indexPath {
+    
+    return (indexPath != nil && [self.delegate canExchange])? NO:YES;
+}
+
+- (UIImageView *)imageViewForCell:(UICollectionViewCell *)cell {
+    
+    if ([self.delegate respondsToSelector:@selector(imageViewForCell:)]) {
+        
+        return [self.delegate imageViewForCell:cell];
+        
+    } else {
+        
+        UIImage *cellImage = [self imageFromCell:cell withBackgroundColor:[UIColor darkGrayColor] alpha:0.8];
+        UIImageView *cellImageView = [[UIImageView alloc] initWithImage:cellImage];
+        cellImageView.frame = cell.frame;
+        return cellImageView;
+    }
+}
+
+- (CGPoint)offsetToCenterForCellImageView:(UIImageView *)cellImageView {
+    
+    CGPoint locationInCellImageView = [self.longPressGestureRecognizer locationInView:cellImageView];
+    CGPoint cellImageViewCenter = CGPointMake(cellImageView.frame.size.width/2, cellImageView.frame.size.height/2);
+    return CGPointMake(locationInCellImageView.x - cellImageViewCenter.x, locationInCellImageView.y - cellImageViewCenter.y);
+}
+
+- (void)blinkCellImage:(UIImageView *)cellImage {
+    
+    if ([self.delegate respondsToSelector:@selector(blinkCellImage:)]) {
+        
+        [self.delegate blinkCellImage:cellImage];
+        
+    } else {
+        
+        NSTimeInterval duration = 0.20;
+        CGFloat blinkToScale = 1.2;
+        CGFloat finalScale = 1.0;
+        
+        [UIView animateWithDuration:duration animations:^ {
+            cellImage.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
+        } completion:^(BOOL finished) {
+            [UIView animateWithDuration:duration animations:^ {
+                cellImage.transform = CGAffineTransformMakeScale(finalScale, finalScale);
+            }];
+        }];
+    }
 }
 
 - (BOOL)isOverSameItemAtIndexPath:(NSIndexPath *)indexPath {
@@ -360,34 +421,9 @@ static CFTimeInterval const minimumPressDuration = 0.15; // ??? should this be e
     return cellImage;
 }
 
-- (ExchangeEventType)exchangeEventType {
-    
-    // The user is still dragging in the long press. Determine the exchange event type.
-    self.currentIndexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
-    
-    if  (self.currentIndexPath == nil || [self isOverSameItemAtIndexPath:self.currentIndexPath]) return ExchangeEventTypeNothingToExchange;
-    
-    
-    // Otherwise there is an exchange event to perform. What kind?
-    
-    if (self.mustUndoPriorExchange)
-    {
-        return ([self isBackToStartingItemAtIndexPath:self.currentIndexPath])? ExchangeEventTypeDraggedToStartingItem : ExchangeEventTypeDraggedToOtherItem;
-    }
-    else
-    {
-        return ExchangeEventTypeDraggedFromStartingItem;
-    }
-}
-
 - (CGPoint)locationInCollectionView {
     
     return [self.longPressGestureRecognizer locationInView:self.collectionView];
-}
-
-- (UICollectionViewFlowLayout *)layout {
-    
-    return (UICollectionViewFlowLayout *) self.collectionView.collectionViewLayout;
 }
 
 
@@ -411,6 +447,11 @@ static CFTimeInterval const minimumPressDuration = 0.15; // ??? should this be e
 
     // As above return nil if you don't want to dim.
 
+}
+
+- (CGFloat)alphaForDimmedItem {
+    
+    return _alphaForDimmedItem;
 }
 
 

@@ -21,9 +21,9 @@
 #import "NSMutableArray+SSCollectionViewExchangeAdditions.h"
 
 
-typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
-    SSCollectionViewSideLeft,
-    SSCollectionViewSideRight
+NS_ENUM(NSInteger, CollectionViewSide) {
+    CollectionViewSideLeft,
+    CollectionViewSideRight
 };
 
 
@@ -73,10 +73,10 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
     self.exchangeController = [[SSCollectionViewExchangeController alloc] initWithDelegate:self
                                                                             collectionView:self.collectionView];
     
-    // The SSCollectionViewExchangeController has created a layout and configured the collection
+    // The SSCollectionViewExchangeController creates a layout and configures the collection
     // view to use it. The layout is a subclass of UICollectionViewFlowLayout specifically
     // designed to manage hiding and dimming items during the exchange process. But it has
-    // not been configured. As a convenience the exchange controller can provide you with the
+    // not been configured. The exchange controller can provide you with the
     // layout, as a UICollectionViewFlowLayout, which you can configure as required.
     
     UICollectionViewFlowLayout *layout = self.exchangeController.layout;
@@ -104,8 +104,7 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
 
 - (void)updateSumLabels
 {
-    // This is here simply to show how live updating is enabled by
-    // the didFinishExchangeEvent delegate method.
+    // Demonstrates how live updating is enabled by the didFinishExchangeEvent delegate method.
     
     self.sumLeft.text =  [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.leftSide]];
     self.sumRight.text = [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.rightSide]];
@@ -113,8 +112,7 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
 
 - (IBAction)undo:(id)sender
 {
-    // This is a very basic example of undo, here simply to show how undo is enabled by the
-    // didFinishExchangeTransactionWithItemAtIndexPath:andItemAtIndexPath: delegate method.
+    // Demonstrates how undo is enabled by the didFinishExchangeTransactionWithItemAtIndexPath:andItemAtIndexPath: delegate method.
     
     if (self.indexPath1ForLastExchange != nil) {
         
@@ -174,6 +172,26 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
     NSLog(@" ");
 }
 
+- (NSMutableArray *)arrayForSection:(NSUInteger)index {
+    
+    // Normally each section of a collection view has its own array. This is a simple example of how
+    // you might map your sections to actual arrays. Using a technique like this simplifies the
+    // implementation of the exchangeItemAtIndexPath:withItemAtIndexPath: delegate method.
+    
+    NSMutableArray *array;
+    
+    switch (index) {
+        case CollectionViewSideLeft:
+            array = self.leftSide;
+            break;
+            
+        case CollectionViewSideRight:
+            array = self.rightSide;
+            break;
+    }
+    return array;
+}
+
 
 
 //-----------------------------------------------------------------
@@ -196,7 +214,7 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
     // To keep this example simple the custom cell doesn't have a class. So the label is retrieved with a tag...
     UILabel *itemLabel = (UILabel *)[cell viewWithTag:999];
     
-    NSNumber *itemNumber = (indexPath.section == SSCollectionViewSideLeft)? self.leftSide[ indexPath.item ] : self.rightSide[ indexPath.item ];
+    NSNumber *itemNumber = (indexPath.section == CollectionViewSideLeft)? self.leftSide[ indexPath.item ] : self.rightSide[ indexPath.item ];
     itemLabel.text = [NSString stringWithFormat:@" %@", itemNumber];
     
     return cell;
@@ -209,74 +227,35 @@ typedef NS_ENUM(NSInteger, SSCollectionViewSide) {
 
 - (void)exchangeItemAtIndexPath:(NSIndexPath *)indexPath1 withItemAtIndexPath:(NSIndexPath *)indexPath2
 {
-    // Called either one or two times during an exchange event. Allows the delegate
-    // to keep the model synchronized with the changes occuring on the view. Refer
-    // to the comments in the protocol definition.
+    // Allows the delegate to keep the model synchronized with the changes occuring on the view.
+    // Called either one or two times during an exchange event.
+    // Refer to the additional comments in the protocol definition.
     
-    // Update the model. Not structured optimally, intention is readability...
+    NSMutableArray *array1 = [self arrayForSection:indexPath1.section];
+    NSMutableArray *array2 = [self arrayForSection:indexPath2.section];
     
-    if ([indexPath1 isEqual:indexPath2])
-    {
-        // If the index paths are the same there's nothing to exchange...
-        return;
-    }
+    [NSMutableArray exchangeItemInArray:array1
+                                atIndex:indexPath1.item
+                        withItemInArray:array2
+                                atIndex:indexPath2.item];
     
-    // The index paths are not the same. What about the sections?
-    
-    if (indexPath1.section == indexPath2.section)
-    {
-        // The sections are the same. In other words the items to exchange
-        // are in the same array.
-        switch (indexPath1.section) {
-                
-            case SSCollectionViewSideLeft:
-                [self.leftSide exchangeObjectAtIndex:indexPath1.item
-                                   withObjectAtIndex:indexPath2.item];
-                break;
-                
-            case SSCollectionViewSideRight:
-                [self.rightSide exchangeObjectAtIndex:indexPath1.item
-                                    withObjectAtIndex:indexPath2.item];
-                break;
-        }
-        
-    } else {
-        
-        // The sections are not the same. In other words the items being
-        // exchanged are not in the same array.
-        switch (indexPath1.section) {
-                
-            case SSCollectionViewSideLeft:
-                [NSMutableArray exchangeItemInArray:self.leftSide
-                                            atIndex:indexPath1.item
-                                    withItemInArray:self.rightSide
-                                            atIndex:indexPath2.item];
-                break;
-                
-            case SSCollectionViewSideRight:
-                [NSMutableArray exchangeItemInArray:self.rightSide
-                                            atIndex:indexPath1.item
-                                    withItemInArray:self.leftSide
-                                            atIndex:indexPath2.item];
-                break;
-        }
-    }
 }
 
 - (void)didFinishExchangeEvent
 {
-    // Called when an exchange event finishes. Refer to the comments in the protocol definition.
-    // Allows the delegate to provide "live" updates as the user drags.
+    // Allows the delegate to provide live updates as the user drags.
+    // Called when an exchange event finishes.
+    // Refer to the additional comments in the protocol definition.
     
-    // In this example update the sum labels and log the model.
     [self updateSumLabels];
     [self logModel];
 }
 
 - (void)didFinishExchangeTransactionWithItemAtIndexPath:(NSIndexPath *)firstItem andItemAtIndexPath:(NSIndexPath *)secondItem
 {
-    // Called at the end of the exchange transaction. Refer to the comments in the protocol definition.
     // Allows the delegate to perform any required action when the user completes the exchange.
+    // Called at the end of the exchange transaction.
+    // Refer to the additional comments in the protocol definition.
     
     // In this example, simply prepare for undo...
     self.indexPath1ForLastExchange = firstItem;

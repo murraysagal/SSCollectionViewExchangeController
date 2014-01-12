@@ -8,8 +8,6 @@
 
 #import "SSCollectionViewExchangeLayout.h"
 
-static CGFloat const alphaForDimmedItem = 0.6; // ???: should this be exposed???
-
 
 @interface SSCollectionViewExchangeLayout ()
 
@@ -27,7 +25,6 @@ static CGFloat const alphaForDimmedItem = 0.6; // ???: should this be exposed???
     if (self) {
         
         _delegate = delegate;
-        
     }
     return self;
 }
@@ -74,7 +71,7 @@ static CGFloat const alphaForDimmedItem = 0.6; // ???: should this be exposed???
     NSIndexPath *indexPathForItemToDim = [self.delegate indexPathForItemToDim];
     
     attributesForItem.hidden = ([attributesForItem.indexPath isEqual:indexPathForItemToHide])? YES : NO;
-    attributesForItem.alpha =  ([attributesForItem.indexPath isEqual:indexPathForItemToDim])?  alphaForDimmedItem : 1.0;
+    attributesForItem.alpha =  ([attributesForItem.indexPath isEqual:indexPathForItemToDim])?  [self.delegate alphaForDimmedItem] : 1.0;
 
     return attributesForItem;
 }
