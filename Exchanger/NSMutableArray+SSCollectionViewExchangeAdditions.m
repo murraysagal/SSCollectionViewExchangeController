@@ -13,7 +13,7 @@
 + (void)exchangeItemInArray:(NSMutableArray *)array1 atIndex:(NSUInteger)index1
             withItemInArray:(NSMutableArray *)array2 atIndex:(NSUInteger)index2 {
     
-    // Exchanges two items that can be in two different arrays.
+    // Exchanges two items that can be in different arrays.
     
     if ([array1 isEqual:array2]) {
         

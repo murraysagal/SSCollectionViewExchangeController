@@ -10,7 +10,7 @@
  
  This app demonstrates the capabilities of the SSCollectionViewExchangeController
  and SSCollectionViewExchangeLayout classes that are designed to exchange items 
- in a 2 column grid.
+ in a multi column grid.
  
  Refer to SSCollectionViewExchangeController.h for more comments. 
  
@@ -23,6 +23,7 @@
 
 NS_ENUM(NSInteger, CollectionViewSide) {
     CollectionViewSideLeft,
+    CollectionViewSideMiddle,
     CollectionViewSideRight
 };
 
@@ -37,12 +38,14 @@ NS_ENUM(NSInteger, CollectionViewSide) {
 
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (weak, nonatomic) IBOutlet UILabel *sumLeft;
+@property (weak, nonatomic) IBOutlet UILabel *sumMiddle;
 @property (weak, nonatomic) IBOutlet UILabel *sumRight;
 
 - (IBAction)reset:(id)sender;
 - (IBAction)undo:(id)sender;
 
 @property (strong, nonatomic) NSMutableArray *leftSide;
+@property (strong, nonatomic) NSMutableArray *middle;
 @property (strong, nonatomic) NSMutableArray *rightSide;
 
 @property (strong, nonatomic) NSIndexPath *indexPath1ForLastExchange;
@@ -80,10 +83,10 @@ NS_ENUM(NSInteger, CollectionViewSide) {
     // layout, as a UICollectionViewFlowLayout, which you can configure as required.
     
     UICollectionViewFlowLayout *layout = self.exchangeController.layout;
-    layout.itemSize = CGSizeMake(150, 30);
+    layout.itemSize = CGSizeMake(100, 30);
     layout.minimumLineSpacing = 1;
     layout.minimumInteritemSpacing = 1;
-    layout.sectionInset = UIEdgeInsetsMake(5, 5, 5, 5);
+    layout.sectionInset = UIEdgeInsetsMake(5, 3, 5, 3);
     layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
 
 }
@@ -97,9 +100,11 @@ NS_ENUM(NSInteger, CollectionViewSide) {
 {    
     NSArray *temp1to10 =    @[  @1,  @2,  @3,  @4,  @5,  @6,  @7,  @8,  @9, @10 ];
     NSArray *temp11to20 =   @[ @11, @12, @13, @14, @15, @16, @17, @18, @19, @20 ];
+    NSArray *temp21to30 =   @[ @21, @22, @23, @24, @25, @26, @27, @28, @29, @30 ];
     
     self.leftSide = [NSMutableArray arrayWithArray:temp1to10];
-    self.rightSide = [NSMutableArray arrayWithArray:temp11to20];
+    self.middle = [NSMutableArray arrayWithArray:temp11to20];
+    self.rightSide = [NSMutableArray arrayWithArray:temp21to30];
 }
 
 - (void)updateSumLabels
@@ -107,12 +112,14 @@ NS_ENUM(NSInteger, CollectionViewSide) {
     // Demonstrates how live updating is enabled by the didFinishExchangeEvent delegate method.
     
     self.sumLeft.text =  [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.leftSide]];
+    self.sumMiddle.text =  [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.middle]];
     self.sumRight.text = [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.rightSide]];
 }
 
 - (IBAction)undo:(id)sender
 {
-    // Demonstrates how undo is enabled by the didFinishExchangeTransactionWithItemAtIndexPath:andItemAtIndexPath: delegate method.
+    // Demonstrates how undo is enabled by the
+    // exchangeControllerDidFinishExchangeTransaction:withIndexPath1:indexPath2:: delegate method.
     
     if (self.indexPath1ForLastExchange != nil) {
         
@@ -153,33 +160,33 @@ NS_ENUM(NSInteger, CollectionViewSide) {
 
 - (NSInteger)sumArray:(NSArray *)array
 {
-//    NSInteger sum = 0;
-//    for (NSNumber *number in array) {
-//        sum += [number integerValue];
-//    }
-//    return sum;
-    
-    __block NSInteger sum = 0;
-    [array enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-        sum += [obj integerValue];
-    }];
+    NSInteger sum = 0;
+    for (NSNumber *number in array) {
+        sum += [number integerValue];
+    }
     return sum;
+    
+//    __block NSInteger sum = 0;
+//    [array enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+//        sum += [obj integerValue];
+//    }];
+//    return sum;
 }
 
 - (void)logModel
 {
     NSLog(@" ");
-    NSLog(@"self.leftSide   |    self.rightSide");
+    NSLog(@"self.leftSide   |    self.middle    |    self.rightSide");
     
     for (int i=0; i<[self.leftSide count]; i++) {
-        NSLog(@"          %@     |    %@", self.leftSide[i], self.rightSide[i]);
+        NSLog(@"          %@     |       %@          |          %@", self.leftSide[i], self.middle[i], self.rightSide[i]);
     }
     
     NSInteger sumLeft = [self sumArray:self.leftSide];
     NSInteger sumRight = [self sumArray:self.rightSide];
     
     NSLog(@" ");
-    NSLog(@"    sumLeft= %ld | sumRight= %ld", (long)sumLeft, (long)sumRight);
+    NSLog(@" sumLeft= %ld                         sumRight= %ld", (long)sumLeft, (long)sumRight);
     NSLog(@" ");
 }
 
@@ -196,6 +203,10 @@ NS_ENUM(NSInteger, CollectionViewSide) {
             array = self.leftSide;
             break;
             
+        case CollectionViewSideMiddle:
+            array = self.middle;
+            break;
+            
         case CollectionViewSideRight:
             array = self.rightSide;
             break;
@@ -210,7 +221,7 @@ NS_ENUM(NSInteger, CollectionViewSide) {
 
 - (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView
 {
-    return 2;
+    return 3;
 }
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
@@ -225,7 +236,22 @@ NS_ENUM(NSInteger, CollectionViewSide) {
     // To keep this example simple the custom cell doesn't have a class. So the label is retrieved with a tag...
     UILabel *itemLabel = (UILabel *)[cell viewWithTag:999];
     
-    NSNumber *itemNumber = (indexPath.section == CollectionViewSideLeft)? self.leftSide[ indexPath.item ] : self.rightSide[ indexPath.item ];
+    NSNumber *itemNumber;
+    
+    switch (indexPath.section) {
+        case CollectionViewSideLeft:
+            itemNumber = self.leftSide[ indexPath.item ];
+            break;
+            
+        case CollectionViewSideMiddle:
+            itemNumber = self.middle[ indexPath.item ];
+            break;
+            
+        case CollectionViewSideRight:
+            itemNumber = self.rightSide[ indexPath.item ];
+            break;
+    }
+    
     itemLabel.text = [NSString stringWithFormat:@" %@", itemNumber];
     
     return cell;
@@ -234,7 +260,7 @@ NS_ENUM(NSInteger, CollectionViewSide) {
 
 
 //-----------------------------------------------------------------------
-#pragma mark - SSCollectionViewExchangeLayoutDelegate protocol methods...
+#pragma mark - SSCollectionViewExchangeControllerDelegate protocol methods...
 
 - (void)    exchangeController:(SSCollectionViewExchangeController *)exchangeController
    didExchangeItemAtIndexPath1:(NSIndexPath *)indexPath1

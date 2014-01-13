@@ -9,6 +9,7 @@
             <connections>
                 <outlet property="collectionView" destination="8" id="PZC-YD-uKb"/>
                 <outlet property="sumLeft" destination="jAN-ny-5Ax" id="8HJ-1u-qQ6"/>
+                <outlet property="sumMiddle" destination="vUK-hM-fED" id="MEG-bo-ZVH"/>
                 <outlet property="sumRight" destination="v7G-Zi-O9m" id="ymu-kf-b1Q"/>
                 <outlet property="view" destination="6" id="7"/>
             </connections>
@@ -44,15 +45,14 @@
                         <action selector="reset:" destination="-1" eventType="touchUpInside" id="e3H-qr-xPg"/>
                     </connections>
                 </button>
-                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="&lt;-- sum -->" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="qJt-dM-maW">
-                    <rect key="frame" x="115" y="352" width="90" height="21"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
-                    <nil key="highlightedColor"/>
-                </label>
                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="sumLeft" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="jAN-ny-5Ax">
                     <rect key="frame" x="20" y="352" width="79" height="21"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                    <nil key="highlightedColor"/>
+                </label>
+                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="sumMiddle" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="vUK-hM-fED">
+                    <rect key="frame" x="121" y="352" width="85" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                     <nil key="highlightedColor"/>

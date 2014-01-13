@@ -123,14 +123,14 @@
 		722D2FCC183291E300F82D12 /* Exchanger */ = {
 			isa = PBXGroup;
 			children = (
+				72FF890C188044DC00E4DAAB /* NSMutableArray+SSCollectionViewExchangeAdditions.h */,
+				72FF890D188044DC00E4DAAB /* NSMutableArray+SSCollectionViewExchangeAdditions.m */,
 				722D2FFB1832927100F82D12 /* SSCollectionViewExchangeLayout.h */,
 				722D2FFC1832927100F82D12 /* SSCollectionViewExchangeLayout.m */,
 				72553951187EFBDC000338BB /* SSCollectionViewExchangeController.h */,
 				72553952187EFBDC000338BB /* SSCollectionViewExchangeController.m */,
 				722D2FFD1832927100F82D12 /* ViewController.h */,
 				722D2FFE1832927100F82D12 /* ViewController.m */,
-				72FF890C188044DC00E4DAAB /* NSMutableArray+SSCollectionViewExchangeAdditions.h */,
-				72FF890D188044DC00E4DAAB /* NSMutableArray+SSCollectionViewExchangeAdditions.m */,
 				722D2FFF1832927100F82D12 /* ViewController.xib */,
 				722D30001832927100F82D12 /* ItemCell.xib */,
 				722D2FD5183291E300F82D12 /* AppDelegate.h */,
