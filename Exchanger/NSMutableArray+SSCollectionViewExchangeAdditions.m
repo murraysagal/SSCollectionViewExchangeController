@@ -21,10 +21,10 @@
         
     } else {
         
-        id item1 = array1[index1];
+        id itemFromArray1 = array1[ index1 ];
         
         [array1 replaceObjectAtIndex:index1 withObject:array2[ index2 ]];
-        [array2 replaceObjectAtIndex:index2 withObject:item1];
+        [array2 replaceObjectAtIndex:index2 withObject:itemFromArray1];
     }
 }
 

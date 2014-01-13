@@ -117,17 +117,28 @@ NS_ENUM(NSInteger, CollectionViewSide) {
     if (self.indexPath1ForLastExchange != nil) {
         
         // Model...
-        [self exchangeItemAtIndexPath:self.indexPath1ForLastExchange withItemAtIndexPath:self.indexPath2ForLastExchange];
+        [self exchangeItemAtIndexPath1:self.indexPath1ForLastExchange withItemAtIndexPath2:self.indexPath2ForLastExchange];
         [self updateSumLabels];
         [self logModel];
         
         // View...
-        [self.collectionView performBatchUpdates:^{
+        [self.collectionView performBatchUpdates:^ {
             [self.collectionView moveItemAtIndexPath:self.indexPath1ForLastExchange toIndexPath:self.indexPath2ForLastExchange];
             [self.collectionView moveItemAtIndexPath:self.indexPath2ForLastExchange toIndexPath:self.indexPath1ForLastExchange];
         }
                                       completion:nil];
     }
+}
+
+- (void)exchangeItemAtIndexPath1:(NSIndexPath *)indexPath1 withItemAtIndexPath2:(NSIndexPath *)indexPath2 {
+    
+    NSMutableArray *array1 = [self arrayForSection:indexPath1.section];
+    NSMutableArray *array2 = [self arrayForSection:indexPath2.section];
+    
+    [NSMutableArray exchangeItemInArray:array1
+                                atIndex:indexPath1.item
+                        withItemInArray:array2
+                                atIndex:indexPath2.item];
 }
 
 - (IBAction)reset:(id)sender
@@ -225,23 +236,18 @@ NS_ENUM(NSInteger, CollectionViewSide) {
 //----------------------------------------------------------------------------
 #pragma mark - SSCollectionViewExchangeLayoutDelegate protocol methods...
 
-- (void)exchangeItemAtIndexPath:(NSIndexPath *)indexPath1 withItemAtIndexPath:(NSIndexPath *)indexPath2
+- (void)exchangeController:(SSCollectionViewExchangeController *)exchangeController
+  exchangeItemAtIndexPath1:(NSIndexPath *)indexPath1
+      withItemAtIndexPath2:(NSIndexPath *)indexPath2
 {
     // Allows the delegate to keep the model synchronized with the changes occuring on the view.
     // Called either one or two times during an exchange event.
     // Refer to the additional comments in the protocol definition.
     
-    NSMutableArray *array1 = [self arrayForSection:indexPath1.section];
-    NSMutableArray *array2 = [self arrayForSection:indexPath2.section];
-    
-    [NSMutableArray exchangeItemInArray:array1
-                                atIndex:indexPath1.item
-                        withItemInArray:array2
-                                atIndex:indexPath2.item];
-    
+    [self exchangeItemAtIndexPath1:indexPath1 withItemAtIndexPath2:indexPath2];
 }
 
-- (void)didFinishExchangeEvent
+- (void)exchangeControllerDidFinishExchangeEvent:(SSCollectionViewExchangeController *)exchangeController
 {
     // Allows the delegate to provide live updates as the user drags.
     // Called when an exchange event finishes.
@@ -251,18 +257,20 @@ NS_ENUM(NSInteger, CollectionViewSide) {
     [self logModel];
 }
 
-- (void)didFinishExchangeTransactionWithItemAtIndexPath:(NSIndexPath *)firstItem andItemAtIndexPath:(NSIndexPath *)secondItem
+- (void)exchangeControllerDidFinishExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController
+                                        withIndexPath1:(NSIndexPath *)indexPath1
+                                            indexPath2:(NSIndexPath *)indexPath2
 {
     // Allows the delegate to perform any required action when the user completes the exchange.
     // Called at the end of the exchange transaction.
     // Refer to the additional comments in the protocol definition.
     
     // In this example, simply prepare for undo...
-    self.indexPath1ForLastExchange = firstItem;
-    self.indexPath2ForLastExchange = secondItem;
+    self.indexPath1ForLastExchange = indexPath1;
+    self.indexPath2ForLastExchange = indexPath2;
 }
 
-- (BOOL)canExchange
+- (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController
 {
     // Return whether the collection view can exchange items at this time.
     // For example, you may only allow exchanges when editing.

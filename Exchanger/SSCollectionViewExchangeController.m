@@ -18,8 +18,6 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     ExchangeEventTypeNothingToExchange
 };
 
-static CFTimeInterval   const defaultMinimumPressDuration = 0.15;
-static CGFloat          const defaultAlphaForDimmedItem = 0.60;
 
 
 @interface SSCollectionViewExchangeController () <SSCollectionViewExchangeLayoutDelegate>
@@ -59,11 +57,18 @@ static CGFloat          const defaultAlphaForDimmedItem = 0.60;
     self = [super init];
     if (self) {
         
-        _minimumPressDuration = defaultMinimumPressDuration;
-        _alphaForDimmedItem = defaultAlphaForDimmedItem;
+        // defaults...
+        _minimumPressDuration =     0.15;
+        _alphaForDimmedItem =       0.60;
+        _animationDuration =        0.20;
+        _blinkToScaleForCatch =     1.20;
+        _blinkToScaleForRelease =   1.05;
+        _alphaForImage =            0.80;
+        _backgroundColorForImage =  [UIColor darkGrayColor];
+        
         
         _longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress)];
-        _longPressGestureRecognizer.minimumPressDuration = defaultMinimumPressDuration;
+        _longPressGestureRecognizer.minimumPressDuration = _minimumPressDuration;
         _longPressGestureRecognizer.delaysTouchesBegan = YES;
         [collectionView addGestureRecognizer:_longPressGestureRecognizer];
         
@@ -75,15 +80,10 @@ static CGFloat          const defaultAlphaForDimmedItem = 0.60;
     return self;
 }
 
-- (UICollectionViewFlowLayout *)layout {
-    
-    return (UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout;
-}
 
 
-
-//--------------------------------
-#pragma mark - Accessor methods...
+//-------------------------
+#pragma mark - Accessors...
 
 - (void)setMinimumPressDuration:(CFTimeInterval)minimumPressDuration {
     
@@ -91,6 +91,11 @@ static CGFloat          const defaultAlphaForDimmedItem = 0.60;
         _minimumPressDuration = minimumPressDuration;
         self.longPressGestureRecognizer.minimumPressDuration = minimumPressDuration;
     }
+}
+
+- (UICollectionViewFlowLayout *)layout {
+    
+    return (UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout;
 }
 
 
@@ -149,7 +154,7 @@ static CGFloat          const defaultAlphaForDimmedItem = 0.60;
     self.indexPathOfItemLastExchanged = currentIndexPath;
     self.mustUndoPriorExchange = NO;
     
-    [self blinkCellImage:cellImageView];
+    [self animateCatch:cellImageView];
     
     // InvalidateLayout kicks off the process of redrawing the layout.
     // SSCollectionViewExchangeLayout intervenes in that process by overriding
@@ -190,7 +195,8 @@ static CGFloat          const defaultAlphaForDimmedItem = 0.60;
     // The user is still dragging in the long press. Determine the exchange event type.
     self.currentIndexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
     
-    if  (self.currentIndexPath == nil || [self isOverSameItemAtIndexPath:self.currentIndexPath]) return ExchangeEventTypeNothingToExchange;
+    if  (self.currentIndexPath == nil || [self isOverSameItemAtIndexPath:self.currentIndexPath])
+        return ExchangeEventTypeNothingToExchange;
     
     
     // Otherwise there is an exchange event to perform. What kind?
@@ -210,8 +216,10 @@ static CGFloat          const defaultAlphaForDimmedItem = 0.60;
     [self.collectionView performBatchUpdates:^{
         
         // Model...
-        [self.delegate exchangeItemAtIndexPath:self.currentIndexPath withItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
-        [self.delegate didFinishExchangeEvent];
+        [self.delegate exchangeController:self
+                 exchangeItemAtIndexPath1:self.currentIndexPath
+                     withItemAtIndexPath2:self.originalIndexPathForItemBeingDragged];
+        [self.delegate exchangeControllerDidFinishExchangeEvent:self];
         
         // View...
         [self.collectionView moveItemAtIndexPath:self.originalIndexPathForItemBeingDragged toIndexPath:self.currentIndexPath];
@@ -220,8 +228,7 @@ static CGFloat          const defaultAlphaForDimmedItem = 0.60;
         // State...
         self.indexPathOfItemLastExchanged = self.currentIndexPath;
         self.mustUndoPriorExchange = YES;
-        
-        [self keepCenterOfCellForLastItemExchangedAtIndexPath:self.currentIndexPath];
+        [self keepCenterOfCellForLastItemExchanged];
         
     } completion:nil];
 }
@@ -231,9 +238,13 @@ static CGFloat          const defaultAlphaForDimmedItem = 0.60;
     [self.collectionView performBatchUpdates:^{
         
         // Model...
-        [self.delegate exchangeItemAtIndexPath:self.originalIndexPathForItemBeingDragged withItemAtIndexPath:self.indexPathOfItemLastExchanged];
-        [self.delegate exchangeItemAtIndexPath:self.currentIndexPath withItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
-        [self.delegate didFinishExchangeEvent];
+        [self.delegate exchangeController:self
+                 exchangeItemAtIndexPath1:self.originalIndexPathForItemBeingDragged
+                     withItemAtIndexPath2:self.indexPathOfItemLastExchanged];
+        [self.delegate exchangeController:self
+                 exchangeItemAtIndexPath1:self.currentIndexPath
+                     withItemAtIndexPath2:self.originalIndexPathForItemBeingDragged];
+        [self.delegate exchangeControllerDidFinishExchangeEvent:self];
         
         // View...
         [self.collectionView moveItemAtIndexPath:self.originalIndexPathForItemBeingDragged toIndexPath:self.indexPathOfItemLastExchanged];
@@ -243,8 +254,7 @@ static CGFloat          const defaultAlphaForDimmedItem = 0.60;
         // State...
         self.indexPathOfItemLastExchanged = self.currentIndexPath;
         self.mustUndoPriorExchange = YES;
-        
-        [self keepCenterOfCellForLastItemExchangedAtIndexPath:self.currentIndexPath];
+        [self keepCenterOfCellForLastItemExchanged];
         
     } completion:nil];
 }
@@ -254,8 +264,10 @@ static CGFloat          const defaultAlphaForDimmedItem = 0.60;
     [self.collectionView performBatchUpdates:^{
         
         // Model...
-        [self.delegate exchangeItemAtIndexPath:self.originalIndexPathForItemBeingDragged withItemAtIndexPath:self.indexPathOfItemLastExchanged];
-        [self.delegate didFinishExchangeEvent];
+        [self.delegate exchangeController:self
+                 exchangeItemAtIndexPath1:self.originalIndexPathForItemBeingDragged
+                     withItemAtIndexPath2:self.indexPathOfItemLastExchanged];
+        [self.delegate exchangeControllerDidFinishExchangeEvent:self];
         
         // View...
         [self.collectionView moveItemAtIndexPath:self.originalIndexPathForItemBeingDragged toIndexPath:self.indexPathOfItemLastExchanged];
@@ -264,39 +276,47 @@ static CGFloat          const defaultAlphaForDimmedItem = 0.60;
         // State...
         self.indexPathOfItemLastExchanged = self.originalIndexPathForItemBeingDragged;
         self.mustUndoPriorExchange = NO;
-        
-        [self keepCenterOfCellForLastItemExchangedAtIndexPath:self.currentIndexPath];
+        [self keepCenterOfCellForLastItemExchanged];
         
     } completion:nil];
 }
 
 - (void)finishExchangeTransaction {
     
-    [self.delegate didFinishExchangeTransactionWithItemAtIndexPath:self.indexPathOfItemLastExchanged
-                                                andItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
+    [self.delegate exchangeControllerDidFinishExchangeTransaction:self
+                                                   withIndexPath1:self.indexPathOfItemLastExchanged
+                                                       indexPath2:self.originalIndexPathForItemBeingDragged];
     
     // Animate the release. This is one of any number of ways to accomplish this.
     // You can change the animation as you see fit but you must call
     // performPostReleaseCleanupWithAnimationDuration: in your final completion block.
     
-    NSTimeInterval duration = 0.20;
-    CGFloat blinkToScale = 1.05f;
-    CGFloat finalScale = 1.0f;
+    NSTimeInterval duration = self.animationDuration;
+    CGFloat blinkToScale = self.blinkToScaleForCatch;
+    CGFloat finalScale = 1.0;
     UICollectionViewCell *cellForOriginalLocation = [self.collectionView cellForItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
     
     [UIView animateWithDuration:duration animations:^ {
         self.viewForImageBeingDragged.center = self.centerOfCellForLastItemExchanged;
         cellForOriginalLocation.alpha = 1.0;
     } completion:^(BOOL finished) {
-        [UIView animateWithDuration:duration animations:^ {
-            self.viewForImageBeingDragged.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
-        } completion:^(BOOL finished) {
+        
+        if ([self.delegate respondsToSelector:@selector(exchangeController:animateReleaseForImage:)]) {
+            
+            [self.delegate exchangeController:self animateReleaseForImage:self.viewForImageBeingDragged];
+            
+        } else {
+            
             [UIView animateWithDuration:duration animations:^ {
-                self.viewForImageBeingDragged.transform = CGAffineTransformMakeScale(finalScale, finalScale);
+                self.viewForImageBeingDragged.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
             } completion:^(BOOL finished) {
-                [self performPostReleaseCleanupWithAnimationDuration:duration];
+                [UIView animateWithDuration:duration animations:^ {
+                    self.viewForImageBeingDragged.transform = CGAffineTransformMakeScale(finalScale, finalScale);
+                } completion:^(BOOL finished) {
+                    [self performPostReleaseCleanupWithAnimationDuration:duration];
+                }];
             }];
-        }];
+        }
     }];
 }
 
@@ -313,36 +333,29 @@ static CGFloat          const defaultAlphaForDimmedItem = 0.60;
     self.longPressGestureRecognizer.enabled = YES;
 }
 
-- (void)performPostReleaseCleanupWithAnimationDuration:(float)animationDuration {
+- (void)performPostReleaseCleanupWithAnimationDuration:(NSTimeInterval)duration {
     
-    [CATransaction begin];
-    {
-        self.indexPathOfItemLastExchanged = nil;
-        self.originalIndexPathForItemBeingDragged = nil;
-        [self.collectionView.collectionViewLayout invalidateLayout];
-        
-        [CATransaction setCompletionBlock:^{
-            
-            [UIView animateWithDuration:animationDuration animations:^{
-                self.viewForImageBeingDragged.alpha = 0.0;
-            } completion:^(BOOL finished) {
-                [self.viewForImageBeingDragged removeFromSuperview];
-            }];
-        }];
-    }
-    [CATransaction commit];
+    self.indexPathOfItemLastExchanged = nil;
+    self.originalIndexPathForItemBeingDragged = nil;
+    [self.collectionView.collectionViewLayout invalidateLayout];
+    
+    [UIView animateWithDuration:duration animations:^{
+        self.viewForImageBeingDragged.alpha = 0.0;
+    } completion:^(BOOL finished) {
+        [self.viewForImageBeingDragged removeFromSuperview];
+    }];
 }
 
 - (BOOL)shouldNotContinueExchangeTransactionAtIndexPath:(NSIndexPath *)indexPath {
     
-    return (indexPath != nil && [self.delegate canExchange])? NO:YES;
+    return (indexPath != nil && [self.delegate exchangeControllerCanExchange:self])? NO:YES;
 }
 
 - (UIImageView *)imageViewForCell:(UICollectionViewCell *)cell {
     
-    if ([self.delegate respondsToSelector:@selector(imageViewForCell:)]) {
+    if ([self.delegate respondsToSelector:@selector(exchangeController:imageViewForCell:)]) {
         
-        return [self.delegate imageViewForCell:cell];
+        return [self.delegate exchangeController:self imageViewForCell:cell];
         
     } else {
         
@@ -360,11 +373,11 @@ static CGFloat          const defaultAlphaForDimmedItem = 0.60;
     return CGPointMake(locationInCellImageView.x - cellImageViewCenter.x, locationInCellImageView.y - cellImageViewCenter.y);
 }
 
-- (void)blinkCellImage:(UIImageView *)cellImage {
+- (void)animateCatch:(UIImageView *)cellImage {
     
-    if ([self.delegate respondsToSelector:@selector(blinkCellImage:)]) {
+    if ([self.delegate respondsToSelector:@selector(exchangeController:animateCatchForImage:)]) {
         
-        [self.delegate blinkCellImage:cellImage];
+        [self.delegate exchangeController:self animateCatchForImage:cellImage];
         
     } else {
         
@@ -392,9 +405,9 @@ static CGFloat          const defaultAlphaForDimmedItem = 0.60;
     return [indexPath isEqual:self.originalIndexPathForItemBeingDragged];
 }
 
-- (void)keepCenterOfCellForLastItemExchangedAtIndexPath:(NSIndexPath *)indexPath {
+- (void)keepCenterOfCellForLastItemExchanged {
     
-    UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:indexPath];
+    UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:self.currentIndexPath];
     self.centerOfCellForLastItemExchanged = itemCell.center;
 }
 

@@ -84,13 +84,17 @@
  
  
  7. Optional. This example app contains a category on NSMutableArray that implements a method for 
-    exchanging two items that can be in two different arrays. You can import that category and use
+    exchanging two items that can be in different arrays. You can import that category and use
     the method in the exchangeItemAtIndexPath:withItemAtIndexPath: delegate method.
  
         [NSMutableArray exchangeItemInArray:array1
                                     atIndex:indexPath1.item
                             withItemInArray:array2
                                     atIndex:indexPath2.item];
+ 
+    Note: see the arrayForSection: method in ViewController.m for an example of how to map your
+    collection view sections to arrays. You may need to implement something like this.
+ 
  
  8. Optional. The long press gesture recognizer is created with a default minimumPressDuration of 0.15. If you
     require a different value this property is exposed. Set it as required...
@@ -102,20 +106,37 @@
     Set it as required...
         self.exchangeController.alphaForDimmedItem = 0.75;
  
+ 
+ 10. Optional. This class provides default animations during the exchange process to provide feedback to
+    the user. If you need to change those animations you have two options.
+ 
+        1. This class exposes the properties used to set some aspects of the animations. You can set
+            those properties as you require. 
+        2. The protocol defines two optional methods that you can implement to do your own catch 
+            and release animations.
+ 
+ At the beginning of the process, when the long press enters the Began state, an image of the
+    cell is created with a default background color ([UIColor darkGrayColor]) and alpha (0.8). The image is
+    transformed to blink indicating a successful grab. That image is then animated around the screen following
+    the user's finger
+ 
  */
 
 
 
 #import <UIKit/UIKit.h>
 
+@class SSCollectionViewExchangeController;
 
 @protocol SSCollectionViewExchangeControllerDelegate <NSObject>
 
-- (BOOL)canExchange;
+- (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController ;
 // Called before beginning the exchange transaction to determine if it is ok to allow exchanges.
 
 
-- (void)exchangeItemAtIndexPath:(NSIndexPath *)firstItem withItemAtIndexPath:(NSIndexPath *)secondItem;
+- (void)exchangeController:(SSCollectionViewExchangeController *)exchangeController
+  exchangeItemAtIndexPath1:(NSIndexPath *)indexPath1
+      withItemAtIndexPath2:(NSIndexPath *)indexPath2;
 // Called whenever an exchange event occurs during an exchange transaction. This method
 // provides the delegate with an opportunity to update the model as the user is dragging. This method
 // may be called twice during a single exchange event. If so, the first call will be to undo a prior
@@ -123,12 +144,14 @@
 // update the model by exchanging the elements at the indicated index paths.
 
 
-- (void)didFinishExchangeEvent;
+- (void)exchangeControllerDidFinishExchangeEvent:(SSCollectionViewExchangeController *)exchangeController;
 // Called when an exchange event finishes within an exchange transaction. This method
 // provides the delegate with an opportunity to perform live updating as the user drags.
 
 
-- (void)didFinishExchangeTransactionWithItemAtIndexPath:(NSIndexPath *)firstItem andItemAtIndexPath:(NSIndexPath *)secondItem;
+- (void)exchangeControllerDidFinishExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController
+                                        withIndexPath1:(NSIndexPath *)indexPath1
+                                            indexPath2:(NSIndexPath *)indexPath2;
 // Called when the exchange transaction completes (the user lifts his/her finger). The
 // index paths represent the two items that were finally exchanged. This allows the delegate
 // to setup for undo, for example. If the user dragged back to the starting position and
@@ -137,15 +160,19 @@
 
 @optional
 
-- (UIImageView *)imageViewForCell:(UICollectionViewCell *)cell;
+- (UIImageView *)exchangeController:(SSCollectionViewExchangeController *)exchangeController imageViewForCell:(UICollectionViewCell *)cell;
 // SSCollectionViewExchangeController implements a method for returning an image of the cell using a default
 // background color and alpha. If this does not suit your purposes then implement this delegate method.
 
 
-- (void)blinkCellImage:(UIImageView *)cellImage;
-// SSCollectionViewExchangeController implements a default blink animation at the beginning of the long press
-// to provide feedback to the user. If this default implementation does not suit your purposes then implmement
-// this delegate method.
+- (void)exchangeController:(SSCollectionViewExchangeController *)exchangeController animateCatchForImage:(UIImageView *)cellImage;
+- (void)exchangeController:(SSCollectionViewExchangeController *)exchangeController animateReleaseForImage:(UIImageView *)cellImage;
+// To provide feedback to the user SSCollectionViewExchangeController implements default blink
+// animations at the beginning and end of the process. If the default implementations don't suit
+// your purposes then implmement either or both of these delegate methods.
+//
+// Note: If you implement exchangeController:animateReleaseForImage: you must call
+// performPostReleaseCleanupWithAnimationDuration: in your final completion block.
 
 @end
 
@@ -155,9 +182,18 @@
 - (instancetype)initWithDelegate:(id<SSCollectionViewExchangeControllerDelegate>)delegate
                   collectionView:(UICollectionView *)collectionView;
 
+- (void)performPostReleaseCleanupWithAnimationDuration:(NSTimeInterval)duration;
+
 - (UICollectionViewFlowLayout *)layout;
 
-@property (nonatomic) CGFloat           alphaForDimmedItem;
 @property (nonatomic) CFTimeInterval    minimumPressDuration;
+@property (nonatomic) CGFloat           alphaForDimmedItem;
+
+// Exchange process animation related properties...
+@property (nonatomic) NSTimeInterval    animationDuration;
+@property (nonatomic) CGFloat           blinkToScaleForCatch;
+@property (nonatomic) CGFloat           blinkToScaleForRelease;
+@property (nonatomic) CGFloat           alphaForImage;
+@property (strong, nonatomic) UIColor   *backgroundColorForImage;
 
 @end
