@@ -187,7 +187,7 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 - (UIImageView *)exchangeController:(SSCollectionViewExchangeController *)exchangeController
                    imageViewForCell:(UICollectionViewCell *)cell;
 // SSCollectionViewExchangeController implements a method for returning an image of the cell using a default
-// background color and alpha. If this does not suit your purposes then implement this delegate method.
+// background color and alpha. If this does not meet your requirements then implement this delegate method.
 
 
 - (void)animateCatchForExchangeController:(SSCollectionViewExchangeController *)exchangeController
@@ -196,11 +196,11 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 - (void)animateReleaseForExchangeController:(SSCollectionViewExchangeController *)exchangeController
                                   withImage:(UIImageView *)cellImage
                                     toPoint:(CGPoint)centerOfCell
-                     cellAtOriginalLocation:(UICollectionViewCell *)cellAtOriginalLocation // if you want to animate its alpha to 1.0
+                     cellAtOriginalLocation:(UICollectionViewCell *)cellAtOriginalLocation // you may want to animate its alpha back to 1.0
                             completionBlock:(PostReleaseCompletionBlock)completionBlock;
 // To provide feedback to the user SSCollectionViewExchangeController implements default
 // animations at the beginning (catch) and end of the process (release). If these implementations
-// don't suit your purposes then implement either or both of these delegate methods.
+// don't meet your requirements then implement either or both of these delegate methods.
 //
 // Note: If you implement animateReleaseForExchangeController:withImage:toPoint:cellAtOriginalLocation:completionBlock:
 // you must execute completionBlock and pass it an animation duration in your final completion block.
