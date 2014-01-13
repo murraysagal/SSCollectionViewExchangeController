@@ -179,14 +179,15 @@ NS_ENUM(NSInteger, CollectionViewSide) {
     NSLog(@"self.leftSide   |    self.middle    |    self.rightSide");
     
     for (int i=0; i<[self.leftSide count]; i++) {
-        NSLog(@"          %@     |       %@          |          %@", self.leftSide[i], self.middle[i], self.rightSide[i]);
+        NSLog(@"          %@     |         %@        |          %@", self.leftSide[i], self.middle[i], self.rightSide[i]);
     }
     
     NSInteger sumLeft = [self sumArray:self.leftSide];
+    NSInteger sumMiddle = [self sumArray:self.middle];
     NSInteger sumRight = [self sumArray:self.rightSide];
     
     NSLog(@" ");
-    NSLog(@" sumLeft= %ld                         sumRight= %ld", (long)sumLeft, (long)sumRight);
+    NSLog(@" sumLeft= %ld        sumMiddle= %ld      sumRight= %ld", (long)sumLeft, (long)sumMiddle, (long)sumRight);
     NSLog(@" ");
 }
 
