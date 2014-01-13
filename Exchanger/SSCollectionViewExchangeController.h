@@ -9,11 +9,14 @@
 /*
  
  SSCollectionViewExchangeController manages the process of exchanging 2 collection view items. 
- It installs a gesture recognizer in your collection view and creates a custom layout object,
- SSCollectionViewExchangeLayout, that manages the hiding and dimming of items in the collection 
- view during the exchange process. Through the SSCollectionViewExchangeControllerDelegate protocol 
- your view controller is kept informed allowing you to keep your model in sync with the changes 
- occuring on the collection view and perform any kind of live updating required during the process.
+ The two items can be in different sections (and different arrays) but must be in the same 
+ collection view. All cells that can be exchanged need to be visible--scrolling is not supported.
+ When you initialize an instance of this class it installs a gesture recognizer in your collection 
+ view and creates a custom layout object, SSCollectionViewExchangeLayout, that manages the hiding 
+ and dimming of items in the collection view during the exchange process. Through the 
+ SSCollectionViewExchangeControllerDelegate protocol your view controller is kept informed allowing 
+ you to keep your model in sync with the changes occuring on the collection view and perform any 
+ kind of live updating required during the process.
  
  
  Conceptual Diagram...
@@ -39,16 +42,24 @@
                                         ---------------------------------------
  
  
- Exchange Transactions and Exchange Events...
+ Terminology...
  
- An exchange transaction begins with a long press on an item and concludes when the user releases,
+ Catch: The user initiates the process with a long press on a cell. The default catch animation 
+ runs (you can create any animation you require) to indicate to the user that this item will be
+ exchanged with another. 
+ 
+ Release: The user releases, usually over another item, ending the process. The default release
+ animation runs (again, you can create any animation you require).
+ 
+ Exchange Transaction: An exchange transaction begins with a catch and concludes with a release,
  normally over another item, causing the two to be exchanged. However, between the beginning and
  the end the user may drag over many items including, possibly, the starting position.
  
- An exchange event occurs each time the user drags to a different item. If it is the first
+ Exchange Events: An exchange event occurs each time the user drags to a different item. If it is the first
  exchange event it is a simple exchange between the item being dragged and the item dragged to.
  If the user keeps dragging to new items subsequent exchange events include undoing the previous
- exchange and then performing the new exchange.
+ exchange and then performing the new exchange. There can be many exchange events within a single
+ exchange transaction.
  
  
  Usage...
@@ -76,14 +87,18 @@
         ...
  
  
- 6. Implement the protocol...
-        - (BOOL)canExchange;
-        - (void)exchangeItemAtIndexPath:(NSIndexPath *)indexPath1 withItemAtIndexPath:(NSIndexPath *)indexPath2;
-        - (void)didFinishExchangeEvent;
-        - (void)didFinishExchangeTransactionWithItemAtIndexPath:(NSIndexPath *)firstItem andItemAtIndexPath:(NSIndexPath *)secondItem;
+ 6. Implement the mandatory protocol methods...
+        - (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController;
+        - (void)exchangeController:(SSCollectionViewExchangeController *)exchangeController
+       didExchangeItemAtIndexPath1:(NSIndexPath *)indexPath1
+              withItemAtIndexPath2:(NSIndexPath *)indexPath2;
+        - (void)exchangeControllerDidFinishExchangeEvent:(SSCollectionViewExchangeController *)exchangeController;
+        - (void)exchangeControllerDidFinishExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController
+                                                withIndexPath1:(NSIndexPath *)indexPath1
+                                                    indexPath2:(NSIndexPath *)indexPath2;
  
  
- 7. Optional. This example app contains a category on NSMutableArray that implements a method for 
+ 7. Optional. This example app contains a category on NSMutableArray that implements a method for
     exchanging two items that can be in different arrays. You can import that category and use
     the method in the exchangeItemAtIndexPath:withItemAtIndexPath: delegate method.
  
@@ -185,7 +200,7 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
                             completionBlock:(PostReleaseCompletionBlock)completionBlock;
 // To provide feedback to the user SSCollectionViewExchangeController implements default
 // animations at the beginning (catch) and end of the process (release). If these implementations
-// don't suit your purposes then implmement either or both of these delegate methods.
+// don't suit your purposes then implement either or both of these delegate methods.
 //
 // Note: If you implement animateReleaseForExchangeController:withImage:toPoint:cellAtOriginalLocation:completionBlock:
 // you must execute completionBlock and pass it an animation duration in your final completion block.
@@ -205,7 +220,10 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 
 - (UICollectionViewFlowLayout *)layout;
 
+// for configuring the long press...
 @property (nonatomic) CFTimeInterval    minimumPressDuration;
+
+// the layout uses this property...
 @property (nonatomic) CGFloat           alphaForDimmedItem;
 
 // Exchange process animation related properties...
