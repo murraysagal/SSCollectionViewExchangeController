@@ -44,7 +44,9 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 // be captured just before it is hidden.
 @property (nonatomic)           CGPoint             centerOfCellForLastItemExchanged;
 
-@property (strong, nonatomic)   UILongPressGestureRecognizer *longPressGestureRecognizer;
+@property (strong, nonatomic)   UILongPressGestureRecognizer    *longPressGestureRecognizer;
+
+@property (nonatomic, copy)     PostReleaseCompletionBlock      postReleaseCompletionBlock;
 
 @end
 
@@ -96,6 +98,24 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 - (UICollectionViewFlowLayout *)layout {
     
     return (UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout;
+}
+
+- (PostReleaseCompletionBlock)postReleaseCompletionBlock {
+    
+    __weak SSCollectionViewExchangeController *weakSelf = self;
+    
+    return ^ void (NSTimeInterval duration) {
+        
+        weakSelf.indexPathOfItemLastExchanged = nil;
+        weakSelf.originalIndexPathForItemBeingDragged = nil;
+        [weakSelf.collectionView.collectionViewLayout invalidateLayout];
+        
+        [UIView animateWithDuration:duration animations:^ {
+            weakSelf.viewForImageBeingDragged.alpha = 0.0;
+        } completion:^(BOOL finished) {
+            [weakSelf.viewForImageBeingDragged removeFromSuperview];
+        }];
+    };
 }
 
 
@@ -217,7 +237,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         
         // Model...
         [self.delegate exchangeController:self
-                 exchangeItemAtIndexPath1:self.currentIndexPath
+              didExchangeItemAtIndexPath1:self.currentIndexPath
                      withItemAtIndexPath2:self.originalIndexPathForItemBeingDragged];
         [self.delegate exchangeControllerDidFinishExchangeEvent:self];
         
@@ -239,10 +259,10 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         
         // Model...
         [self.delegate exchangeController:self
-                 exchangeItemAtIndexPath1:self.originalIndexPathForItemBeingDragged
+              didExchangeItemAtIndexPath1:self.originalIndexPathForItemBeingDragged
                      withItemAtIndexPath2:self.indexPathOfItemLastExchanged];
         [self.delegate exchangeController:self
-                 exchangeItemAtIndexPath1:self.currentIndexPath
+              didExchangeItemAtIndexPath1:self.currentIndexPath
                      withItemAtIndexPath2:self.originalIndexPathForItemBeingDragged];
         [self.delegate exchangeControllerDidFinishExchangeEvent:self];
         
@@ -265,7 +285,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         
         // Model...
         [self.delegate exchangeController:self
-                 exchangeItemAtIndexPath1:self.originalIndexPathForItemBeingDragged
+              didExchangeItemAtIndexPath1:self.originalIndexPathForItemBeingDragged
                      withItemAtIndexPath2:self.indexPathOfItemLastExchanged];
         [self.delegate exchangeControllerDidFinishExchangeEvent:self];
         
@@ -286,40 +306,8 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     [self.delegate exchangeControllerDidFinishExchangeTransaction:self
                                                    withIndexPath1:self.indexPathOfItemLastExchanged
                                                        indexPath2:self.originalIndexPathForItemBeingDragged];
-    
-    // Animate the release. This is one of any number of ways to accomplish this.
-    // You can change the animation as you see fit but you must call
-    // performPostReleaseCleanupWithAnimationDuration: in your final completion block.
-    
-    NSTimeInterval duration = self.animationDuration;
-    CGFloat blinkToScale = self.blinkToScaleForCatch;
-    CGFloat finalScale = 1.0;
-    UICollectionViewCell *cellForOriginalLocation = [self.collectionView cellForItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
-    
-    [UIView animateWithDuration:duration animations:^ {
-        self.viewForImageBeingDragged.center = self.centerOfCellForLastItemExchanged;
-        cellForOriginalLocation.alpha = 1.0;
-    } completion:^(BOOL finished) {
-        
-        if ([self.delegate respondsToSelector:@selector(exchangeController:animateReleaseForImage:)]) {
-            
-            [self.delegate exchangeController:self animateReleaseForImage:self.viewForImageBeingDragged];
-            
-        } else {
-            
-            [UIView animateWithDuration:duration animations:^ {
-                self.viewForImageBeingDragged.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
-            } completion:^(BOOL finished) {
-                [UIView animateWithDuration:duration animations:^ {
-                    self.viewForImageBeingDragged.transform = CGAffineTransformMakeScale(finalScale, finalScale);
-                } completion:^(BOOL finished) {
-                    [self performPostReleaseCleanupWithAnimationDuration:duration];
-                }];
-            }];
-        }
-    }];
+    [self animateRelease];
 }
-
 
 
 //---------------------------------------
@@ -333,22 +321,39 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     self.longPressGestureRecognizer.enabled = YES;
 }
 
-- (void)performPostReleaseCleanupWithAnimationDuration:(NSTimeInterval)duration {
-    
-    self.indexPathOfItemLastExchanged = nil;
-    self.originalIndexPathForItemBeingDragged = nil;
-    [self.collectionView.collectionViewLayout invalidateLayout];
-    
-    [UIView animateWithDuration:duration animations:^{
-        self.viewForImageBeingDragged.alpha = 0.0;
-    } completion:^(BOOL finished) {
-        [self.viewForImageBeingDragged removeFromSuperview];
-    }];
-}
-
 - (BOOL)shouldNotContinueExchangeTransactionAtIndexPath:(NSIndexPath *)indexPath {
     
-    return (indexPath != nil && [self.delegate exchangeControllerCanExchange:self])? NO:YES;
+    BOOL canExchange = [self.delegate exchangeControllerCanExchange:self];
+    BOOL locationIsInCatchRectangle = [self locationIsInCatchRectangleForItemAtIndexPath:indexPath];
+    
+    BOOL shouldContinue = (indexPath && canExchange && locationIsInCatchRectangle);
+    
+    return !shouldContinue;
+}
+
+- (BOOL)locationIsInCatchRectangleForItemAtIndexPath:(NSIndexPath *)indexPath {
+    
+    BOOL locationIsInCatchRectangle;
+    UIView *viewForCatchRectangle;
+    
+    if ([self.delegate respondsToSelector:@selector(exchangeController:viewForCatchRectangleForItemAtIndexPath:)]) {
+
+        viewForCatchRectangle = [self.delegate exchangeController:self
+                          viewForCatchRectangleForItemAtIndexPath:indexPath];
+    }
+    
+    if (viewForCatchRectangle) {
+        
+        CGPoint locationInCatchRectangle = [self.longPressGestureRecognizer locationInView:viewForCatchRectangle];
+        locationIsInCatchRectangle = (locationInCatchRectangle.x < 0 ||
+                                      locationInCatchRectangle.y < 0 ||
+                                      locationInCatchRectangle.x > viewForCatchRectangle.frame.size.width ||
+                                      locationInCatchRectangle.y > viewForCatchRectangle.frame.size.height)? NO:YES;
+    } else {
+        locationIsInCatchRectangle = YES;
+    }
+    
+    return locationIsInCatchRectangle;
 }
 
 - (UIImageView *)imageViewForCell:(UICollectionViewCell *)cell {
@@ -359,7 +364,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         
     } else {
         
-        UIImage *cellImage = [self imageFromCell:cell withBackgroundColor:[UIColor darkGrayColor] alpha:0.8];
+        UIImage *cellImage = [self imageFromCell:cell withBackgroundColor:self.backgroundColorForImage alpha:self.alphaForImage];
         UIImageView *cellImageView = [[UIImageView alloc] initWithImage:cellImage];
         cellImageView.frame = cell.frame;
         return cellImageView;
@@ -375,14 +380,14 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (void)animateCatch:(UIImageView *)cellImage {
     
-    if ([self.delegate respondsToSelector:@selector(exchangeController:animateCatchForImage:)]) {
+    if ([self.delegate respondsToSelector:@selector(animateCatchForExchangeController:withImage:)]) {
         
-        [self.delegate exchangeController:self animateCatchForImage:cellImage];
+        [self.delegate animateCatchForExchangeController:self withImage:cellImage];
         
     } else {
         
-        NSTimeInterval duration = 0.20;
-        CGFloat blinkToScale = 1.2;
+        NSTimeInterval duration = self.animationDuration;
+        CGFloat blinkToScale = self.blinkToScaleForCatch;
         CGFloat finalScale = 1.0;
         
         [UIView animateWithDuration:duration animations:^ {
@@ -390,6 +395,42 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         } completion:^(BOOL finished) {
             [UIView animateWithDuration:duration animations:^ {
                 cellImage.transform = CGAffineTransformMakeScale(finalScale, finalScale);
+            }];
+        }];
+    }
+}
+
+- (void)animateRelease {
+    
+    UICollectionViewCell *cellForOriginalLocation = [self.collectionView cellForItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
+    
+    if ([self.delegate respondsToSelector:@selector(animateReleaseForExchangeController:withImage:toPoint:cellAtOriginalLocation:completionBlock:)]) {
+        
+        [self.delegate animateReleaseForExchangeController:self
+                                                 withImage:self.viewForImageBeingDragged
+                                                   toPoint:self.centerOfCellForLastItemExchanged
+                                    cellAtOriginalLocation:cellForOriginalLocation
+                                           completionBlock:self.postReleaseCompletionBlock];
+    } else {
+        
+        NSTimeInterval duration = self.animationDuration;
+        CGFloat blinkToScale = self.blinkToScaleForRelease;
+        CGFloat finalScale = 1.0;
+        
+        [UIView animateWithDuration:duration animations:^ {
+            self.viewForImageBeingDragged.center = self.centerOfCellForLastItemExchanged;
+            cellForOriginalLocation.alpha = 1.0;
+        } completion:^(BOOL finished) {
+            
+            [UIView animateWithDuration:duration animations:^ {
+                self.viewForImageBeingDragged.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
+            } completion:^(BOOL finished) {
+                
+                [UIView animateWithDuration:duration animations:^ {
+                    self.viewForImageBeingDragged.transform = CGAffineTransformMakeScale(finalScale, finalScale);
+                } completion:^(BOOL finished) {
+                    self.postReleaseCompletionBlock(duration);
+                }];
             }];
         }];
     }

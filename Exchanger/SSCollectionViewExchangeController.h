@@ -126,17 +126,19 @@
 
 #import <UIKit/UIKit.h>
 
+typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
+
 @class SSCollectionViewExchangeController;
 
 @protocol SSCollectionViewExchangeControllerDelegate <NSObject>
 
-- (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController ;
+- (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController;
 // Called before beginning the exchange transaction to determine if it is ok to allow exchanges.
 
 
-- (void)exchangeController:(SSCollectionViewExchangeController *)exchangeController
-  exchangeItemAtIndexPath1:(NSIndexPath *)indexPath1
-      withItemAtIndexPath2:(NSIndexPath *)indexPath2;
+- (void)    exchangeController:(SSCollectionViewExchangeController *)exchangeController
+   didExchangeItemAtIndexPath1:(NSIndexPath *)indexPath1
+          withItemAtIndexPath2:(NSIndexPath *)indexPath2;
 // Called whenever an exchange event occurs during an exchange transaction. This method
 // provides the delegate with an opportunity to update the model as the user is dragging. This method
 // may be called twice during a single exchange event. If so, the first call will be to undo a prior
@@ -160,19 +162,38 @@
 
 @optional
 
-- (UIImageView *)exchangeController:(SSCollectionViewExchangeController *)exchangeController imageViewForCell:(UICollectionViewCell *)cell;
+- (UIView *)      exchangeController:(SSCollectionViewExchangeController *)exchangeController
+  viewForCatchRectangleForItemAtIndexPath:(NSIndexPath *)indexPath;
+// If your collection view cells can only be caught if the long press occurs over a specific
+// rectangle then implement this method and return the view representing that rectangle. If
+// this method is not implemented the catch rectangle is assumed to be the entire cell. 
+
+
+- (UIImageView *)exchangeController:(SSCollectionViewExchangeController *)exchangeController
+                   imageViewForCell:(UICollectionViewCell *)cell;
 // SSCollectionViewExchangeController implements a method for returning an image of the cell using a default
 // background color and alpha. If this does not suit your purposes then implement this delegate method.
 
 
-- (void)exchangeController:(SSCollectionViewExchangeController *)exchangeController animateCatchForImage:(UIImageView *)cellImage;
-- (void)exchangeController:(SSCollectionViewExchangeController *)exchangeController animateReleaseForImage:(UIImageView *)cellImage;
-// To provide feedback to the user SSCollectionViewExchangeController implements default blink
-// animations at the beginning and end of the process. If the default implementations don't suit
-// your purposes then implmement either or both of these delegate methods.
+- (void)animateCatchForExchangeController:(SSCollectionViewExchangeController *)exchangeController
+                                withImage:(UIImageView *)cellImage;
+
+- (void)animateReleaseForExchangeController:(SSCollectionViewExchangeController *)exchangeController
+                                  withImage:(UIImageView *)cellImage
+                                    toPoint:(CGPoint)centerOfCell
+                     cellAtOriginalLocation:(UICollectionViewCell *)cellAtOriginalLocation // if you want to animate its alpha to 1.0
+                            completionBlock:(PostReleaseCompletionBlock)completionBlock;
+// To provide feedback to the user SSCollectionViewExchangeController implements default
+// animations at the beginning (catch) and end of the process (release). If these implementations
+// don't suit your purposes then implmement either or both of these delegate methods.
 //
-// Note: If you implement exchangeController:animateReleaseForImage: you must call
-// performPostReleaseCleanupWithAnimationDuration: in your final completion block.
+// Note: If you implement animateReleaseForExchangeController:withImage:toPoint:cellAtOriginalLocation:completionBlock:
+// you must execute completionBlock and pass it an animation duration in your final completion block.
+//          ...
+//          } completion:^(BOOL finished) {
+//              postReleaseCompletionBlock(duration);
+//          }];
+
 
 @end
 
@@ -181,8 +202,6 @@
 
 - (instancetype)initWithDelegate:(id<SSCollectionViewExchangeControllerDelegate>)delegate
                   collectionView:(UICollectionView *)collectionView;
-
-- (void)performPostReleaseCleanupWithAnimationDuration:(NSTimeInterval)duration;
 
 - (UICollectionViewFlowLayout *)layout;
 

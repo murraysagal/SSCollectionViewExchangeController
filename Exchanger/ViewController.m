@@ -233,12 +233,12 @@ NS_ENUM(NSInteger, CollectionViewSide) {
 
 
 
-//----------------------------------------------------------------------------
+//-----------------------------------------------------------------------
 #pragma mark - SSCollectionViewExchangeLayoutDelegate protocol methods...
 
-- (void)exchangeController:(SSCollectionViewExchangeController *)exchangeController
-  exchangeItemAtIndexPath1:(NSIndexPath *)indexPath1
-      withItemAtIndexPath2:(NSIndexPath *)indexPath2
+- (void)    exchangeController:(SSCollectionViewExchangeController *)exchangeController
+   didExchangeItemAtIndexPath1:(NSIndexPath *)indexPath1
+          withItemAtIndexPath2:(NSIndexPath *)indexPath2
 {
     // Allows the delegate to keep the model synchronized with the changes occuring on the view.
     // Called either one or two times during an exchange event.
@@ -277,6 +277,49 @@ NS_ENUM(NSInteger, CollectionViewSide) {
     
     // This example always returns YES.
     return YES;
+}
+
+- (void)animateCatchForExchangeController:(SSCollectionViewExchangeController *)exchangeController withImage:(UIImageView *)cellImage {
+
+    NSTimeInterval duration = 0.20;
+    CGFloat blinkToScale = 1.20;
+    CGFloat finalScale = 1.0;
+    
+    [UIView animateWithDuration:duration animations:^ {
+        cellImage.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
+    } completion:^(BOOL finished) {
+        [UIView animateWithDuration:duration animations:^ {
+            cellImage.transform = CGAffineTransformMakeScale(finalScale, finalScale);
+        }];
+    }];
+}
+
+- (void)animateReleaseForExchangeController:(SSCollectionViewExchangeController *)exchangeController
+                                  withImage:(UIImageView *)cellImage
+                                    toPoint:(CGPoint)centerOfCell
+                     cellAtOriginalLocation:(UICollectionViewCell *)cellAtOriginalLocation
+                            completionBlock:(PostReleaseCompletionBlock)completionBlock {
+    
+    NSTimeInterval duration = 0.20;
+    CGFloat blinkToScale = 1.05;
+    CGFloat finalScale = 1.0;
+    
+    [UIView animateWithDuration:duration animations:^ {
+        cellImage.center = centerOfCell;
+        cellAtOriginalLocation.alpha = 1.0;
+    } completion:^(BOOL finished) {
+        
+        [UIView animateWithDuration:duration animations:^ {
+            cellImage.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
+        } completion:^(BOOL finished) {
+            
+            [UIView animateWithDuration:duration animations:^ {
+                cellImage.transform = CGAffineTransformMakeScale(finalScale, finalScale);
+            } completion:^(BOOL finished) {
+                completionBlock(duration);
+            }];
+        }];
+    }];
 }
 
 
