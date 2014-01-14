@@ -194,21 +194,34 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
                                 withImage:(UIImageView *)cellImage;
 
 - (void)animateReleaseForExchangeController:(SSCollectionViewExchangeController *)exchangeController
-                                  withImage:(UIImageView *)cellImage
-                                    toPoint:(CGPoint)centerOfCell
-                     cellAtOriginalLocation:(UICollectionViewCell *)cellAtOriginalLocation // you may want to animate its alpha back to 1.0
-                            completionBlock:(PostReleaseCompletionBlock)completionBlock;
-// To provide feedback to the user SSCollectionViewExchangeController implements default
-// animations at the beginning (catch) and end of the process (release). If these implementations
-// don't meet your requirements then implement either or both of these delegate methods.
-//
-// Note: If you implement animateReleaseForExchangeController:withImage:toPoint:cellAtOriginalLocation:completionBlock:
-// you must execute completionBlock and pass it an animation duration in your final completion block.
-//          ...
-//          } completion:^(BOOL finished) {
-//              postReleaseCompletionBlock(duration);
-//          }];
+                                  withImage:(UIImageView *)cellImage                        // this is the image the user has been dragging
+                                    toPoint:(CGPoint)centerOfCell                           // this is the center of the cell where the release occurred
+                     cellAtOriginalLocation:(UICollectionViewCell *)cellAtOriginalLocation  // animate its alpha back to 1.0
+                            completionBlock:(PostReleaseCompletionBlock)completionBlock;    // you must execute this completion block in your final completion block
+/*
+ To provide feedback to the user SSCollectionViewExchangeController implements default
+ animations for the catch and the release. If these implementations don't meet your
+ requirements then implement either or both of these animate... delegate methods.
 
+ Note: If you implement animateReleaseForExchangeController:withImage:toPoint:cellAtOriginalLocation:completionBlock:
+ you must do the following...
+    1. Animate cellImage to centerOfCell. The how is up to you.
+    2. Animate the alpha for cellAtOriginalLocation back to 1.0.
+    3. Do not call invalidateLayout or remove the image from its superview.
+    4. In your final completion block, execute completionBlock and pass it an animation duration.
+          ...
+          } completion:^(BOOL finished) {
+              completionBlock(duration);
+          }];
+
+        completionBlock manages the sequencing of the final moments of the exchange transaction.
+        First, it sets some internal state and then calls invalidateLayout to unhide the hidden 
+        cell (where the user dragged to). This unhiding happens immediately and without any animation.
+        But, purposefully, the image the user dragged around is still on the view so the instant 
+        unhiding of the cell happened behind the image so no change was visible. Then completionBlock 
+        animates the alpha of the image to 0.0, according to the duration you provide, revealing the 
+        now unhidden cell. When that animation is finished it removes the image from the collection view.
+*/
 
 @end
 

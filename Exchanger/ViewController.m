@@ -165,12 +165,6 @@ NS_ENUM(NSInteger, CollectionViewSide) {
         sum += [number integerValue];
     }
     return sum;
-    
-//    __block NSInteger sum = 0;
-//    [array enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-//        sum += [obj integerValue];
-//    }];
-//    return sum;
 }
 
 - (void)logModel
