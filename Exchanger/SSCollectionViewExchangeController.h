@@ -45,8 +45,7 @@
  Terminology...
  
  Catch: The user initiates the process with a long press on a cell. The default catch animation 
- runs (you can create any animation you require) to indicate to the user that this item will be
- exchanged with another. 
+ runs (you can create any animation you require) to indicate a successul catch to the user.
  
  Release: The user releases, usually over another item, ending the process. The default release
  animation runs (again, you can create any animation you require).
@@ -55,11 +54,22 @@
  normally over another item, causing the two to be exchanged. However, between the beginning and
  the end the user may drag over many items including, possibly, the starting position.
  
- Exchange Events: An exchange event occurs each time the user drags to a different item. If it is the first
- exchange event it is a simple exchange between the item being dragged and the item dragged to.
- If the user keeps dragging to new items subsequent exchange events include undoing the previous
- exchange and then performing the new exchange. There can be many exchange events within a single
- exchange transaction.
+ Exchange Events: An exchange event occurs each time the user drags to a different item. If it 
+ is the first exchange event it is a simple exchange between the item being dragged and the item 
+ dragged to. If the user keeps dragging to new items subsequent exchange events include undoing 
+ the previous exchange and then performing the new exchange. There can be many exchange events 
+ within a single exchange transaction.
+ 
+ Displaced Item: When the user drags over a new item that item is displaced. It animates away to 
+ the original location of the item being dragged. At the same time, the item that was previously
+ displaced animates back to its original location. The layout lowers the alpha for the displaced
+ item to indicate where the process started. 
+ 
+ Dragged Item: Between the catch and the release the cell for the dragged item is hidden. This is 
+ managed by the layout. Nevertheless, the dragged item is following the user as the exchange 
+ transaction proceeds. If you are curios, return nil from the indexPathForItemToHide delegate 
+ method and you will be able to watch the dragged item, best viewed in the simulator with slow 
+ animations on.
  
  
  Usage...
@@ -127,13 +137,24 @@
  
         1. This class exposes the properties used to set some aspects of the animations. You can set
             those properties as you require. 
-        2. The protocol defines two optional methods that you can implement to do your own catch 
-            and release animations.
+        2. The protocol defines three methods (optional) that you can implement to create your own cell
+            snapshot and perform your own catch and release animations.
  
- At the beginning of the process, when the long press enters the Began state, an image of the
-    cell is created with a default background color ([UIColor darkGrayColor]) and alpha (0.8). The image is
-    transformed to blink indicating a successful grab. That image is then animated around the screen following
-    the user's finger
+ At the beginning of the process, at the catch, a snapshot of the
+    cell is created with a default background color ([UIColor darkGrayColor]) and alpha (0.8). The snapshot is
+    transformed to blink indicating a successful catch. That snapshot is then animated around the screen following
+    the user's finger.
+ 
+ // TODO: the documentation for #10 needs work.
+ 
+ 
+ Limitations...
+ 
+    - Scrolling is not supported. All the cells that can be exchanged need to be visible on the screen.
+    - The exchange controller does not provide any support for rotation. But if your view controller
+        allows rotation and manages the layout as required the exchange controller will continue to work. 
+ 
+ // TODO: the rotation assumption needs testing
  
  */
 
@@ -177,37 +198,36 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 
 @optional
 
-- (UIView *)      exchangeController:(SSCollectionViewExchangeController *)exchangeController
+- (UIView *)           exchangeController:(SSCollectionViewExchangeController *)exchangeController
   viewForCatchRectangleForItemAtIndexPath:(NSIndexPath *)indexPath;
 // If your collection view cells can only be caught if the long press occurs over a specific
 // rectangle then implement this method and return the view representing that rectangle. If
 // this method is not implemented the catch rectangle is assumed to be the entire cell. 
 
 
-- (UIImageView *)exchangeController:(SSCollectionViewExchangeController *)exchangeController
-                   imageViewForCell:(UICollectionViewCell *)cell;
-// SSCollectionViewExchangeController implements a method for returning an image of the cell using a default
+- (UIView *)exchangeController:(SSCollectionViewExchangeController *)exchangeController
+               snapshotForCell:(UICollectionViewCell *)cell;
+// SSCollectionViewExchangeController implements a method for returning a snapshot of the cell using a default
 // background color and alpha. If this does not meet your requirements then implement this delegate method.
 
 
 - (void)animateCatchForExchangeController:(SSCollectionViewExchangeController *)exchangeController
-                                withImage:(UIImageView *)cellImage;
+                             withSnapshot:(UIView *)snapshot;
 
 - (void)animateReleaseForExchangeController:(SSCollectionViewExchangeController *)exchangeController
-                                  withImage:(UIImageView *)cellImage                        // this is the image the user has been dragging
+                               withSnapshot:(UIView *)snapshot                              // this is the view the user has been dragging
                                     toPoint:(CGPoint)centerOfCell                           // this is the center of the cell where the release occurred
                      cellAtOriginalLocation:(UICollectionViewCell *)cellAtOriginalLocation  // animate its alpha back to 1.0
                             completionBlock:(PostReleaseCompletionBlock)completionBlock;    // you must execute this completion block in your final completion block
 /*
  To provide feedback to the user SSCollectionViewExchangeController implements default
  animations for the catch and the release. If these implementations don't meet your
- requirements then implement either or both of these animate... delegate methods.
+ requirements then implement either or both of the animate... delegate methods.
 
- Note: If you implement animateReleaseForExchangeController:withImage:toPoint:cellAtOriginalLocation:completionBlock:
- you must do the following...
-    1. Animate cellImage to centerOfCell. The how is up to you.
+ Note: If you implement the animateRelease... method you must do the following...
+    1. Animate snapshot to centerOfCell.
     2. Animate the alpha for cellAtOriginalLocation back to 1.0.
-    3. Do not call invalidateLayout or remove the image from its superview.
+    3. Do not call invalidateLayout or remove the snapshot from its superview.
     4. In your final completion block, execute completionBlock and pass it an animation duration.
           ...
           } completion:^(BOOL finished) {
@@ -215,12 +235,12 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
           }];
 
         completionBlock manages the sequencing of the final moments of the exchange transaction.
-        First, it sets some internal state and then calls invalidateLayout to unhide the hidden 
+        First, it sets some internal state and then calls invalidateLayout which unhides the hidden 
         cell (where the user dragged to). This unhiding happens immediately and without any animation.
-        But, purposefully, the image the user dragged around is still on the view so the instant 
-        unhiding of the cell happened behind the image so no change was visible. Then completionBlock 
-        animates the alpha of the image to 0.0, according to the duration you provide, revealing the
-        now unhidden cell. When that animation is finished it removes the image from the collection view.
+        But, purposefully, the snapshot the user dragged around is still on the view so the instant
+        unhiding of the cell happened behind the snapshot so no change was visible. Then completionBlock
+        animates the alpha of the snapshot to 0.0, according to the duration you provide, revealing the
+        now unhidden cell. When that animation is finished it removes the snapshot from the collection view.
 */
 
 @end
@@ -243,7 +263,7 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 @property (nonatomic) NSTimeInterval    animationDuration;
 @property (nonatomic) CGFloat           blinkToScaleForCatch;
 @property (nonatomic) CGFloat           blinkToScaleForRelease;
-@property (nonatomic) CGFloat           alphaForImage;
-@property (strong, nonatomic) UIColor   *backgroundColorForImage;
+@property (nonatomic) CGFloat           snapshotAlpha;
+@property (strong, nonatomic) UIColor   *snapshotBackgroundColor;
 
 @end

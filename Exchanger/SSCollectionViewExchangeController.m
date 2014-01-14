@@ -8,7 +8,7 @@
 
 #import "SSCollectionViewExchangeController.h"
 #import "SSCollectionViewExchangeLayout.h"
-#import <QuartzCore/QuartzCore.h>
+#import "UIGestureRecognizer+SSCollectionViewExchangeControllerAdditions.h"
 
 
 typedef NS_ENUM(NSInteger, ExchangeEventType) {
@@ -25,8 +25,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 @property (weak, nonatomic)     id<SSCollectionViewExchangeControllerDelegate> delegate;
 
 @property (weak, nonatomic)     UICollectionView    *collectionView;
-@property (strong, nonatomic)   UIView         *viewForImageBeingDragged;
-//@property (strong, nonatomic)   UIImageView         *viewForImageBeingDragged;
+@property (strong, nonatomic)   UIView              *snapshot;
 @property (nonatomic)           CGPoint             locationInCollectionView;
 @property (strong, nonatomic)   NSIndexPath         *originalIndexPathForItemBeingDragged;
 @property (strong, nonatomic)   NSIndexPath         *indexPathOfItemLastExchanged;
@@ -66,8 +65,8 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         _animationDuration =        0.20;
         _blinkToScaleForCatch =     1.20;
         _blinkToScaleForRelease =   1.05;
-        _alphaForImage =            0.80;
-        _backgroundColorForImage =  [UIColor darkGrayColor];
+        _snapshotAlpha =            0.80;
+        _snapshotBackgroundColor =  [UIColor darkGrayColor];
         
         
         _longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress)];
@@ -112,9 +111,9 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         [weakSelf.collectionView.collectionViewLayout invalidateLayout];
         
         [UIView animateWithDuration:duration animations:^ {
-            weakSelf.viewForImageBeingDragged.alpha = 0.0;
+            weakSelf.snapshot.alpha = 0.0;
         } completion:^(BOOL finished) {
-            [weakSelf.viewForImageBeingDragged removeFromSuperview];
+            [weakSelf.snapshot removeFromSuperview];
         }];
     };
 }
@@ -133,7 +132,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
             break;
             
         case UIGestureRecognizerStateChanged:
-            [self updateCellImageLocation];
+            [self updateSnapshotLocation];
             [self performExchangeEventType];
             break;
             
@@ -157,37 +156,60 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (void)beginExchangeTransaction {
     
-    NSIndexPath *currentIndexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
+    NSIndexPath *indexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
     
-    if ([self shouldNotContinueExchangeTransactionAtIndexPath:currentIndexPath]) {
+    if ([self shouldNotContinueExchangeTransactionAtIndexPath:indexPath]) {
         [self cancelLongPressRecognizer];
         return;
     }
     
-    UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:currentIndexPath];
-    UIView *cellSnapshot = [self snapshotView:cell withBackgroundColor:self.backgroundColorForImage alpha:self.alphaForImage];
-    [self.collectionView addSubview:cellSnapshot];
+    UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:indexPath];
+    UIView *snapshot = [self snapshotForCell:cell];
+    [self.collectionView addSubview:snapshot];
     
-    self.offsetToCenter = [self offsetToCenterForCellImageView:cell];
-    self.viewForImageBeingDragged = cellSnapshot;
+    [self animateCatch:snapshot];
+    
+    self.offsetToCenter = [self.longPressGestureRecognizer offsetFromLocationToCenterForView:cell];
+    self.snapshot = snapshot;
     self.centerOfCellForLastItemExchanged = cell.center;
-    self.originalIndexPathForItemBeingDragged = currentIndexPath;
-    self.indexPathOfItemLastExchanged = currentIndexPath;
+    self.originalIndexPathForItemBeingDragged = indexPath;
+    self.indexPathOfItemLastExchanged = indexPath;
     self.mustUndoPriorExchange = NO;
-    
-    [self animateCatch:cellSnapshot];
     
     // InvalidateLayout kicks off the process of redrawing the layout.
     // SSCollectionViewExchangeLayout intervenes in that process by overriding
     // layoutAttributesForElementsInRect: and layoutAttributesForItemAtIndexPath:
     // to hide and dim collection view items as required.
     [self.collectionView.collectionViewLayout invalidateLayout];
+    
 }
 
-- (void)updateCellImageLocation {
+- (void)updateSnapshotLocation {
     
     CGPoint offsetLocationInCollectionView = CGPointMake(self.locationInCollectionView.x - self.offsetToCenter.x, self.locationInCollectionView.y - self.offsetToCenter.y);
-    self.viewForImageBeingDragged.center = offsetLocationInCollectionView;
+    self.snapshot.center = offsetLocationInCollectionView;
+}
+
+- (ExchangeEventType)exchangeEventType {
+    
+    // The user is still dragging in the long press. Determine the exchange event type.
+    self.currentIndexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
+    
+    // TODo: it might be better to reverse these two conditons...
+    if  (self.currentIndexPath == nil || [self isOverSameItemAtIndexPath:self.currentIndexPath])
+        return ExchangeEventTypeNothingToExchange;
+    
+    
+    // Otherwise there is an exchange event to perform. What kind?
+    
+    if (self.mustUndoPriorExchange) {
+        
+        return ([self isBackToStartingItemAtIndexPath:self.currentIndexPath])? ExchangeEventTypeDraggedToStartingItem : ExchangeEventTypeDraggedToOtherItem;
+        
+    } else {
+        
+        return ExchangeEventTypeDraggedFromStartingItem;
+    }
 }
 
 - (void)performExchangeEventType {
@@ -208,27 +230,6 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         case ExchangeEventTypeDraggedToStartingItem:
             [self performExchangeEventTypeDraggedToStartingItem];
             break;
-    }
-}
-
-- (ExchangeEventType)exchangeEventType {
-    
-    // The user is still dragging in the long press. Determine the exchange event type.
-    self.currentIndexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
-    
-    if  (self.currentIndexPath == nil || [self isOverSameItemAtIndexPath:self.currentIndexPath])
-        return ExchangeEventTypeNothingToExchange;
-    
-    
-    // Otherwise there is an exchange event to perform. What kind?
-    
-    if (self.mustUndoPriorExchange)
-    {
-        return ([self isBackToStartingItemAtIndexPath:self.currentIndexPath])? ExchangeEventTypeDraggedToStartingItem : ExchangeEventTypeDraggedToOtherItem;
-    }
-    else
-    {
-        return ExchangeEventTypeDraggedFromStartingItem;
     }
 }
 
@@ -326,10 +327,9 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     
     BOOL canExchange = [self.delegate exchangeControllerCanExchange:self];
     BOOL locationIsInCatchRectangle = [self locationIsInCatchRectangleForItemAtIndexPath:indexPath];
-    
     BOOL shouldContinue = (indexPath && canExchange && locationIsInCatchRectangle);
-    
     return !shouldContinue;
+    
 }
 
 - (BOOL)locationIsInCatchRectangleForItemAtIndexPath:(NSIndexPath *)indexPath {
@@ -341,6 +341,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
         viewForCatchRectangle = [self.delegate exchangeController:self
                           viewForCatchRectangleForItemAtIndexPath:indexPath];
+        
     }
     
     if (viewForCatchRectangle) {
@@ -350,41 +351,43 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
                                       locationInCatchRectangle.y < 0 ||
                                       locationInCatchRectangle.x > viewForCatchRectangle.frame.size.width ||
                                       locationInCatchRectangle.y > viewForCatchRectangle.frame.size.height)? NO:YES;
+        
     } else {
+        
         locationIsInCatchRectangle = YES;
+        
     }
     
     return locationIsInCatchRectangle;
+    
 }
 
-- (UIImageView *)imageViewForCell:(UICollectionViewCell *)cell {
+- (UIView *)snapshotForCell:(UICollectionViewCell *)cell {
     
-    if ([self.delegate respondsToSelector:@selector(exchangeController:imageViewForCell:)]) {
+    if ([self.delegate respondsToSelector:@selector(exchangeController:snapshotForCell:)]) {
         
-        return [self.delegate exchangeController:self imageViewForCell:cell];
+        return [self.delegate exchangeController:self snapshotForCell:cell];
         
     } else {
         
-        UIImage *cellImage = [self imageFromCell:cell withBackgroundColor:self.backgroundColorForImage alpha:self.alphaForImage];
-        UIImageView *cellImageView = [[UIImageView alloc] initWithImage:cellImage];
-        cellImageView.frame = cell.frame;
-        return cellImageView;
+        UIColor *originalBackgroundColor = cell.backgroundColor;
+        float originalAlpha = cell.alpha;
+        cell.backgroundColor = self.snapshotBackgroundColor;
+        cell.alpha = self.snapshotAlpha;
+        UIView *snapshot = [cell snapshotViewAfterScreenUpdates:YES];
+        snapshot.frame = cell.frame;
+        cell.backgroundColor = originalBackgroundColor;
+        cell.alpha = originalAlpha;
+        return snapshot;
+        
     }
-}
-
-// TODO: this should be a category on UIGestureRecognizer and it should take a view.
-- (CGPoint)offsetToCenterForCellImageView:(UIView *)viewThing {
-    
-    CGPoint locationInCellImageView = [self.longPressGestureRecognizer locationInView:viewThing];
-    CGPoint cellImageViewCenter = CGPointMake(viewThing.frame.size.width/2, viewThing.frame.size.height/2);
-    return CGPointMake(locationInCellImageView.x - cellImageViewCenter.x, locationInCellImageView.y - cellImageViewCenter.y);
 }
 
 - (void)animateCatch:(UIView *)snapshot {
     
-    if ([self.delegate respondsToSelector:@selector(animateCatchForExchangeController:withImage:)]) {
+    if ([self.delegate respondsToSelector:@selector(animateCatchForExchangeController:withSnapshot:)]) {
         
-        [self.delegate animateCatchForExchangeController:self withImage:snapshot];
+        [self.delegate animateCatchForExchangeController:self withSnapshot:snapshot];
         
     } else {
         
@@ -406,10 +409,10 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     
     UICollectionViewCell *cellForOriginalLocation = [self.collectionView cellForItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
     
-    if ([self.delegate respondsToSelector:@selector(animateReleaseForExchangeController:withImage:toPoint:cellAtOriginalLocation:completionBlock:)]) {
+    if ([self.delegate respondsToSelector:@selector(animateReleaseForExchangeController:withSnapshot:toPoint:cellAtOriginalLocation:completionBlock:)]) {
         
         [self.delegate animateReleaseForExchangeController:self
-                                                 withImage:self.viewForImageBeingDragged
+                                              withSnapshot:self.snapshot
                                                    toPoint:self.centerOfCellForLastItemExchanged
                                     cellAtOriginalLocation:cellForOriginalLocation
                                            completionBlock:self.postReleaseCompletionBlock];
@@ -420,16 +423,16 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         CGFloat finalScale = 1.0;
         
         [UIView animateWithDuration:duration animations:^ {
-            self.viewForImageBeingDragged.center = self.centerOfCellForLastItemExchanged;
+            self.snapshot.center = self.centerOfCellForLastItemExchanged;
             cellForOriginalLocation.alpha = 1.0;
         } completion:^(BOOL finished) {
             
             [UIView animateWithDuration:duration animations:^ {
-                self.viewForImageBeingDragged.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
+                self.snapshot.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
             } completion:^(BOOL finished) {
                 
                 [UIView animateWithDuration:duration animations:^ {
-                    self.viewForImageBeingDragged.transform = CGAffineTransformMakeScale(finalScale, finalScale);
+                    self.snapshot.transform = CGAffineTransformMakeScale(finalScale, finalScale);
                 } completion:^(BOOL finished) {
                     self.postReleaseCompletionBlock(duration);
                 }];
@@ -459,36 +462,19 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     return ![self isBackToStartingItemAtIndexPath:self.indexPathOfItemLastExchanged];
 }
 
-- (UIView *)snapshotView:(UIView *)view
-     withBackgroundColor:(UIColor *)backgroundColor
-                   alpha:(float)alpha {
-    
-    UIView *snapshot = [view snapshotViewAfterScreenUpdates:NO];
-    snapshot.backgroundColor = backgroundColor;
-    snapshot.alpha = alpha;
-    return snapshot;
-}
-
-// TODO: make this a category on UIView, call it imageFromView:withBackgroundColor:alpha:
-- (UIImage *)imageFromCell:(UICollectionViewCell *)cell
+- (UIView *)snapshotForView:(UIView *)view
        withBackgroundColor:(UIColor *)backgroundColor
-                     alpha:(float)alpha {
+                      alpha:(float)alpha {
     
+    UIColor *originalBackgroundColor = view.backgroundColor;
+    float originialAlpha = view.alpha;
+    view.backgroundColor = backgroundColor;
+    view.alpha = alpha;
+    UIView *snapshot = [view snapshotViewAfterScreenUpdates:YES];
+    view.backgroundColor = originalBackgroundColor;
+    view.alpha = originialAlpha;
+    return snapshot;
     
-    // TODO: instead of restoring, make a copy
-    // TODO: try UiView's snapshotViewAfterScreenUpdates:
-    UIColor *originalBackgroundColor = cell.backgroundColor;
-    float originialAlpha = cell.alpha;
-    cell.backgroundColor = backgroundColor;
-    cell.alpha = alpha;
-    UIGraphicsBeginImageContextWithOptions(cell.bounds.size, cell.opaque, 0.0f);
-    [cell.layer renderInContext:UIGraphicsGetCurrentContext()];
-    UIImage *cellImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    cell.backgroundColor = originalBackgroundColor;
-    cell.alpha = originialAlpha;
-    
-    return cellImage;
 }
 
 - (CGPoint)locationInCollectionView {

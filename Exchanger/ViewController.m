@@ -300,23 +300,24 @@ NS_ENUM(NSInteger, CollectionViewSide) {
     return YES;
 }
 
-- (void)animateCatchForExchangeController:(SSCollectionViewExchangeController *)exchangeController withImage:(UIImageView *)cellImage {
+- (void)animateCatchForExchangeController:(SSCollectionViewExchangeController *)exchangeController
+                             withSnapshot:(UIView *)snapshot {
 
     NSTimeInterval duration = 0.20;
     CGFloat blinkToScale = 1.20;
     CGFloat finalScale = 1.0;
     
     [UIView animateWithDuration:duration animations:^ {
-        cellImage.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
+        snapshot.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
     } completion:^(BOOL finished) {
         [UIView animateWithDuration:duration animations:^ {
-            cellImage.transform = CGAffineTransformMakeScale(finalScale, finalScale);
+            snapshot.transform = CGAffineTransformMakeScale(finalScale, finalScale);
         }];
     }];
 }
 
 - (void)animateReleaseForExchangeController:(SSCollectionViewExchangeController *)exchangeController
-                                  withImage:(UIImageView *)cellImage
+                               withSnapshot:(UIView *)snapshot
                                     toPoint:(CGPoint)centerOfCell
                      cellAtOriginalLocation:(UICollectionViewCell *)cellAtOriginalLocation
                             completionBlock:(PostReleaseCompletionBlock)completionBlock {
@@ -326,16 +327,16 @@ NS_ENUM(NSInteger, CollectionViewSide) {
     CGFloat finalScale = 1.0;
     
     [UIView animateWithDuration:duration animations:^ {
-        cellImage.center = centerOfCell;
+        snapshot.center = centerOfCell;
         cellAtOriginalLocation.alpha = 1.0;
     } completion:^(BOOL finished) {
         
         [UIView animateWithDuration:duration animations:^ {
-            cellImage.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
+            snapshot.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
         } completion:^(BOOL finished) {
             
             [UIView animateWithDuration:duration animations:^ {
-                cellImage.transform = CGAffineTransformMakeScale(finalScale, finalScale);
+                snapshot.transform = CGAffineTransformMakeScale(finalScale, finalScale);
             } completion:^(BOOL finished) {
                 completionBlock(duration);
             }];
