@@ -457,10 +457,13 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     return ![self isBackToStartingItemAtIndexPath:self.indexPathOfItemLastExchanged];
 }
 
+// TODO: make this a category on UIView, call it imageFromView:withBackgroundColor:alpha:
 - (UIImage *)imageFromCell:(UICollectionViewCell *)cell
        withBackgroundColor:(UIColor *)backgroundColor
                      alpha:(float)alpha {
     
+    // TODO: instead of restoring, make a copy
+    // TODO: try UiView's snapshotViewAfterScreenUpdates:
     UIColor *originalBackgroundColor = cell.backgroundColor;
     float originialAlpha = cell.alpha;
     cell.backgroundColor = backgroundColor;
