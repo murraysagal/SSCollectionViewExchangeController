@@ -25,7 +25,8 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 @property (weak, nonatomic)     id<SSCollectionViewExchangeControllerDelegate> delegate;
 
 @property (weak, nonatomic)     UICollectionView    *collectionView;
-@property (strong, nonatomic)   UIImageView         *viewForImageBeingDragged;
+@property (strong, nonatomic)   UIView         *viewForImageBeingDragged;
+//@property (strong, nonatomic)   UIImageView         *viewForImageBeingDragged;
 @property (nonatomic)           CGPoint             locationInCollectionView;
 @property (strong, nonatomic)   NSIndexPath         *originalIndexPathForItemBeingDragged;
 @property (strong, nonatomic)   NSIndexPath         *indexPathOfItemLastExchanged;
@@ -164,17 +165,17 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     }
     
     UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:currentIndexPath];
-    UIImageView *cellImageView = [self imageViewForCell:cell];
-    [self.collectionView addSubview:cellImageView];
+    UIView *cellSnapshot = [self snapshotView:cell withBackgroundColor:self.backgroundColorForImage alpha:self.alphaForImage];
+    [self.collectionView addSubview:cellSnapshot];
     
-    self.offsetToCenter = [self offsetToCenterForCellImageView:cellImageView];
-    self.viewForImageBeingDragged = cellImageView;
+    self.offsetToCenter = [self offsetToCenterForCellImageView:cell];
+    self.viewForImageBeingDragged = cellSnapshot;
     self.centerOfCellForLastItemExchanged = cell.center;
     self.originalIndexPathForItemBeingDragged = currentIndexPath;
     self.indexPathOfItemLastExchanged = currentIndexPath;
     self.mustUndoPriorExchange = NO;
     
-    [self animateCatch:cellImageView];
+    [self animateCatch:cellSnapshot];
     
     // InvalidateLayout kicks off the process of redrawing the layout.
     // SSCollectionViewExchangeLayout intervenes in that process by overriding
@@ -371,18 +372,19 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     }
 }
 
-- (CGPoint)offsetToCenterForCellImageView:(UIImageView *)cellImageView {
+// TODO: this should be a category on UIGestureRecognizer and it should take a view.
+- (CGPoint)offsetToCenterForCellImageView:(UIView *)viewThing {
     
-    CGPoint locationInCellImageView = [self.longPressGestureRecognizer locationInView:cellImageView];
-    CGPoint cellImageViewCenter = CGPointMake(cellImageView.frame.size.width/2, cellImageView.frame.size.height/2);
+    CGPoint locationInCellImageView = [self.longPressGestureRecognizer locationInView:viewThing];
+    CGPoint cellImageViewCenter = CGPointMake(viewThing.frame.size.width/2, viewThing.frame.size.height/2);
     return CGPointMake(locationInCellImageView.x - cellImageViewCenter.x, locationInCellImageView.y - cellImageViewCenter.y);
 }
 
-- (void)animateCatch:(UIImageView *)cellImage {
+- (void)animateCatch:(UIView *)snapshot {
     
     if ([self.delegate respondsToSelector:@selector(animateCatchForExchangeController:withImage:)]) {
         
-        [self.delegate animateCatchForExchangeController:self withImage:cellImage];
+        [self.delegate animateCatchForExchangeController:self withImage:snapshot];
         
     } else {
         
@@ -391,10 +393,10 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         CGFloat finalScale = 1.0;
         
         [UIView animateWithDuration:duration animations:^ {
-            cellImage.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
+            snapshot.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
         } completion:^(BOOL finished) {
             [UIView animateWithDuration:duration animations:^ {
-                cellImage.transform = CGAffineTransformMakeScale(finalScale, finalScale);
+                snapshot.transform = CGAffineTransformMakeScale(finalScale, finalScale);
             }];
         }];
     }
@@ -457,10 +459,21 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     return ![self isBackToStartingItemAtIndexPath:self.indexPathOfItemLastExchanged];
 }
 
+- (UIView *)snapshotView:(UIView *)view
+     withBackgroundColor:(UIColor *)backgroundColor
+                   alpha:(float)alpha {
+    
+    UIView *snapshot = [view snapshotViewAfterScreenUpdates:NO];
+    snapshot.backgroundColor = backgroundColor;
+    snapshot.alpha = alpha;
+    return snapshot;
+}
+
 // TODO: make this a category on UIView, call it imageFromView:withBackgroundColor:alpha:
 - (UIImage *)imageFromCell:(UICollectionViewCell *)cell
        withBackgroundColor:(UIColor *)backgroundColor
                      alpha:(float)alpha {
+    
     
     // TODO: instead of restoring, make a copy
     // TODO: try UiView's snapshotViewAfterScreenUpdates:

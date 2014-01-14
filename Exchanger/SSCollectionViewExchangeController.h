@@ -219,7 +219,7 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
         cell (where the user dragged to). This unhiding happens immediately and without any animation.
         But, purposefully, the image the user dragged around is still on the view so the instant 
         unhiding of the cell happened behind the image so no change was visible. Then completionBlock 
-        animates the alpha of the image to 0.0, according to the duration you provide, revealing the 
+        animates the alpha of the image to 0.0, according to the duration you provide, revealing the
         now unhidden cell. When that animation is finished it removes the image from the collection view.
 */
 
