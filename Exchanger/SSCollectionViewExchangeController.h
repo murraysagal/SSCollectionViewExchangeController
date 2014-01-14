@@ -152,7 +152,8 @@
  
     - Scrolling is not supported. All the cells that can be exchanged need to be visible on the screen.
     - The exchange controller does not provide any support for rotation. But if your view controller
-        allows rotation and manages the layout as required the exchange controller will continue to work. 
+        allows rotation and manages the layout as required the exchange controller will continue to work as
+        long as the rotation does not occur during an exchange transaction.
  
  // TODO: the rotation assumption needs testing
  
