@@ -193,10 +193,10 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 - (ExchangeEventType)exchangeEventType {
     
     // The user is still dragging in the long press. Determine the exchange event type.
+    
     self.currentIndexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
     
-    // TODo: it might be better to reverse these two conditons...
-    if  (self.currentIndexPath == nil || [self isOverSameItemAtIndexPath:self.currentIndexPath])
+    if  ([self isOverSameItemAtIndexPath:self.currentIndexPath] || self.currentIndexPath == nil)
         return ExchangeEventTypeNothingToExchange;
     
     
