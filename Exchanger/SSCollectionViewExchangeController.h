@@ -62,8 +62,8 @@
  
  Displaced Item: When the user drags over a new item that item is displaced. It animates away to 
  the original location of the item being dragged. At the same time, the item that was previously
- displaced animates back to its original location. The layout lowers the alpha for the displaced
- item to indicate the displaced item.
+ displaced animates back to its original location. To indicate the displaced item the layout 
+ lowers its alpha.
  
  Hidden Item: Between the catch and the release the cell for the dragged item is hidden. This is
  managed by the layout. Nevertheless, the hidden item is following the user as the exchange
@@ -77,7 +77,19 @@
  Catch Rectangle: In some implementations, collection view cells can only be caught if the long 
  press occurs over a specific rectangle within the cell. That is the catch rectangle. Refer to the 
  optional exchangeController:viewForCatchRectangleForItemAtIndexPath: delegate method.
-
+ 
+ 
+ Installation...
+ 
+     Copy these files to your Xcode project:
+        - SSCollectionViewExchangeController.h
+        - SSCollectionViewExchangeController.m
+        - SSCollectionViewExchangeLayout.h
+        - SSCollectionViewExchangeLayout.m
+        - UIGestureRecognizer+SSCollectionViewExchangeControllerAdditions.h
+        - UIGestureRecognizer+SSCollectionViewExchangeControllerAdditions.m
+        - NSMutableArray+SSCollectionViewExchangeAdditions.h
+        - NSMutableArray+SSCollectionViewExchangeAdditions.m
  
  
  Usage...
@@ -118,7 +130,8 @@
  
  7. Optional. This example app contains a category on NSMutableArray that implements a method for
     exchanging two items that can be in different arrays. You can import that category and use
-    the method in the exchangeItemAtIndexPath:withItemAtIndexPath: delegate method.
+    the method in your implementation of the exchangeController:didExchangeItemAtIndexPath1:withItemAtIndexPath2: 
+    delegate method.
  
         [NSMutableArray exchangeItemInArray:array1
                                     atIndex:indexPath1.item
@@ -150,6 +163,21 @@
         allows rotation and manages the layout as required the exchange controller will continue to work.
         But the rotatation event must not occur during an exchange transaction. Your view controller can
         ask the exchange controller if an exchange transaction is in progress.
+ 
+ 
+ 
+ Thanks to...
+ 
+    - Matt Galloway: For taking the time to answer my  question, "Can I do that with a collection view?"
+    - Tony Copping: For gently schooling me on background threads. 
+    - Cesare Rocchi: For patiently enduring multiple code walkthroughs and providing excellent suggestions.
+    - Gijs van Klooster: For asking, "Why are those methods so long?" And the enum suggestion.
+ 
+ 
+ 
+ Original Inspiration...
+ 
+    LXReorderableCollectionViewFlowLayout: https://github.com/lxcid/LXReorderableCollectionViewFlowLayout
  
  */
 
@@ -252,7 +280,7 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 // This method is provided as a convenience. The delegate could ask its collection view
 // for its layout but that will be returned as a UICollectionViewLayout and would need
 // to be cast to a UICollectionViewFlowLayout before configuration. This method conveniently
-// returns the layout as a UICollectionViewFlowLayout, ready to be configured. 
+// returns the layout as a UICollectionViewFlowLayout, ready to be configured.
 
 @property (nonatomic) CFTimeInterval    minimumPressDuration;       // for configuring the long press, default: 0.15
 @property (nonatomic) CGFloat           alphaForDisplacedItem;      // so the user can distinguish the most recently displaced item, default: 0.60
