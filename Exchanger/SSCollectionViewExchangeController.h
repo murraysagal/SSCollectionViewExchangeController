@@ -250,7 +250,7 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 - (void)animateReleaseForExchangeController:(SSCollectionViewExchangeController *)exchangeController
                                withSnapshot:(UIView *)snapshot                              // this is the view the user has been dragging
                                     toPoint:(CGPoint)centerOfCell                           // this is the center of the cell where the release occurred
-                     cellAtOriginalLocation:(UICollectionViewCell *)cellAtOriginalLocation  // animate its alpha back to 1.0
+            originalIndexPathForDraggedItem:(NSIndexPath *)originalIndexPathForDraggedItem  // animate the alpha for the cell at this index path back to 1.0
                             completionBlock:(PostReleaseCompletionBlock)completionBlock;    // you must execute this completion block in your final completion block
 /*
  To provide feedback to the user SSCollectionViewExchangeController implements default
@@ -259,7 +259,7 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 
  Note: If you implement the animateRelease... method you must do the following...
     1. Animate snapshot to centerOfCell.
-    2. Animate the alpha for cellAtOriginalLocation back to 1.0.
+    2. Animate the alpha for the cell at originalIndexPathForDraggedItem back to 1.0.
     3. Do not call invalidateLayout or remove the snapshot from its superview.
     4. In your final completion block, execute completionBlock and pass it an animation duration.
           ...

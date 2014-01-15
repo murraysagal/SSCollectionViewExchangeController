@@ -407,13 +407,14 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     
     UICollectionViewCell *cellForOriginalLocation = [self.collectionView cellForItemAtIndexPath:self.originalIndexPathForDraggedItem];
     
-    if ([self.delegate respondsToSelector:@selector(animateReleaseForExchangeController:withSnapshot:toPoint:cellAtOriginalLocation:completionBlock:)]) {
+    if ([self.delegate respondsToSelector:@selector(animateReleaseForExchangeController:withSnapshot:toPoint:originalIndexPathForDraggedItem:completionBlock:)]) {
         
         [self.delegate animateReleaseForExchangeController:self
                                               withSnapshot:self.snapshot
                                                    toPoint:self.centerOfHiddenCell
-                                    cellAtOriginalLocation:cellForOriginalLocation
+                           originalIndexPathForDraggedItem:self.originalIndexPathForDraggedItem
                                            completionBlock:self.postReleaseCompletionBlock];
+        
     } else {
         
         NSTimeInterval duration = self.animationDuration;
