@@ -201,7 +201,7 @@
     - Matt Galloway: For taking the time to answer my question, "Can I do that with a collection view?"
     - Tony Copping: For schooling me on background threads.
     - Cesare Rocchi: For patiently enduring multiple code walkthroughs and providing excellent suggestions.
-    - Gijs van Klooster: For asking, "Why are those methods so long?" And that enum suggestion.
+    - Gijs van Klooster: For asking, "Why are those methods so long?" And that great enum suggestion.
  
  
  
