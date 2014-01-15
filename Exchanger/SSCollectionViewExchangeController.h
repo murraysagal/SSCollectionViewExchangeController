@@ -33,11 +33,11 @@
     |   |                   |                       |
     |   ---------------------                       |
     |        |                                      |
-    |        |                       ------------------------------------------
-    |        |  @property (strong)   |                                        |
-    |         ---------------------->|   SSCollectionViewExchangeController   |
-    |                                |                                        |
-    |                                ------------------------------------------
+    |        |                           ------------------------------------------
+    |        |  @property (strong, ...   |                                        |
+    |         -------------------------->|   SSCollectionViewExchangeController   |
+    |                                    |                                        |
+    |                                    ------------------------------------------
     |                                                   |
     |   ------------------------                        |
     |   |                      |                        V
@@ -61,11 +61,13 @@
  normally over another item, causing the two to be exchanged. However, between the catch and
  the release the user may drag over many items including, possibly, the starting position.
  
- Exchange Event: An exchange event occurs each time the user drags to a different item. If it
- is the first exchange event it is a simple exchange between the item being dragged and the item 
- dragged to. If the user keeps dragging to new items subsequent exchange events include undoing 
- the previous exchange and then performing the new exchange. There can be many exchange events 
- within a single exchange transaction.
+ Exchange Event: An exchange event occurs each time the user drags to a different item during
+ an exchange transaction. There can be many exchange events within a single exchange transaction.
+ An exchange event contains either one or two individual exchanges. If it is the first exchange
+ event in the transaction there is an individual exchange between the item being dragged and
+ the item dragged to. If the user keeps dragging to new items subsequent exchange events include 
+ two individual exchanges: one to undo the previous exchange and another for the new exchange.
+ Refer to the timeline diagram below.
  
  Displaced Item: When the user drags over a new item that item is displaced. It animates away to 
  the original location of the item being dragged. At the same time, the item that was previously
@@ -84,6 +86,27 @@
  Catch Rectangle: In some implementations, collection view cells can only be caught if the long 
  press occurs over a specific rectangle within the cell. That is the catch rectangle. Refer to the 
  optional exchangeController:viewForCatchRectangleForItemAtIndexPath: delegate method.
+ 
+ 
+ 
+ Timeline diagram...
+ 
+ |--- time --->
+
+                                            Exchange Transaction
+ |------------------------------------------------------------------------------------------------------------>|
+ Catch at index path 0,3                                                               Release at index path 1,7
+ 
+ 
+           Exchange Event 1                     Exchange Event 2                     Exchange Event 3
+ |---------------------------------->||---------------------------------->||---------------------------------->|
+ move from:   0,3 to 0,5                           0,5 to 1,3                           1,3 to 1,7
+ 
+ 
+             new exchange               undo previous      new exchange      undo previous      new exchange
+ |---------------------------------->||---------------->||--------------->||---------------->||--------------->|
+ exchange:   0,3 with 0,5                0,5 with 0,3       0,3 with 1,3      1,3 with 0,3       0,3 and 1,7
+ 
  
  
  
@@ -148,9 +171,8 @@
  
  
  8. Optional. The exchange controller provides default animations during the exchange process to provide
-    feedback to the user. Some properties related to visual aspects of the exchange process are exposed 
-    to allow you to configure them to better meet your requirements. Refer to the comments for the 
-    property declarations below.
+    feedback to the user. Some properties related to those animations are exposed to allow you to configure 
+    them to better meet your requirements. Refer to the comments for the property declarations below.
  
  
  10. Optional. If the exposed properties don't provide you with the control you require you can implement
@@ -179,7 +201,7 @@
     - Matt Galloway: For taking the time to answer my question, "Can I do that with a collection view?"
     - Tony Copping: For schooling me on background threads.
     - Cesare Rocchi: For patiently enduring multiple code walkthroughs and providing excellent suggestions.
-    - Gijs van Klooster: For asking, "Why are those methods so long?" And the enum suggestion.
+    - Gijs van Klooster: For asking, "Why are those methods so long?" And that enum suggestion.
  
  
  
@@ -202,17 +224,17 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 @required
 
 - (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController;
-// Called before beginning the exchange transaction to determine if it is ok to allow exchanges.
+// Called before beginning an exchange transaction to determine if it is ok to allow exchanges.
 
 
 - (void)    exchangeController:(SSCollectionViewExchangeController *)exchangeController
    didExchangeItemAtIndexPath1:(NSIndexPath *)indexPath1
           withItemAtIndexPath2:(NSIndexPath *)indexPath2;
-// Called whenever an exchange event occurs during an exchange transaction. This method
-// provides the delegate with an opportunity to update the model as the user is dragging. This method
-// may be called twice during a single exchange event. If so, the first call will be to undo a prior
-// exchange and the second call will be for the new exchange. In all cases the delegate should just
-// update the model by exchanging the elements at the indicated index paths.
+// Called for each individual exchange within an exchange event. There may be one exchange or two per
+// event. In all cases the delegate should just update the model by exchanging the elements at the
+// indicated index paths. Refer to the Exchange Event description and the Timeline diagram above.
+// This method provides the delegate with an opportunity to keep its model in sync with changes
+// happening on the view.
 
 
 - (void)exchangeControllerDidFinishExchangeEvent:(SSCollectionViewExchangeController *)exchangeController;
@@ -223,10 +245,11 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 - (void)exchangeControllerDidFinishExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController
                                         withIndexPath1:(NSIndexPath *)indexPath1
                                             indexPath2:(NSIndexPath *)indexPath2;
-// Called when the exchange transaction completes (the user lifts his/her finger). The
-// index paths represent the two items that were finally exchanged. This allows the delegate
-// to setup for undo, for example. If the user dragged back to the starting position and
-// released (effectively nothing was exchanged) the index paths will be the same.
+// Called when an exchange transaction completes (the user lifts his/her finger). The
+// index paths represent the two items in the final exchange. Do not exchange these items,
+// you already have. This method allows the delegate to perform any task required at the end
+// of the transaction such as setting up for undo. If the user dragged back to the starting
+// position and released (effectively nothing was exchanged) the index paths will be the same.
 
 
 @optional
@@ -257,7 +280,7 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
  animations for the catch and the release. If these implementations don't meet your
  requirements then implement either or both of the animate... delegate methods.
 
- Note: If you implement the animateRelease... method you must do the following...
+ Note: If you implement the animateRelease... method you should do the following...
     1. Animate snapshot to centerOfCell.
     2. Animate the alpha for the cell at originalIndexPathForDraggedItem back to 1.0.
     3. Do not call invalidateLayout or remove the snapshot from its superview.
