@@ -3,7 +3,7 @@
 //  Exchanger
 //
 //  Created by Murray Sagal on 1/9/2014.
-//  Copyright (c) 2014 Murray Sagal. All rights reserved.
+//  Copyright (c) 2014 Signature Software. All rights reserved.
 //
 
 #import "SSCollectionViewExchangeController.h"
@@ -36,16 +36,15 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 @property (nonatomic, copy)     PostReleaseCompletionBlock      postReleaseCompletionBlock;
 
 // For the view being dragged, this is the offset from the location of the long press to its center...
-@property (nonatomic)           CGPoint             offsetToCenter;
+@property (nonatomic)           CGPoint             offsetToCenterOfSnapshot;
 
-// This helps safeguard against the documented behaviour regarding items that are hidden.
-// As an optimization, the collection view might not create the corresponding view
-// if the hidden property (UICollectionViewLayoutAttributes) is set to YES. In the
-// gesture recognizer's ended state we always need the cell for the item that
-// is hidden so we can animate to its center when the user releases. So we use this
-// property to hold the center of the cell at indexPathOfItemLastExchanged but it must
-// be captured just before it is hidden.
-@property (nonatomic)           CGPoint             centerOfCellForLastItemExchanged;
+// At the end of the exchange transation the snapshot is animated to the center of the cell
+// that is hidden. But, as an optimization, the collection view does not create the view for cells
+// that are hidden. So the center can't be determined at that time. So this property is set at
+// the end of each exchange event just before the layout hides the item.
+@property (nonatomic)           CGPoint             centerOfHiddenCell;
+
+@property (nonatomic, readwrite) BOOL               exchangeTransactionInProgress;
 
 @end
 
@@ -155,24 +154,26 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (void)beginExchangeTransaction {
     
-    NSIndexPath *indexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
+    NSIndexPath *startingIndexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
     
-    if ([self shouldNotContinueExchangeTransactionAtIndexPath:indexPath]) {
+    if ([self shouldNotContinueExchangeTransactionAtIndexPath:startingIndexPath]) {
         [self cancelLongPressRecognizer];
         return;
     }
     
-    UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:indexPath];
+    self.exchangeTransactionInProgress = YES;
+    
+    UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:startingIndexPath];
     UIView *snapshot = [self snapshotForCell:cell];
     [self.collectionView addSubview:snapshot];
     
     [self animateCatch:snapshot];
     
-    self.offsetToCenter = [self.longPressGestureRecognizer offsetFromLocationToCenterForView:cell];
+    self.offsetToCenterOfSnapshot = [self.longPressGestureRecognizer offsetFromLocationToCenterForView:cell];
     self.snapshot = snapshot;
-    self.centerOfCellForLastItemExchanged = cell.center;
-    self.originalIndexPathForDraggedItem = indexPath;
-    self.originalIndexPathForDisplacedItem = indexPath;
+    self.centerOfHiddenCell = cell.center;
+    self.originalIndexPathForDraggedItem = startingIndexPath;
+    self.originalIndexPathForDisplacedItem = startingIndexPath;
     self.mustUndoPriorExchange = NO;
     
     // InvalidateLayout kicks off the process of redrawing the layout.
@@ -185,7 +186,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (void)updateSnapshotLocation {
     
-    CGPoint offsetLocationInCollectionView = CGPointMake(self.locationInCollectionView.x - self.offsetToCenter.x, self.locationInCollectionView.y - self.offsetToCenter.y);
+    CGPoint offsetLocationInCollectionView = CGPointMake(self.locationInCollectionView.x - self.offsetToCenterOfSnapshot.x, self.locationInCollectionView.y - self.offsetToCenterOfSnapshot.y);
     self.snapshot.center = offsetLocationInCollectionView;
 }
 
@@ -195,8 +196,9 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     
     self.currentIndexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
     
-    if  ([self isOverSameItemAtIndexPath:self.currentIndexPath] || self.currentIndexPath == nil)
+    if  ([self isOverSameItemAtIndexPath:self.currentIndexPath] || self.currentIndexPath == nil) {
         return ExchangeEventTypeNothingToExchange;
+    }
     
     
     // Otherwise there is an exchange event to perform. What kind?
@@ -308,6 +310,8 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
                                                    withIndexPath1:self.originalIndexPathForDisplacedItem
                                                        indexPath2:self.originalIndexPathForDraggedItem];
     [self animateRelease];
+    
+    self.exchangeTransactionInProgress = NO;
 }
 
 
@@ -316,18 +320,14 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (void)cancelLongPressRecognizer {
     
-    // As per the docs, this triggers a cancel.
-    
     self.longPressGestureRecognizer.enabled = NO;
     self.longPressGestureRecognizer.enabled = YES;
+    
 }
 
 - (BOOL)shouldNotContinueExchangeTransactionAtIndexPath:(NSIndexPath *)indexPath {
     
-    BOOL canExchange = [self.delegate exchangeControllerCanExchange:self];
-    BOOL locationIsInCatchRectangle = [self locationIsInCatchRectangleForItemAtIndexPath:indexPath];
-    BOOL shouldContinue = (indexPath && canExchange && locationIsInCatchRectangle);
-    return !shouldContinue;
+    return !(indexPath && [self.delegate exchangeControllerCanExchange:self] && [self locationIsInCatchRectangleForItemAtIndexPath:indexPath]);
     
 }
 
@@ -412,7 +412,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         
         [self.delegate animateReleaseForExchangeController:self
                                               withSnapshot:self.snapshot
-                                                   toPoint:self.centerOfCellForLastItemExchanged
+                                                   toPoint:self.centerOfHiddenCell
                                     cellAtOriginalLocation:cellForOriginalLocation
                                            completionBlock:self.postReleaseCompletionBlock];
     } else {
@@ -422,7 +422,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         CGFloat finalScale = 1.0;
         
         [UIView animateWithDuration:duration animations:^ {
-            self.snapshot.center = self.centerOfCellForLastItemExchanged;
+            self.snapshot.center = self.centerOfHiddenCell;
             cellForOriginalLocation.alpha = 1.0;
         } completion:^(BOOL finished) {
             
@@ -453,7 +453,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 - (void)keepCenterOfCellForLastItemExchanged {
     
     UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:self.currentIndexPath];
-    self.centerOfCellForLastItemExchanged = itemCell.center;
+    self.centerOfHiddenCell = itemCell.center;
 }
 
 - (BOOL)itemsWereExchanged {

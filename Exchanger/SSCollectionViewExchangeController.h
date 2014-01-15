@@ -3,7 +3,7 @@
 //  Exchanger
 //
 //  Created by Murray Sagal on 1/9/2014.
-//  Copyright (c) 2014 Murray Sagal. All rights reserved.
+//  Copyright (c) 2014 Signature Software. All rights reserved.
 //
 
 /*
@@ -51,8 +51,8 @@
  animation runs (again, you can create any animation you require).
  
  Exchange Transaction: An exchange transaction begins with a catch and concludes with a release,
- normally over another item, causing the two to be exchanged. However, between the beginning and
- the end the user may drag over many items including, possibly, the starting position.
+ normally over another item, causing the two to be exchanged. However, between the catch and
+ the release the user may drag over many items including, possibly, the starting position.
  
  Exchange Events: An exchange event occurs each time the user drags to a different item. If it 
  is the first exchange event it is a simple exchange between the item being dragged and the item 
@@ -63,13 +63,21 @@
  Displaced Item: When the user drags over a new item that item is displaced. It animates away to 
  the original location of the item being dragged. At the same time, the item that was previously
  displaced animates back to its original location. The layout lowers the alpha for the displaced
- item to indicate where the process started. 
+ item to indicate the displaced item.
  
- Dragged Item: Between the catch and the release the cell for the dragged item is hidden. This is 
- managed by the layout. Nevertheless, the dragged item is following the user as the exchange 
+ Hidden Item: Between the catch and the release the cell for the dragged item is hidden. This is
+ managed by the layout. Nevertheless, the hidden item is following the user as the exchange
  transaction proceeds. If you are curios, return nil from the indexPathForItemToHide delegate 
- method and you will be able to watch the dragged item, best viewed in the simulator with slow 
+ method and you will be able to observe this, best viewed in the simulator with slow
  animations on.
+ 
+ Snapshot: During the catch a snapshot of the cell is created. The snapshot follows the user's
+ finger during the long press. 
+ 
+ Catch Rectangle: In some implementations, collection view cells can only be caught if the long 
+ press occurs over a specific rectangle within the cell. That is the catch rectangle. Refer to the 
+ optional exchangeController:viewForCatchRectangleForItemAtIndexPath: delegate method.
+
  
  
  Usage...
@@ -121,41 +129,27 @@
     collection view sections to arrays. You may need to implement something like this.
  
  
- 8. Optional. The long press gesture recognizer is created with a default minimumPressDuration of 0.15. If you
-    require a different value this property is exposed. Set it as required...
-        self.exchangeController.minimumPressDuration = 0.30;
+ 8. Optional. The exchange controller provides default animations during the exchange process to provide
+    feedback to the user. Some properties related to visual aspects of the exchange process are exposed 
+    to allow you to configure them to better meet your requirements. Refer to the comments for the 
+    property declarations below.
+ 
+ 
+ 10. Optional. If the exposed properties don't provide you with the control you require you can implement
+    the optional delegate methods for...
+        - creating the snapshot
+        - animating the catch
+        - animating the release
 
- 
- 9. Optional. The custom layout hides and dims items during the exchange process. Items are dimmed by setting
-    their alpha value to a default of 0.60. If you require a different value this property is exposed. 
-    Set it as required...
-        self.exchangeController.alphaForDisplacedItem = 0.75;
- 
- 
- 10. Optional. This class provides default animations during the exchange process to provide feedback to
-    the user. If you need to change those animations you have two options.
- 
-        1. This class exposes the properties used to set some aspects of the animations. You can set
-            those properties as you require. 
-        2. The protocol defines three methods (optional) that you can implement to create your own cell
-            snapshot and perform your own catch and release animations.
- 
- At the beginning of the process, at the catch, a snapshot of the
-    cell is created with a default background color ([UIColor darkGrayColor]) and alpha (0.8). The snapshot is
-    transformed to blink indicating a successful catch. That snapshot is then animated around the screen following
-    the user's finger.
- 
- // TODO: the documentation for #10 needs work.
  
  
  Limitations...
  
     - Scrolling is not supported. All the cells that can be exchanged need to be visible on the screen.
-    - The exchange controller does not provide any support for rotation. But if your view controller
-        allows rotation and manages the layout as required the exchange controller will continue to work as
-        long as the rotation does not occur during an exchange transaction.
- 
- // TODO: the rotation assumption needs testing
+    - The exchange controller does not provide direct support for rotation. But if your view controller
+        allows rotation and manages the layout as required the exchange controller will continue to work.
+        But the rotatation event must not occur during an exchange transaction. Your view controller can
+        ask the exchange controller if an exchange transaction is in progress.
  
  */
 
@@ -168,6 +162,8 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 @class SSCollectionViewExchangeController;
 
 @protocol SSCollectionViewExchangeControllerDelegate <NSObject>
+
+@required
 
 - (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController;
 // Called before beginning the exchange transaction to determine if it is ok to allow exchanges.
@@ -254,17 +250,17 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 
 - (UICollectionViewFlowLayout *)layout;
 
-// for configuring the long press...
-@property (nonatomic) CFTimeInterval    minimumPressDuration;
 
-// the layout uses this property...
-@property (nonatomic) CGFloat           alphaForDisplacedItem; // TODO: rename to alphaForDisplacedItem
+@property (nonatomic) CFTimeInterval    minimumPressDuration;       // for configuring the long press, default: 0.15
+@property (nonatomic) CGFloat           alphaForDisplacedItem;      // so the user can distinguish the most recently displaced item, default: 0.60
 
 // Exchange process animation related properties...
-@property (nonatomic) NSTimeInterval    animationDuration;
-@property (nonatomic) CGFloat           blinkToScaleForCatch;
-@property (nonatomic) CGFloat           blinkToScaleForRelease;
-@property (nonatomic) CGFloat           snapshotAlpha;
-@property (strong, nonatomic) UIColor   *snapshotBackgroundColor;
+@property (nonatomic) NSTimeInterval    animationDuration;          // the duration of each segment of the default animations, default: 0.20
+@property (nonatomic) CGFloat           blinkToScaleForCatch;       // default: 1.20
+@property (nonatomic) CGFloat           blinkToScaleForRelease;     // default: 1.05
+@property (nonatomic) CGFloat           snapshotAlpha;              // default: 0.80
+@property (strong, nonatomic) UIColor   *snapshotBackgroundColor;   // default: [UIColor darkGrayColor]
+
+@property (nonatomic, readonly) BOOL    exchangeTransactionInProgress; // allows clients to determine if there is an exchange transaction in progress
 
 @end

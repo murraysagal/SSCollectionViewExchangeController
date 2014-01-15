@@ -3,7 +3,7 @@
 //  Exchanger
 //
 //  Created by Murray Sagal on 1/10/2014.
-//  Copyright (c) 2014 Murray Sagal. All rights reserved.
+//  Copyright (c) 2014 Signature Software. All rights reserved.
 //
 
 #import "NSMutableArray+SSCollectionViewExchangeAdditions.h"
