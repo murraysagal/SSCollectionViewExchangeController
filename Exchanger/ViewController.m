@@ -18,7 +18,7 @@
 
 #import "ViewController.h"
 #import "SSCollectionViewExchangeController.h"
-#import "NSMutableArray+SSCollectionViewExchangeAdditions.h"
+#import "NSMutableArray+SSCollectionViewExchangeControllerAdditions.h"
 
 
 NS_ENUM(NSInteger, CollectionViewSection) {

@@ -1,14 +1,14 @@
 //
-//  NSMutableArray+SSCollectionViewExchangeAdditions.m
+//  NSMutableArray+SSCollectionViewExchangeControllerAdditions.m
 //  Exchanger
 //
 //  Created by Murray Sagal on 1/10/2014.
 //  Copyright (c) 2014 Signature Software. All rights reserved.
 //
 
-#import "NSMutableArray+SSCollectionViewExchangeAdditions.h"
+#import "NSMutableArray+SSCollectionViewExchangeControllerAdditions.h"
 
-@implementation NSMutableArray (SSCollectionViewExchangeAdditions)
+@implementation NSMutableArray (SSCollectionViewExchangeControllerAdditions)
 
 + (void)exchangeItemInArray:(NSMutableArray *)array1 atIndex:(NSUInteger)index1
             withItemInArray:(NSMutableArray *)array2 atIndex:(NSUInteger)index2 {
