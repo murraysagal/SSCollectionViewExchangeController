@@ -27,10 +27,13 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 @property (weak, nonatomic)     UICollectionView    *collectionView;
 @property (strong, nonatomic)   UIView              *snapshot;
 @property (nonatomic)           CGPoint             locationInCollectionView;
-@property (strong, nonatomic)   NSIndexPath         *originalIndexPathForItemBeingDragged;
-@property (strong, nonatomic)   NSIndexPath         *indexPathOfItemLastExchanged;
+@property (strong, nonatomic)   NSIndexPath         *originalIndexPathForDraggedItem;
+@property (strong, nonatomic)   NSIndexPath         *originalIndexPathForDisplacedItem;
 @property (strong, nonatomic)   NSIndexPath         *currentIndexPath;
 @property (nonatomic)           BOOL                mustUndoPriorExchange;
+
+@property (strong, nonatomic)   UILongPressGestureRecognizer    *longPressGestureRecognizer;
+@property (nonatomic, copy)     PostReleaseCompletionBlock      postReleaseCompletionBlock;
 
 // For the view being dragged, this is the offset from the location of the long press to its center...
 @property (nonatomic)           CGPoint             offsetToCenter;
@@ -43,10 +46,6 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 // property to hold the center of the cell at indexPathOfItemLastExchanged but it must
 // be captured just before it is hidden.
 @property (nonatomic)           CGPoint             centerOfCellForLastItemExchanged;
-
-@property (strong, nonatomic)   UILongPressGestureRecognizer    *longPressGestureRecognizer;
-
-@property (nonatomic, copy)     PostReleaseCompletionBlock      postReleaseCompletionBlock;
 
 @end
 
@@ -61,7 +60,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         
         // defaults...
         _minimumPressDuration =     0.15;
-        _alphaForDimmedItem =       0.60;
+        _alphaForDisplacedItem =    0.60;
         _animationDuration =        0.20;
         _blinkToScaleForCatch =     1.20;
         _blinkToScaleForRelease =   1.05;
@@ -106,8 +105,8 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     
     return ^ void (NSTimeInterval duration) {
         
-        weakSelf.indexPathOfItemLastExchanged = nil;
-        weakSelf.originalIndexPathForItemBeingDragged = nil;
+        weakSelf.originalIndexPathForDisplacedItem = nil;
+        weakSelf.originalIndexPathForDraggedItem = nil;
         [weakSelf.collectionView.collectionViewLayout invalidateLayout];
         
         [UIView animateWithDuration:duration animations:^ {
@@ -172,8 +171,8 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     self.offsetToCenter = [self.longPressGestureRecognizer offsetFromLocationToCenterForView:cell];
     self.snapshot = snapshot;
     self.centerOfCellForLastItemExchanged = cell.center;
-    self.originalIndexPathForItemBeingDragged = indexPath;
-    self.indexPathOfItemLastExchanged = indexPath;
+    self.originalIndexPathForDraggedItem = indexPath;
+    self.originalIndexPathForDisplacedItem = indexPath;
     self.mustUndoPriorExchange = NO;
     
     // InvalidateLayout kicks off the process of redrawing the layout.
@@ -240,15 +239,15 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         // Model...
         [self.delegate exchangeController:self
               didExchangeItemAtIndexPath1:self.currentIndexPath
-                     withItemAtIndexPath2:self.originalIndexPathForItemBeingDragged];
+                     withItemAtIndexPath2:self.originalIndexPathForDraggedItem];
         [self.delegate exchangeControllerDidFinishExchangeEvent:self];
         
         // View...
-        [self.collectionView moveItemAtIndexPath:self.originalIndexPathForItemBeingDragged toIndexPath:self.currentIndexPath];
-        [self.collectionView moveItemAtIndexPath:self.currentIndexPath toIndexPath:self.originalIndexPathForItemBeingDragged];
+        [self.collectionView moveItemAtIndexPath:self.originalIndexPathForDraggedItem toIndexPath:self.currentIndexPath];
+        [self.collectionView moveItemAtIndexPath:self.currentIndexPath toIndexPath:self.originalIndexPathForDraggedItem];
         
         // State...
-        self.indexPathOfItemLastExchanged = self.currentIndexPath;
+        self.originalIndexPathForDisplacedItem = self.currentIndexPath;
         self.mustUndoPriorExchange = YES;
         [self keepCenterOfCellForLastItemExchanged];
         
@@ -261,20 +260,20 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         
         // Model...
         [self.delegate exchangeController:self
-              didExchangeItemAtIndexPath1:self.originalIndexPathForItemBeingDragged
-                     withItemAtIndexPath2:self.indexPathOfItemLastExchanged];
+              didExchangeItemAtIndexPath1:self.originalIndexPathForDraggedItem
+                     withItemAtIndexPath2:self.originalIndexPathForDisplacedItem];
         [self.delegate exchangeController:self
               didExchangeItemAtIndexPath1:self.currentIndexPath
-                     withItemAtIndexPath2:self.originalIndexPathForItemBeingDragged];
+                     withItemAtIndexPath2:self.originalIndexPathForDraggedItem];
         [self.delegate exchangeControllerDidFinishExchangeEvent:self];
         
         // View...
-        [self.collectionView moveItemAtIndexPath:self.originalIndexPathForItemBeingDragged toIndexPath:self.indexPathOfItemLastExchanged];
-        [self.collectionView moveItemAtIndexPath:self.indexPathOfItemLastExchanged toIndexPath:self.currentIndexPath];
-        [self.collectionView moveItemAtIndexPath:self.currentIndexPath toIndexPath:self.originalIndexPathForItemBeingDragged];
+        [self.collectionView moveItemAtIndexPath:self.originalIndexPathForDraggedItem toIndexPath:self.originalIndexPathForDisplacedItem];
+        [self.collectionView moveItemAtIndexPath:self.originalIndexPathForDisplacedItem toIndexPath:self.currentIndexPath];
+        [self.collectionView moveItemAtIndexPath:self.currentIndexPath toIndexPath:self.originalIndexPathForDraggedItem];
         
         // State...
-        self.indexPathOfItemLastExchanged = self.currentIndexPath;
+        self.originalIndexPathForDisplacedItem = self.currentIndexPath;
         self.mustUndoPriorExchange = YES;
         [self keepCenterOfCellForLastItemExchanged];
         
@@ -287,16 +286,16 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         
         // Model...
         [self.delegate exchangeController:self
-              didExchangeItemAtIndexPath1:self.originalIndexPathForItemBeingDragged
-                     withItemAtIndexPath2:self.indexPathOfItemLastExchanged];
+              didExchangeItemAtIndexPath1:self.originalIndexPathForDraggedItem
+                     withItemAtIndexPath2:self.originalIndexPathForDisplacedItem];
         [self.delegate exchangeControllerDidFinishExchangeEvent:self];
         
         // View...
-        [self.collectionView moveItemAtIndexPath:self.originalIndexPathForItemBeingDragged toIndexPath:self.indexPathOfItemLastExchanged];
-        [self.collectionView moveItemAtIndexPath:self.indexPathOfItemLastExchanged toIndexPath:self.originalIndexPathForItemBeingDragged];
+        [self.collectionView moveItemAtIndexPath:self.originalIndexPathForDraggedItem toIndexPath:self.originalIndexPathForDisplacedItem];
+        [self.collectionView moveItemAtIndexPath:self.originalIndexPathForDisplacedItem toIndexPath:self.originalIndexPathForDraggedItem];
         
         // State...
-        self.indexPathOfItemLastExchanged = self.originalIndexPathForItemBeingDragged;
+        self.originalIndexPathForDisplacedItem = self.originalIndexPathForDraggedItem;
         self.mustUndoPriorExchange = NO;
         [self keepCenterOfCellForLastItemExchanged];
         
@@ -306,8 +305,8 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 - (void)finishExchangeTransaction {
     
     [self.delegate exchangeControllerDidFinishExchangeTransaction:self
-                                                   withIndexPath1:self.indexPathOfItemLastExchanged
-                                                       indexPath2:self.originalIndexPathForItemBeingDragged];
+                                                   withIndexPath1:self.originalIndexPathForDisplacedItem
+                                                       indexPath2:self.originalIndexPathForDraggedItem];
     [self animateRelease];
 }
 
@@ -407,7 +406,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (void)animateRelease {
     
-    UICollectionViewCell *cellForOriginalLocation = [self.collectionView cellForItemAtIndexPath:self.originalIndexPathForItemBeingDragged];
+    UICollectionViewCell *cellForOriginalLocation = [self.collectionView cellForItemAtIndexPath:self.originalIndexPathForDraggedItem];
     
     if ([self.delegate respondsToSelector:@selector(animateReleaseForExchangeController:withSnapshot:toPoint:cellAtOriginalLocation:completionBlock:)]) {
         
@@ -443,12 +442,12 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (BOOL)isOverSameItemAtIndexPath:(NSIndexPath *)indexPath {
     
-    return [indexPath isEqual:self.indexPathOfItemLastExchanged];
+    return [indexPath isEqual:self.originalIndexPathForDisplacedItem];
 }
 
 - (BOOL)isBackToStartingItemAtIndexPath:(NSIndexPath *)indexPath {
     
-    return [indexPath isEqual:self.originalIndexPathForItemBeingDragged];
+    return [indexPath isEqual:self.originalIndexPathForDraggedItem];
 }
 
 - (void)keepCenterOfCellForLastItemExchanged {
@@ -459,7 +458,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (BOOL)itemsWereExchanged {
     
-    return ![self isBackToStartingItemAtIndexPath:self.indexPathOfItemLastExchanged];
+    return ![self isBackToStartingItemAtIndexPath:self.originalIndexPathForDisplacedItem];
 }
 
 - (UIView *)snapshotForView:(UIView *)view
@@ -489,7 +488,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (NSIndexPath *)indexPathForItemToHide {
     
-    return self.indexPathOfItemLastExchanged;
+    return self.originalIndexPathForDisplacedItem;
     
     // Return nil if you don't want to hide.
     // This can be useful during testing to ensure that the item
@@ -499,15 +498,15 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (NSIndexPath *)indexPathForItemToDim {
     
-    return self.originalIndexPathForItemBeingDragged;
+    return self.originalIndexPathForDraggedItem;
 
     // As above return nil if you don't want to dim.
 
 }
 
-- (CGFloat)alphaForDimmedItem {
+- (CGFloat)alphaForDisplacedItem {
     
-    return _alphaForDimmedItem;
+    return _alphaForDisplacedItem;
 }
 
 

@@ -129,7 +129,7 @@
  9. Optional. The custom layout hides and dims items during the exchange process. Items are dimmed by setting
     their alpha value to a default of 0.60. If you require a different value this property is exposed. 
     Set it as required...
-        self.exchangeController.alphaForDimmedItem = 0.75;
+        self.exchangeController.alphaForDisplacedItem = 0.75;
  
  
  10. Optional. This class provides default animations during the exchange process to provide feedback to
@@ -258,7 +258,7 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 @property (nonatomic) CFTimeInterval    minimumPressDuration;
 
 // the layout uses this property...
-@property (nonatomic) CGFloat           alphaForDimmedItem;
+@property (nonatomic) CGFloat           alphaForDisplacedItem; // TODO: rename to alphaForDisplacedItem
 
 // Exchange process animation related properties...
 @property (nonatomic) NSTimeInterval    animationDuration;
