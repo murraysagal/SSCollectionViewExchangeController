@@ -8,7 +8,7 @@
 
 /*
  
- SSCollectionViewExchangeController: 
+ SSCollectionViewExchangeController: <github url here>
  
  SSCollectionViewExchangeController manages the process of exchanging 2 collection view items. 
  The two items can be in different sections (and different arrays) but must be in the same 
