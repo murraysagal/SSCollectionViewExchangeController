@@ -15,9 +15,11 @@
 
 @protocol SSCollectionViewExchangeLayoutDelegate
 
+@required
+
 - (NSIndexPath *)indexPathForItemToHide;
 - (NSIndexPath *)indexPathForItemToDim;
-- (CGFloat)alphaForDisplacedItem;
+- (CGFloat)alphaForItemToDim;
 
 @end
 

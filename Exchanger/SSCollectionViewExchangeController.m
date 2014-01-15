@@ -248,13 +248,11 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         [self.collectionView moveItemAtIndexPath:self.originalIndexPathForDraggedItem toIndexPath:self.currentIndexPath];
         [self.collectionView moveItemAtIndexPath:self.currentIndexPath toIndexPath:self.originalIndexPathForDraggedItem];
         
-        // State...
-        self.originalIndexPathForDisplacedItem = self.currentIndexPath;
-        self.mustUndoPriorExchange = YES;
-        [self keepCenterOfCellForLastItemExchanged];
+        [self setPostExchangeEventStateWithIndexPathForDisplacedItem:self.currentIndexPath undoFlag:YES];
         
     } completion:nil];
 }
+
 
 - (void)performExchangeEventTypeDraggedToOtherItem {
     
@@ -274,10 +272,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         [self.collectionView moveItemAtIndexPath:self.originalIndexPathForDisplacedItem toIndexPath:self.currentIndexPath];
         [self.collectionView moveItemAtIndexPath:self.currentIndexPath toIndexPath:self.originalIndexPathForDraggedItem];
         
-        // State...
-        self.originalIndexPathForDisplacedItem = self.currentIndexPath;
-        self.mustUndoPriorExchange = YES;
-        [self keepCenterOfCellForLastItemExchanged];
+        [self setPostExchangeEventStateWithIndexPathForDisplacedItem:self.currentIndexPath undoFlag:YES];
         
     } completion:nil];
 }
@@ -296,10 +291,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         [self.collectionView moveItemAtIndexPath:self.originalIndexPathForDraggedItem toIndexPath:self.originalIndexPathForDisplacedItem];
         [self.collectionView moveItemAtIndexPath:self.originalIndexPathForDisplacedItem toIndexPath:self.originalIndexPathForDraggedItem];
         
-        // State...
-        self.originalIndexPathForDisplacedItem = self.originalIndexPathForDraggedItem;
-        self.mustUndoPriorExchange = NO;
-        [self keepCenterOfCellForLastItemExchanged];
+        [self setPostExchangeEventStateWithIndexPathForDisplacedItem:self.originalIndexPathForDisplacedItem undoFlag:NO];
         
     } completion:nil];
 }
@@ -359,6 +351,13 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     
     return locationIsInCatchRectangle;
     
+}
+
+- (void)setPostExchangeEventStateWithIndexPathForDisplacedItem:(NSIndexPath *)indexPathForDisplacedItem
+                                                      undoFlag:(BOOL)undoFlag {
+    self.originalIndexPathForDisplacedItem = indexPathForDisplacedItem;
+    self.mustUndoPriorExchange = undoFlag;
+    self.centerOfHiddenCell = [self.collectionView cellForItemAtIndexPath:self.currentIndexPath].center;
 }
 
 - (UIView *)snapshotForCell:(UICollectionViewCell *)cell {
@@ -450,17 +449,6 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     return [indexPath isEqual:self.originalIndexPathForDraggedItem];
 }
 
-- (void)keepCenterOfCellForLastItemExchanged {
-    
-    UICollectionViewCell *itemCell = [self.collectionView cellForItemAtIndexPath:self.currentIndexPath];
-    self.centerOfHiddenCell = itemCell.center;
-}
-
-- (BOOL)itemsWereExchanged {
-    
-    return ![self isBackToStartingItemAtIndexPath:self.originalIndexPathForDisplacedItem];
-}
-
 - (UIView *)snapshotForView:(UIView *)view
        withBackgroundColor:(UIColor *)backgroundColor
                       alpha:(float)alpha {
@@ -504,9 +492,9 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 }
 
-- (CGFloat)alphaForDisplacedItem {
+- (CGFloat)alphaForItemToDim {
     
-    return _alphaForDisplacedItem;
+    return self.alphaForDisplacedItem;
 }
 
 

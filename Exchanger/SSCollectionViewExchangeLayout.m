@@ -71,7 +71,7 @@
     NSIndexPath *indexPathForItemToDim = [self.delegate indexPathForItemToDim];
     
     attributesForItem.hidden = ([attributesForItem.indexPath isEqual:indexPathForItemToHide])? YES : NO;
-    attributesForItem.alpha =  ([attributesForItem.indexPath isEqual:indexPathForItemToDim])?  [self.delegate alphaForDisplacedItem] : 1.0;
+    attributesForItem.alpha =  ([attributesForItem.indexPath isEqual:indexPathForItemToDim])?  [self.delegate alphaForItemToDim] : 1.0;
 
     return attributesForItem;
 }
