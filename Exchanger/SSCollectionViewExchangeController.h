@@ -8,6 +8,8 @@
 
 /*
  
+ SSCollectionViewExchangeController: 
+ 
  SSCollectionViewExchangeController manages the process of exchanging 2 collection view items. 
  The two items can be in different sections (and different arrays) but must be in the same 
  collection view. All cells that can be exchanged need to be visible--scrolling is not supported.
@@ -17,6 +19,10 @@
  SSCollectionViewExchangeControllerDelegate protocol your view controller is kept informed allowing 
  you to keep your model in sync with the changes occuring on the collection view and perform any 
  kind of live updating required during the process.
+ 
+ If your view contains multiple collection views you can have an exchange controller for each. But
+ exchanges cannot occur between collection views. 
+ 
  
  
  Conceptual Diagram...
@@ -40,6 +46,7 @@
         ------------------------     -->|   SSCollectionViewExchangeLayout    |
                                         |                                     |
                                         ---------------------------------------
+ 
  
  
  Terminology...
@@ -79,17 +86,15 @@
  optional exchangeController:viewForCatchRectangleForItemAtIndexPath: delegate method.
  
  
+ 
  Installation...
  
      Copy these files to your Xcode project:
-        - SSCollectionViewExchangeController.h
-        - SSCollectionViewExchangeController.m
-        - SSCollectionViewExchangeLayout.h
-        - SSCollectionViewExchangeLayout.m
-        - UIGestureRecognizer+SSCollectionViewExchangeControllerAdditions.h
-        - UIGestureRecognizer+SSCollectionViewExchangeControllerAdditions.m
-        - NSMutableArray+SSCollectionViewExchangeAdditions.h
-        - NSMutableArray+SSCollectionViewExchangeAdditions.m
+        - SSCollectionViewExchangeController.h and .m
+        - SSCollectionViewExchangeLayout.h and .m
+        - UIGestureRecognizer+SSCollectionViewExchangeControllerAdditions.h and .m
+        - NSMutableArray+SSCollectionViewExchangeControllerAdditions.h and .m
+ 
  
  
  Usage...
@@ -158,24 +163,27 @@
  
  Limitations...
  
+    - If your view contains multiple collection views the exchange controllers do not support exchanges
+        between collection views.
     - Scrolling is not supported. All the cells that can be exchanged need to be visible on the screen.
     - The exchange controller does not provide direct support for rotation. But if your view controller
         allows rotation and manages the layout as required the exchange controller will continue to work.
-        But the rotatation event must not occur during an exchange transaction. Your view controller can
+        But the rotation event should not occur during an exchange transaction. Your view controller can
         ask the exchange controller if an exchange transaction is in progress.
  
  
  
  Thanks to...
  
-    - Matt Galloway: For taking the time to answer my  question, "Can I do that with a collection view?"
-    - Tony Copping: For gently schooling me on background threads. 
+    - Bolot Kerimbaev: For directing me to collection views when iOS 6 was released.
+    - Matt Galloway: For taking the time to answer my question, "Can I do that with a collection view?"
+    - Tony Copping: For schooling me on background threads.
     - Cesare Rocchi: For patiently enduring multiple code walkthroughs and providing excellent suggestions.
     - Gijs van Klooster: For asking, "Why are those methods so long?" And the enum suggestion.
  
  
  
- Original Inspiration...
+ Original Inspiration from...
  
     LXReorderableCollectionViewFlowLayout: https://github.com/lxcid/LXReorderableCollectionViewFlowLayout
  
