@@ -54,7 +54,7 @@
  normally over another item, causing the two to be exchanged. However, between the catch and
  the release the user may drag over many items including, possibly, the starting position.
  
- Exchange Events: An exchange event occurs each time the user drags to a different item. If it 
+ Exchange Event: An exchange event occurs each time the user drags to a different item. If it
  is the first exchange event it is a simple exchange between the item being dragged and the item 
  dragged to. If the user keeps dragging to new items subsequent exchange events include undoing 
  the previous exchange and then performing the new exchange. There can be many exchange events 
@@ -248,8 +248,11 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 - (instancetype)initWithDelegate:(id<SSCollectionViewExchangeControllerDelegate>)delegate
                   collectionView:(UICollectionView *)collectionView;
 
-- (UICollectionViewFlowLayout *)layout;
-
+- (UICollectionViewFlowLayout *)layout;  // allows clients to configure the layout.
+// This method is provided as a convenience. The delegate could ask its collection view
+// for its layout but that will be returned as a UICollectionViewLayout and would need
+// to be cast to a UICollectionViewFlowLayout before configuration. This method conveniently
+// returns the layout as a UICollectionViewFlowLayout, ready to be configured. 
 
 @property (nonatomic) CFTimeInterval    minimumPressDuration;       // for configuring the long press, default: 0.15
 @property (nonatomic) CGFloat           alphaForDisplacedItem;      // so the user can distinguish the most recently displaced item, default: 0.60

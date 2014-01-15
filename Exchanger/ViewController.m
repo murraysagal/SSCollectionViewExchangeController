@@ -10,7 +10,7 @@
  
  This app demonstrates the capabilities of the SSCollectionViewExchangeController
  and SSCollectionViewExchangeLayout classes that are designed to exchange items 
- in a multi column grid.
+ in a collection view.
  
  Refer to SSCollectionViewExchangeController.h for more comments. 
  
@@ -21,10 +21,10 @@
 #import "NSMutableArray+SSCollectionViewExchangeAdditions.h"
 
 
-NS_ENUM(NSInteger, CollectionViewSide) {
-    CollectionViewSideLeft,
-    CollectionViewSideMiddle,
-    CollectionViewSideRight
+NS_ENUM(NSInteger, CollectionViewSection) {
+    CollectionViewSectionLeft,
+    CollectionViewSectionMiddle,
+    CollectionViewSectionRight
 };
 
 
@@ -109,11 +109,11 @@ NS_ENUM(NSInteger, CollectionViewSide) {
 
 - (void)updateSumLabels
 {
-    // Demonstrates how live updating is enabled by the didFinishExchangeEvent delegate method.
+    // Demonstrates how live updating is enabled by the exchangeControllerDidFinishExchangeEvent: delegate method.
     
-    self.sumLeft.text =  [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.leftSide]];
-    self.sumMiddle.text =  [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.middle]];
-    self.sumRight.text = [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.rightSide]];
+    self.sumLeft.text =     [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.leftSide]];
+    self.sumMiddle.text =   [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.middle]];
+    self.sumRight.text =    [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.rightSide]];
 }
 
 - (IBAction)undo:(id)sender
@@ -123,17 +123,20 @@ NS_ENUM(NSInteger, CollectionViewSide) {
     
     if (self.indexPath1ForLastExchange != nil) {
         
-        // Model...
-        [self exchangeItemAtIndexPath1:self.indexPath1ForLastExchange withItemAtIndexPath2:self.indexPath2ForLastExchange];
-        [self updateSumLabels];
-        [self logModel];
-        
-        // View...
         [self.collectionView performBatchUpdates:^ {
+            
             [self.collectionView moveItemAtIndexPath:self.indexPath1ForLastExchange toIndexPath:self.indexPath2ForLastExchange];
             [self.collectionView moveItemAtIndexPath:self.indexPath2ForLastExchange toIndexPath:self.indexPath1ForLastExchange];
+            
         }
-                                      completion:nil];
+                                      completion:^(BOOL finished) {
+                                          
+                                          [self exchangeItemAtIndexPath1:self.indexPath1ForLastExchange
+                                                    withItemAtIndexPath2:self.indexPath2ForLastExchange]; // sync the model
+                                          [self updateSumLabels];
+                                          [self logModel];
+                                          
+                                      }];
     }
 }
 
@@ -142,10 +145,36 @@ NS_ENUM(NSInteger, CollectionViewSide) {
     NSMutableArray *array1 = [self arrayForSection:indexPath1.section];
     NSMutableArray *array2 = [self arrayForSection:indexPath2.section];
     
+    // as defined in the NSMutableArray category, can exchange items in different arrays...
     [NSMutableArray exchangeItemInArray:array1
                                 atIndex:indexPath1.item
                         withItemInArray:array2
                                 atIndex:indexPath2.item];
+}
+
+- (NSMutableArray *)arrayForSection:(NSUInteger)section {
+    
+    // Normally each section of a collection view has its own array. This is a simple example of how
+    // you might map your sections to actual arrays. Using a technique like this simplifies the
+    // implementation of the exchangeItemAtIndexPath:withItemAtIndexPath: method shown above.
+    
+    NSMutableArray *array;
+    
+    switch (section) {
+            
+        case CollectionViewSectionLeft:
+            array = self.leftSide;
+            break;
+            
+        case CollectionViewSectionMiddle:
+            array = self.middle;
+            break;
+            
+        case CollectionViewSectionRight:
+            array = self.rightSide;
+            break;
+    }
+    return array;
 }
 
 - (IBAction)reset:(id)sender
@@ -169,6 +198,8 @@ NS_ENUM(NSInteger, CollectionViewSide) {
 
 - (void)logModel
 {
+    // so you can verify that the model is staying in sync with the changes occurring on the view...
+    
     NSLog(@" ");
     NSLog(@"self.leftSide   |    self.middle    |    self.rightSide");
     
@@ -176,37 +207,13 @@ NS_ENUM(NSInteger, CollectionViewSide) {
         NSLog(@"          %@     |         %@        |          %@", self.leftSide[i], self.middle[i], self.rightSide[i]);
     }
     
-    NSInteger sumLeft = [self sumArray:self.leftSide];
-    NSInteger sumMiddle = [self sumArray:self.middle];
-    NSInteger sumRight = [self sumArray:self.rightSide];
+    NSInteger sumLeft =     [self sumArray:self.leftSide];
+    NSInteger sumMiddle =   [self sumArray:self.middle];
+    NSInteger sumRight =    [self sumArray:self.rightSide];
     
     NSLog(@" ");
     NSLog(@" sumLeft= %ld        sumMiddle= %ld      sumRight= %ld", (long)sumLeft, (long)sumMiddle, (long)sumRight);
     NSLog(@" ");
-}
-
-- (NSMutableArray *)arrayForSection:(NSUInteger)index {
-    
-    // Normally each section of a collection view has its own array. This is a simple example of how
-    // you might map your sections to actual arrays. Using a technique like this simplifies the
-    // implementation of the exchangeItemAtIndexPath:withItemAtIndexPath: delegate method.
-    
-    NSMutableArray *array;
-    
-    switch (index) {
-        case CollectionViewSideLeft:
-            array = self.leftSide;
-            break;
-            
-        case CollectionViewSideMiddle:
-            array = self.middle;
-            break;
-            
-        case CollectionViewSideRight:
-            array = self.rightSide;
-            break;
-    }
-    return array;
 }
 
 
@@ -228,25 +235,26 @@ NS_ENUM(NSInteger, CollectionViewSide) {
 {
     UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"itemCell" forIndexPath:indexPath];
     
-    // To keep this example simple the custom cell doesn't have a class. So the label is retrieved with a tag...
-    UILabel *itemLabel = (UILabel *)[cell viewWithTag:999];
-    
     NSNumber *itemNumber;
     
     switch (indexPath.section) {
-        case CollectionViewSideLeft:
+            
+        case CollectionViewSectionLeft:
             itemNumber = self.leftSide[ indexPath.item ];
             break;
             
-        case CollectionViewSideMiddle:
+        case CollectionViewSectionMiddle:
             itemNumber = self.middle[ indexPath.item ];
             break;
             
-        case CollectionViewSideRight:
+        case CollectionViewSectionRight:
             itemNumber = self.rightSide[ indexPath.item ];
             break;
     }
     
+    // To keep this example simple the custom collection view cell doesn't have a class.
+    // So the label is retrieved with a tag...
+    UILabel *itemLabel = (UILabel *)[cell viewWithTag:999];
     itemLabel.text = [NSString stringWithFormat:@" %@", itemNumber];
     
     return cell;
@@ -254,15 +262,25 @@ NS_ENUM(NSInteger, CollectionViewSide) {
 
 
 
-//-----------------------------------------------------------------------
+//---------------------------------------------------------------------------
 #pragma mark - SSCollectionViewExchangeControllerDelegate protocol methods...
+
+- (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController
+{
+    // Return whether the collection view can exchange items at this time.
+    // For example, you may only allow exchanges when editing.
+    //      return self.editing;
+    
+    // This example always returns YES.
+    return YES;
+}
 
 - (void)    exchangeController:(SSCollectionViewExchangeController *)exchangeController
    didExchangeItemAtIndexPath1:(NSIndexPath *)indexPath1
           withItemAtIndexPath2:(NSIndexPath *)indexPath2
 {
-    // Allows the delegate to keep the model synchronized with the changes occuring on the view.
     // Called either one or two times during an exchange event.
+    // Allows the delegate to keep the model synchronized with the changes occuring on the view.
     // Refer to the additional comments in the protocol definition.
     
     [self exchangeItemAtIndexPath1:indexPath1 withItemAtIndexPath2:indexPath2];
@@ -270,8 +288,8 @@ NS_ENUM(NSInteger, CollectionViewSide) {
 
 - (void)exchangeControllerDidFinishExchangeEvent:(SSCollectionViewExchangeController *)exchangeController
 {
-    // Allows the delegate to provide live updates as the user drags.
     // Called when an exchange event finishes.
+    // Allows the delegate to provide live updates as the user drags.
     // Refer to the additional comments in the protocol definition.
     
     [self updateSumLabels];
@@ -282,66 +300,13 @@ NS_ENUM(NSInteger, CollectionViewSide) {
                                         withIndexPath1:(NSIndexPath *)indexPath1
                                             indexPath2:(NSIndexPath *)indexPath2
 {
-    // Allows the delegate to perform any required action when the user completes the exchange.
     // Called at the end of the exchange transaction.
+    // Allows the delegate to perform any required action when the user completes the exchange transaction.
     // Refer to the additional comments in the protocol definition.
     
     // In this example, simply prepare for undo...
     self.indexPath1ForLastExchange = indexPath1;
     self.indexPath2ForLastExchange = indexPath2;
-}
-
-- (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController
-{
-    // Return whether the collection view can exchange items at this time.
-    // For example, you may only allow exchanges when editing.
-    
-    // This example always returns YES.
-    return YES;
-}
-
-- (void)animateCatchForExchangeController:(SSCollectionViewExchangeController *)exchangeController
-                             withSnapshot:(UIView *)snapshot {
-
-    NSTimeInterval duration = 0.20;
-    CGFloat blinkToScale = 1.20;
-    CGFloat finalScale = 1.0;
-    
-    [UIView animateWithDuration:duration animations:^ {
-        snapshot.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
-    } completion:^(BOOL finished) {
-        [UIView animateWithDuration:duration animations:^ {
-            snapshot.transform = CGAffineTransformMakeScale(finalScale, finalScale);
-        }];
-    }];
-}
-
-- (void)animateReleaseForExchangeController:(SSCollectionViewExchangeController *)exchangeController
-                               withSnapshot:(UIView *)snapshot
-                                    toPoint:(CGPoint)centerOfCell
-                     cellAtOriginalLocation:(UICollectionViewCell *)cellAtOriginalLocation
-                            completionBlock:(PostReleaseCompletionBlock)completionBlock {
-    
-    NSTimeInterval duration = 0.20;
-    CGFloat blinkToScale = 1.05;
-    CGFloat finalScale = 1.0;
-    
-    [UIView animateWithDuration:duration animations:^ {
-        snapshot.center = centerOfCell;
-        cellAtOriginalLocation.alpha = 1.0;
-    } completion:^(BOOL finished) {
-        
-        [UIView animateWithDuration:duration animations:^ {
-            snapshot.transform = CGAffineTransformMakeScale(blinkToScale, blinkToScale);
-        } completion:^(BOOL finished) {
-            
-            [UIView animateWithDuration:duration animations:^ {
-                snapshot.transform = CGAffineTransformMakeScale(finalScale, finalScale);
-            } completion:^(BOOL finished) {
-                completionBlock(duration);
-            }];
-        }];
-    }];
 }
 
 
