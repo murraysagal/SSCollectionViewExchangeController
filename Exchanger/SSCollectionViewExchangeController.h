@@ -89,10 +89,8 @@
  
  
  
- Timeline diagram...
+ Exchange Transaction and Event Timeline...
  
- |--- time --->
-
                                             Exchange Transaction
  |------------------------------------------------------------------------------------------------------------>|
  Catch at index path 0,3                                                               Release at index path 1,7
@@ -127,7 +125,7 @@
  
  
  2. Adopt the SSCollectionViewExchangeControllerDelegate protocol...
-        <SSCollectionViewExchangeControllerDelegate>
+        @interface MyViewController () <SSCollectionViewExchangeControllerDelegate>
 
  
  3. Create a property for the exchange controller...
