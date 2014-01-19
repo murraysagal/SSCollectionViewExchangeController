@@ -5,6 +5,23 @@
 //  Created by Murray Sagal on 1/9/2014.
 //  Copyright (c) 2014 Signature Software. All rights reserved.
 //
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
 
 /*
  
@@ -25,7 +42,7 @@
  
  
  
- Conceptual Diagram...
+ Conceptual Object Model...
  
         ---------------------
         |                   |       delegate
@@ -76,9 +93,8 @@
  
  Hidden Item: Between the catch and the release the cell for the dragged item is hidden. This is
  managed by the layout. Nevertheless, the hidden item is following the user as the exchange
- transaction proceeds. If you are curios, return nil from the indexPathForItemToHide delegate 
- method and you will be able to observe this, best viewed in the simulator with slow
- animations on.
+ transaction proceeds. If you are curios, return nil from indexPathForItemToHide and you will 
+ be able to observe this, best viewed in the simulator with slow animations on.
  
  Snapshot: During the catch a snapshot of the cell is created. The snapshot follows the user's
  finger during the long press. 
@@ -195,7 +211,7 @@
  
  Thanks to...
  
-    - Bolot Kerimbaev: For directing me to collection views when iOS 6 was released.
+    - Bolot Kerimbaev: For pointing out collection views when iOS 6 was released.
     - Matt Galloway: For taking the time to answer my question, "Can I do that with a collection view?"
     - Tony Copping: For schooling me on background threads.
     - Cesare Rocchi: For patiently enduring multiple code walkthroughs and providing excellent suggestions.
@@ -230,9 +246,9 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
           withItemAtIndexPath2:(NSIndexPath *)indexPath2;
 // Called for each individual exchange within an exchange event. There may be one exchange or two per
 // event. In all cases the delegate should just update the model by exchanging the elements at the
-// indicated index paths. Refer to the Exchange Event description and the Timeline diagram above.
-// This method provides the delegate with an opportunity to keep its model in sync with changes
-// happening on the view.
+// indicated index paths. Refer to the Exchange Event description and the Exchange Transaction and
+// Event Timeline above. This method provides the delegate with an opportunity to keep its model in
+// sync with changes happening on the view.
 
 
 - (void)exchangeControllerDidFinishExchangeEvent:(SSCollectionViewExchangeController *)exchangeController;
@@ -261,8 +277,12 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 
 - (UIView *)exchangeController:(SSCollectionViewExchangeController *)exchangeController
                snapshotForCell:(UICollectionViewCell *)cell;
-// SSCollectionViewExchangeController implements a method for returning a snapshot of the cell using a default
-// background color and alpha. If this does not meet your requirements then implement this delegate method.
+// SSCollectionViewExchangeController implements a default method for returning a snapshot of the
+// cell using a default background color and alpha. If this does not meet your requirements then
+// implement this delegate method. Before implementing this method remember that the properties for
+// the background colour and alpha used in the default snapshot method are exposed. Consider setting
+// those before implementing this method.
+
 
 
 - (void)animateCatchForExchangeController:(SSCollectionViewExchangeController *)exchangeController
@@ -278,7 +298,7 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
  animations for the catch and the release. If these implementations don't meet your
  requirements then implement either or both of the animate... delegate methods.
 
- Note: If you implement the animateRelease... method you should do the following...
+If you implement the animateRelease... method you should do the following...
     1. Animate snapshot to centerOfCell.
     2. Animate the alpha for the cell at originalIndexPathForDraggedItem back to 1.0.
     3. Do not call invalidateLayout or remove the snapshot from its superview.
@@ -292,7 +312,7 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
         First, it sets some internal state and then calls invalidateLayout which unhides the hidden 
         cell (where the user dragged to). This unhiding happens immediately and without any animation.
         But, purposefully, the snapshot the user dragged around is still on the view so the instant
-        unhiding of the cell happened behind the snapshot so no change was visible. Then completionBlock
+        unhiding of the cell happens behind the snapshot so no change is visible. Then completionBlock
         animates the alpha of the snapshot to 0.0, according to the duration you provide, revealing the
         now unhidden cell. When that animation is finished it removes the snapshot from the collection view.
 */
