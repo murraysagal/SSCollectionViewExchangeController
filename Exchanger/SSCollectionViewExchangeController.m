@@ -90,11 +90,11 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         longPress.minimumPressDuration = _minimumPressDuration;
         longPress.delaysTouchesBegan = YES;
         [collectionView addGestureRecognizer:longPress];
-        _longPressGestureRecognizer = longPress;
         
         collectionView.collectionViewLayout = [[SSCollectionViewExchangeLayout alloc] initWithDelegate:self];
         
         _collectionView = collectionView;
+        _longPressGestureRecognizer = longPress;
         _delegate = delegate;
     }
     return self;

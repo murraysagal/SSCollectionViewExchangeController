@@ -27,18 +27,23 @@
  
  SSCollectionViewExchangeController: <github url here>
  
- SSCollectionViewExchangeController manages the process of exchanging 2 collection view items. 
- The two items can be in different sections (and different arrays) but must be in the same 
- collection view. All cells that can be exchanged need to be visible--scrolling is not supported.
- When you initialize an instance of this class it installs a gesture recognizer in your collection 
- view and creates a custom layout object, SSCollectionViewExchangeLayout, that manages the hiding 
- and dimming of items in the collection view during the exchange process. Through the 
- SSCollectionViewExchangeControllerDelegate protocol your view controller is kept informed allowing 
- you to keep your model in sync with the changes occuring on the collection view and perform any 
- kind of live updating required during the process.
+ SSCollectionViewExchangeController manages the process of exchanging 2 items in 
+ a collection view. The key word is **exchange** which results in slightly different 
+ outcome compared to the more typical move scenario. Consider an example with these 5 items.
  
- If your view contains multiple collection views you can have an exchange controller for each. But
- exchanges cannot occur between collection views. 
+        item1    item2    item3    item4    item5
+ 
+ In a move scenario, when item1 is moved to item5 this is the result...
+ 
+        item2    item3    item4    item5    item1
+ 
+ With a move, the all items between the *from* and *to* items reposition themselves 
+ toward the *from* item. In an exchange scenario, when item1 is moved to item5 
+ this is the result...
+ 
+        item5    item2    item3    item4    item1
+ 
+ With an exchange the items between the *to* and the *from* don't move. Only the *from* and *to* items move.
  
  
  
@@ -54,20 +59,30 @@
     |         -------------------------->|   SSCollectionViewExchangeController   |
     |                                    |                                        |
     |                                    ------------------------------------------
-    |                                         |                         |
-    |                                         V                         |
-    |                              ----------------------------------   |
-    |                              |                                |   |
-    |                      ------->|  UILongPressGestureRecognizer  |   |
-    |                     |        |                                |   |
-    |                     |        ----------------------------------   |
-    |   ------------------------                                        V
+    |                                         |                            |
+    |                                         V                            |
+    |                              ----------------------------------      |
+    |                              |                                |      |
+    |                      ------->|  UILongPressGestureRecognizer  |      |
+    |                     |        |                                |      |
+    |                     |        ----------------------------------      |
+    |   ------------------------                                           V
     |   |                      |            ---------------------------------------
      -->|   UICollectionView   |----------> |                                     |
         |                      |            |   SSCollectionViewExchangeLayout    |
         ------------------------            |                                     |
                                             ---------------------------------------
  
+ When you initialize an instance of this class it installs a gesture recognizer in your 
+ collection view and creates a custom layout object, SSCollectionViewExchangeLayout, 
+ that manages the hiding and dimming of items in the collection view during the exchange 
+ process. Through the SSCollectionViewExchangeControllerDelegate protocol your view 
+ controller is kept informed allowing you to keep your model in sync with the changes 
+ occuring on the collection view and perform any kind of live updating required during 
+ the process.
+ 
+ If your view contains multiple collection views you can have an exchange controller 
+ for each. But exchanges cannot occur between collection views.
  
  
  
