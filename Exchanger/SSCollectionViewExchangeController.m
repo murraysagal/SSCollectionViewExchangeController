@@ -51,7 +51,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 @property (strong, nonatomic)   NSIndexPath         *currentIndexPath;
 @property (nonatomic)           BOOL                mustUndoPriorExchange;
 
-@property (strong, nonatomic)   UILongPressGestureRecognizer    *longPressGestureRecognizer;
+@property (weak, nonatomic)     UILongPressGestureRecognizer    *longPressGestureRecognizer;
 @property (nonatomic, copy)     PostReleaseCompletionBlock      postReleaseCompletionBlock;
 
 // For the view being dragged, this is the offset from the location of the long press to its center...
@@ -86,10 +86,11 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         _snapshotBackgroundColor =  [UIColor darkGrayColor];
         
         
-        _longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress)];
-        _longPressGestureRecognizer.minimumPressDuration = _minimumPressDuration;
-        _longPressGestureRecognizer.delaysTouchesBegan = YES;
-        [collectionView addGestureRecognizer:_longPressGestureRecognizer];
+        UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress)];
+        longPress.minimumPressDuration = _minimumPressDuration;
+        longPress.delaysTouchesBegan = YES;
+        [collectionView addGestureRecognizer:longPress];
+        _longPressGestureRecognizer = longPress;
         
         collectionView.collectionViewLayout = [[SSCollectionViewExchangeLayout alloc] initWithDelegate:self];
         
@@ -310,7 +311,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         [self.collectionView moveItemAtIndexPath:self.originalIndexPathForDraggedItem toIndexPath:self.originalIndexPathForDisplacedItem];
         [self.collectionView moveItemAtIndexPath:self.originalIndexPathForDisplacedItem toIndexPath:self.originalIndexPathForDraggedItem];
         
-        [self setPostExchangeEventStateWithIndexPathForDisplacedItem:self.originalIndexPathForDisplacedItem undoFlag:NO];
+        [self setPostExchangeEventStateWithIndexPathForDisplacedItem:self.self.originalIndexPathForDraggedItem undoFlag:NO];
         
     } completion:nil];
 }
