@@ -257,10 +257,6 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 
 @required
 
-- (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController;
-// Called before beginning an exchange transaction to determine if it is ok to allow exchanges.
-
-
 - (void)    exchangeController:(SSCollectionViewExchangeController *)exchangeController
    didExchangeItemAtIndexPath1:(NSIndexPath *)indexPath1
           withItemAtIndexPath2:(NSIndexPath *)indexPath2;
@@ -288,6 +284,28 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 
 @optional
 
+// TODO: make optional, if not implemented assume YES
+- (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController;
+// Called before beginning an exchange transaction to determine if it is ok to allow exchanges.
+
+// TODO: implement
+- (BOOL)                      exchangeController:(SSCollectionViewExchangeController *)exchangeController
+  canBeginExchangeTransactionWithItemAtIndexPath:(NSIndexPath *)indexPath;
+// If implemented, called after exchangeControllerCanExchange:, if its result is YES or it's not implemented.
+// Return YES if it is ok to begin
+// the exchange transaction with the item at indexPath. Implement this method if your collection
+// view contains items that cannot be moved. If not implemented the default is YES.
+
+// TODO: implement
+- (BOOL)            exchangeController:(SSCollectionViewExchangeController *)exchangeController
+  canExchangeItemToDisplaceAtIndexPath:(NSIndexPath *)indexPathOfItemToDisplace
+       withItemBeingDraggedAtIndexPath:(NSIndexPath *)indexPathOfItemBeingDragged;
+// If implemented, called throughout the exchange transaction to determine if it's ok to exchange
+// the two items. Implement this method if your collection view contains items that cannot be
+// exchanged at all or if there may be a situation where the item to displace cannot be exchanged
+// with the particular item being dragged. Return YES if it is ok to exchange. If not implemented,
+// the default is YES.
+
 - (UIView *)           exchangeController:(SSCollectionViewExchangeController *)exchangeController
   viewForCatchRectangleForItemAtIndexPath:(NSIndexPath *)indexPath;
 // If your collection view cells can only be caught if the long press occurs over a specific
@@ -301,7 +319,7 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 // cell using a default background color and alpha. If this does not meet your requirements then
 // implement this delegate method. Before implementing this method remember that the properties for
 // the background colour and alpha used in the default snapshot method are exposed. Consider setting
-// those before implementing this method.
+// those properties before implementing this method.
 
 
 
