@@ -290,6 +290,24 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 // you allow exchanges only when editing. If not implemented the exchange controller assumes YES.
 
 
+- (BOOL)exchangeController:(SSCollectionViewExchangeController *)exchangeController
+    canMoveItemAtIndexPath:(NSIndexPath *)indexPath;
+// If implemented, called after exchangeControllerCanExchange: but before beginning an exchange transaction
+// to determine if it is ok to begin the exchange transaction with the item at indexPath. The item at indexPath
+// is the item that will be dragged. Implement this method if your collection view contains items that cannot
+// be moved. If not implemented the default is YES.
+
+
+// TODO: implement
+- (BOOL)        exchangeController:(SSCollectionViewExchangeController *)exchangeController
+        canDisplaceItemAtIndexPath:(NSIndexPath *)indexPathOfItemToDisplace
+   withItemBeingDraggedAtIndexPath:(NSIndexPath *)indexPathOfItemBeingDragged;
+// If implemented, called throughout the exchange transaction to determine if it’s ok to exchange
+// the two items. Implement this method if your collection view contains items that cannot be
+// exchanged at all or if there may be a situation where the item to displace cannot be exchanged
+// with the particular item being dragged. If not implemented, the default is YES.
+
+
 - (UIView *)           exchangeController:(SSCollectionViewExchangeController *)exchangeController
   viewForCatchRectangleForItemAtIndexPath:(NSIndexPath *)indexPath;
 // If your collection view cells can only be caught if the long press occurs over a specific

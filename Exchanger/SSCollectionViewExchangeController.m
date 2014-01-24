@@ -339,14 +339,54 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (BOOL)shouldNotBeginExchangeTransactionAtIndexPath:(NSIndexPath *)indexPath {
     
+    return ![self canBeginExchangeTransactionAtIndexPath:indexPath];
+    
+}
+
+- (BOOL)canBeginExchangeTransactionAtIndexPath:(NSIndexPath *)indexPath {
+
+    // There are several conditions that must be true to begin the transaction...
+    
+    //  1. indexPath must not be nil
+    if (! indexPath) return NO;
+    
+    //  2. the delegate must allow exchanges
+    if (! [self delegateAllowsExchange]) return NO;
+    
+    //  3. the delegate must allow the item at indexPath to be moved
+    if (! [self delegateAllowsMovingItemAtIndexPath:indexPath]) return NO;
+    
+    //  4. the location (of the user's finger) must be in the catch rectangle
+    if (! [self locationIsInCatchRectangleForItemAtIndexPath:indexPath]) return NO;
+    
+    
+    // Otherwise...
+    return YES;
+    
+}
+
+- (BOOL)delegateAllowsExchange {
+    
     BOOL delegateAllowsExchange = YES;
     
     if ([self.delegate respondsToSelector:@selector(exchangeControllerCanExchange:)]) {
         delegateAllowsExchange = [self.delegate exchangeControllerCanExchange:self];
     }
     
-    return !(indexPath && delegateAllowsExchange && [self locationIsInCatchRectangleForItemAtIndexPath:indexPath]);
+    return delegateAllowsExchange;
+
+}
+
+- (BOOL)delegateAllowsMovingItemAtIndexPath:(NSIndexPath *)indexPath {
     
+    BOOL delegateAllowsMovingItemAtIndexPath = YES;
+    
+    if ([self.delegate respondsToSelector:@selector(exchangeController:canMoveItemAtIndexPath:)]) {
+        delegateAllowsMovingItemAtIndexPath = [self.delegate exchangeController:self canMoveItemAtIndexPath:indexPath];
+    }
+    
+    return delegateAllowsMovingItemAtIndexPath;
+
 }
 
 - (BOOL)locationIsInCatchRectangleForItemAtIndexPath:(NSIndexPath *)indexPath {

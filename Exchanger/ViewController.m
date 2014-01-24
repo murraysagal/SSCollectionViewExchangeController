@@ -31,7 +31,7 @@
  and SSCollectionViewExchangeLayout classes that are designed to exchange items 
  in a collection view.
  
- Refer to SSCollectionViewExchangeController.h for detailed documentation. 
+ Refer to SSCollectionViewExchangeController.h for detailed documentation.
  
  */
 
@@ -288,35 +288,26 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
 
 
-//---------------------------------------------------------------------------
-#pragma mark - SSCollectionViewExchangeControllerDelegate protocol methods...
-
-- (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController
-{
-    // Optional method. Return whether the collection view can exchange items at this time.
-    // For example, you may only allow exchanges when editing.
-    //      return self.editing;
-    
-    // This example always returns YES.
-    return YES;
-}
+//------------------------------------------------------------------------------------
+#pragma mark - SSCollectionViewExchangeControllerDelegate protocol required methods...
 
 - (void)    exchangeController:(SSCollectionViewExchangeController *)exchangeController
    didExchangeItemAtIndexPath1:(NSIndexPath *)indexPath1
           withItemAtIndexPath2:(NSIndexPath *)indexPath2
 {
-    // Called either one or two times during an exchange event.
-    // Allows the delegate to keep the model synchronized with the changes occuring on the view.
-    // Refer to the additional comments in the protocol definition.
+    // Called for each individual exchange within an exchange event. There may be one exchange or two per
+    // event. In all cases the delegate should just update the model by exchanging the elements at the
+    // indicated index paths. Refer to the Exchange Event description and the Exchange Transaction and
+    // Event Timeline. This method provides the delegate with an opportunity to keep its model in
+    // sync with changes happening on the view.
     
     [self exchangeItemAtIndexPath1:indexPath1 withItemAtIndexPath2:indexPath2];
 }
 
 - (void)exchangeControllerDidFinishExchangeEvent:(SSCollectionViewExchangeController *)exchangeController
 {
-    // Called when an exchange event finishes.
-    // Allows the delegate to provide live updates as the user drags.
-    // Refer to the additional comments in the protocol definition.
+    // Called when an exchange event finishes within an exchange transaction. This method
+    // provides the delegate with an opportunity to perform live updating as the user drags.
     
     [self updateSumLabels];
     [self logModel];
@@ -326,12 +317,43 @@ NS_ENUM(NSInteger, CollectionViewSection) {
                                         withIndexPath1:(NSIndexPath *)indexPath1
                                             indexPath2:(NSIndexPath *)indexPath2
 {
-    // Called at the end of the exchange transaction.
-    // Allows the delegate to perform any required action when the user completes the exchange transaction.
-    // Refer to the additional comments in the protocol definition.
+    // Called when an exchange transaction completes (the user lifts his/her finger). The
+    // index paths represent the two items in the final exchange. Do not exchange these items,
+    // you already have. This method allows the delegate to perform any task required at the end
+    // of the transaction such as setting up for undo. If the user dragged back to the starting
+    // position and released (effectively nothing was exchanged) the index paths will be the same.
     
-    // In this example, simply prepare for undo...
+    // In this example, prepare for undo...
     [self prepareForUndoWithIndexPath1:indexPath1 indexPath2:indexPath2];
+}
+
+
+
+//------------------------------------------------------------------------------------
+#pragma mark - SSCollectionViewExchangeControllerDelegate protocol optional methods...
+
+- (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController
+{
+    // If implemented, called before beginning an exchange transaction to determine if it is ok to
+    // allow exchanges. Implement this method if you conditionally allow exchanges. For example, maybe
+    // you allow exchanges only when editing. If not implemented the exchange controller assumes YES.
+
+    // This example always returns YES.
+    return YES;
+}
+
+- (BOOL)exchangeController:(SSCollectionViewExchangeController *)exchangeController
+    canMoveItemAtIndexPath:(NSIndexPath *)indexPath {
+    
+    // If implemented, called after exchangeControllerCanExchange: but before beginning an exchange transaction
+    // to determine if it is ok to begin the exchange transaction with the item at indexPath. The item at indexPath
+    // is the item that will be dragged. Implement this method if your collection view contains items that cannot
+    // be moved. If not implemented the default is YES.
+
+    // This example returns NO for index path 0,0...
+    NSIndexPath *indexPathNotToMove = [NSIndexPath indexPathForItem:0 inSection:0];
+    
+    return ([indexPath isEqual:indexPathNotToMove])? NO:YES;
 }
 
 
