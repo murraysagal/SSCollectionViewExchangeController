@@ -176,7 +176,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     
     NSIndexPath *startingIndexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
     
-    if ([self shouldNotContinueExchangeTransactionAtIndexPath:startingIndexPath]) {
+    if ([self shouldNotBeginExchangeTransactionAtIndexPath:startingIndexPath]) {
         [self cancelLongPressRecognizer];
         return;
     }
@@ -337,9 +337,15 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     
 }
 
-- (BOOL)shouldNotContinueExchangeTransactionAtIndexPath:(NSIndexPath *)indexPath {
+- (BOOL)shouldNotBeginExchangeTransactionAtIndexPath:(NSIndexPath *)indexPath {
     
-    return !(indexPath && [self.delegate exchangeControllerCanExchange:self] && [self locationIsInCatchRectangleForItemAtIndexPath:indexPath]);
+    BOOL delegateAllowsExchange = YES;
+    
+    if ([self.delegate respondsToSelector:@selector(exchangeControllerCanExchange:)]) {
+        delegateAllowsExchange = [self.delegate exchangeControllerCanExchange:self];
+    }
+    
+    return !(indexPath && delegateAllowsExchange && [self locationIsInCatchRectangleForItemAtIndexPath:indexPath]);
     
 }
 
@@ -388,13 +394,23 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         
     } else {
         
-        UIColor *originalBackgroundColor = cell.backgroundColor;
+        BOOL shouldApplyBackgroundColor = self.snapshotBackgroundColor != nil;
+        UIColor *originalBackgroundColor;
+        
+        if (shouldApplyBackgroundColor) {
+            originalBackgroundColor = cell.backgroundColor;
+            cell.backgroundColor = self.snapshotBackgroundColor;
+        }
+        
         float originalAlpha = cell.alpha;
-        cell.backgroundColor = self.snapshotBackgroundColor;
         cell.alpha = self.snapshotAlpha;
         UIView *snapshot = [cell snapshotViewAfterScreenUpdates:YES];
         snapshot.frame = cell.frame;
-        cell.backgroundColor = originalBackgroundColor;
+        
+        if (shouldApplyBackgroundColor) {
+            cell.backgroundColor = originalBackgroundColor;
+        }
+        
         cell.alpha = originalAlpha;
         return snapshot;
         

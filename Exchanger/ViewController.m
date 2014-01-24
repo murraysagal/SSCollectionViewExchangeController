@@ -31,7 +31,7 @@
  and SSCollectionViewExchangeLayout classes that are designed to exchange items 
  in a collection view.
  
- Refer to SSCollectionViewExchangeController.h for more comments. 
+ Refer to SSCollectionViewExchangeController.h for detailed documentation. 
  
  */
 
@@ -107,7 +107,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     layout.minimumInteritemSpacing = 1;
     layout.sectionInset = UIEdgeInsetsMake(5, 3, 5, 3);
     layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
-
+    
 }
 
 
@@ -215,6 +215,13 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     return sum;
 }
 
+- (void)prepareForUndoWithIndexPath1:(NSIndexPath *)indexPath1 indexPath2:(NSIndexPath *)indexPath2 {
+    
+    self.indexPath1ForLastExchange = indexPath1;
+    self.indexPath2ForLastExchange = indexPath2;
+    
+}
+
 - (void)logModel
 {
     // so you can verify that the model is staying in sync with the changes occurring on the view...
@@ -286,7 +293,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
 - (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController
 {
-    // Return whether the collection view can exchange items at this time.
+    // Optional method. Return whether the collection view can exchange items at this time.
     // For example, you may only allow exchanges when editing.
     //      return self.editing;
     
@@ -324,8 +331,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     // Refer to the additional comments in the protocol definition.
     
     // In this example, simply prepare for undo...
-    self.indexPath1ForLastExchange = indexPath1;
-    self.indexPath2ForLastExchange = indexPath2;
+    [self prepareForUndoWithIndexPath1:indexPath1 indexPath2:indexPath2];
 }
 
 

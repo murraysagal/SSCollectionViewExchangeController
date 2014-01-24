@@ -284,27 +284,11 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 
 @optional
 
-// TODO: make optional, if not implemented assume YES
 - (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController;
-// Called before beginning an exchange transaction to determine if it is ok to allow exchanges.
+// If implemented, called before beginning an exchange transaction to determine if it is ok to
+// allow exchanges. Implement this method if you conditionally allow exchanges. For example, maybe
+// you allow exchanges only when editing. If not implemented the exchange controller assumes YES.
 
-// TODO: implement
-- (BOOL)                      exchangeController:(SSCollectionViewExchangeController *)exchangeController
-  canBeginExchangeTransactionWithItemAtIndexPath:(NSIndexPath *)indexPath;
-// If implemented, called after exchangeControllerCanExchange:, if its result is YES or it's not implemented.
-// Return YES if it is ok to begin
-// the exchange transaction with the item at indexPath. Implement this method if your collection
-// view contains items that cannot be moved. If not implemented the default is YES.
-
-// TODO: implement
-- (BOOL)            exchangeController:(SSCollectionViewExchangeController *)exchangeController
-  canExchangeItemToDisplaceAtIndexPath:(NSIndexPath *)indexPathOfItemToDisplace
-       withItemBeingDraggedAtIndexPath:(NSIndexPath *)indexPathOfItemBeingDragged;
-// If implemented, called throughout the exchange transaction to determine if it's ok to exchange
-// the two items. Implement this method if your collection view contains items that cannot be
-// exchanged at all or if there may be a situation where the item to displace cannot be exchanged
-// with the particular item being dragged. Return YES if it is ok to exchange. If not implemented,
-// the default is YES.
 
 - (UIView *)           exchangeController:(SSCollectionViewExchangeController *)exchangeController
   viewForCatchRectangleForItemAtIndexPath:(NSIndexPath *)indexPath;
@@ -315,7 +299,7 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 
 - (UIView *)exchangeController:(SSCollectionViewExchangeController *)exchangeController
                snapshotForCell:(UICollectionViewCell *)cell;
-// SSCollectionViewExchangeController implements a default method for returning a snapshot of the
+// SSCollectionViewExchangeController implements a default method for creating a snapshot of the
 // cell using a default background color and alpha. If this does not meet your requirements then
 // implement this delegate method. Before implementing this method remember that the properties for
 // the background colour and alpha used in the default snapshot method are exposed. Consider setting
@@ -377,7 +361,7 @@ If you implement the animateRelease... method you should do the following...
 @property (nonatomic) CGFloat           blinkToScaleForCatch;       // default: 1.20
 @property (nonatomic) CGFloat           blinkToScaleForRelease;     // default: 1.05
 @property (nonatomic) CGFloat           snapshotAlpha;              // default: 0.80
-@property (strong, nonatomic) UIColor   *snapshotBackgroundColor;   // default: [UIColor darkGrayColor]
+@property (strong, nonatomic) UIColor   *snapshotBackgroundColor;   // if you set to nil, no background color will be applied, default: [UIColor darkGrayColor]
 
 @property (nonatomic, readonly) BOOL    exchangeTransactionInProgress; // allows clients to determine if there is an exchange transaction in progress
 
