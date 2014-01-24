@@ -176,7 +176,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     
     NSIndexPath *startingIndexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
     
-    if ([self shouldNotBeginExchangeTransactionAtIndexPath:startingIndexPath]) {
+    if ([self cannotBeginExchangeTransactionAtIndexPath:startingIndexPath]) {
         [self cancelLongPressRecognizer];
         return;
     }
@@ -337,31 +337,24 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     
 }
 
-- (BOOL)shouldNotBeginExchangeTransactionAtIndexPath:(NSIndexPath *)indexPath {
-    
-    return ![self canBeginExchangeTransactionAtIndexPath:indexPath];
+- (BOOL)canBeginExchangeTransactionAtIndexPath:(NSIndexPath *)indexPath {
+
+    // There are several conditions that must be true to begin a transaction...
+    //  1. indexPath must not be nil
+    //  2. the delegate must allow exchanges
+    //  3. the delegate must allow the item at indexPath to be moved
+    //  4. the location (of the user's finger) must be in the catch rectangle
+
+    return (indexPath &&
+            [self delegateAllowsExchange] &&
+            [self delegateAllowsMovingItemAtIndexPath:indexPath] &&
+            [self locationIsInCatchRectangleForItemAtIndexPath:indexPath]);
     
 }
 
-- (BOOL)canBeginExchangeTransactionAtIndexPath:(NSIndexPath *)indexPath {
-
-    // There are several conditions that must be true to begin the transaction...
+- (BOOL)cannotBeginExchangeTransactionAtIndexPath:(NSIndexPath *)indexPath {
     
-    //  1. indexPath must not be nil
-    if (! indexPath) return NO;
-    
-    //  2. the delegate must allow exchanges
-    if (! [self delegateAllowsExchange]) return NO;
-    
-    //  3. the delegate must allow the item at indexPath to be moved
-    if (! [self delegateAllowsMovingItemAtIndexPath:indexPath]) return NO;
-    
-    //  4. the location (of the user's finger) must be in the catch rectangle
-    if (! [self locationIsInCatchRectangleForItemAtIndexPath:indexPath]) return NO;
-    
-    
-    // Otherwise...
-    return YES;
+    return ![self canBeginExchangeTransactionAtIndexPath:indexPath];
     
 }
 
