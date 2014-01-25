@@ -298,7 +298,6 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 // be moved. If not implemented the default is YES.
 
 
-// TODO: implement
 - (BOOL)          exchangeController:(SSCollectionViewExchangeController *)exchangeController
           canDisplaceItemAtIndexPath:(NSIndexPath *)indexPathOfItemToDisplace
    withItemBeingDraggedFromIndexPath:(NSIndexPath *)indexPathOfItemBeingDragged;

@@ -221,7 +221,6 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     // The user is still dragging in the long press. Determine the exchange event type.
     
     self.currentIndexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
-    NSLog(@"[<%@ %p> %@ line= %d] self.currentIndexPath= %@", [self class], self, NSStringFromSelector(_cmd), __LINE__, self.currentIndexPath);
     
     if  ([self isOverSameItemAtIndexPath:self.currentIndexPath] || self.currentIndexPath == nil) {
         return ExchangeEventTypeNothingToExchange;
@@ -250,11 +249,9 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     switch ([self exchangeEventType]) {
             
         case ExchangeEventTypeNothingToExchange:
-            NSLog(@"ExchangeEventTypeNothingToExchange");
             break;
             
         case ExchangeEventTypeCannotDisplaceItem:
-            NSLog(@"ExchangeEventTypeCannotDisplaceItem");
             break;
             
         case ExchangeEventTypeDraggedFromStartingItem:
@@ -282,6 +279,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         [self.delegate exchangeControllerDidFinishExchangeEvent:self];
         
         // View...
+        [self ensureItemsToMoveAreFrontMost];
         [self.collectionView moveItemAtIndexPath:self.originalIndexPathForDraggedItem toIndexPath:self.currentIndexPath];
         [self.collectionView moveItemAtIndexPath:self.currentIndexPath toIndexPath:self.originalIndexPathForDraggedItem];
         
@@ -305,6 +303,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         [self.delegate exchangeControllerDidFinishExchangeEvent:self];
         
         // View...
+        [self ensureItemsToMoveAreFrontMost];
         [self.collectionView moveItemAtIndexPath:self.originalIndexPathForDraggedItem toIndexPath:self.originalIndexPathForDisplacedItem];
         [self.collectionView moveItemAtIndexPath:self.originalIndexPathForDisplacedItem toIndexPath:self.currentIndexPath];
         [self.collectionView moveItemAtIndexPath:self.currentIndexPath toIndexPath:self.originalIndexPathForDraggedItem];
@@ -325,6 +324,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         [self.delegate exchangeControllerDidFinishExchangeEvent:self];
         
         // View...
+        [self ensureItemsToMoveAreFrontMost];
         [self.collectionView moveItemAtIndexPath:self.originalIndexPathForDraggedItem toIndexPath:self.originalIndexPathForDisplacedItem];
         [self.collectionView moveItemAtIndexPath:self.originalIndexPathForDisplacedItem toIndexPath:self.originalIndexPathForDraggedItem];
         
@@ -405,15 +405,12 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     // This if() is here to prevent repeated calls to the delegate. With this if() the delegate
     // is asked only once until indexPathForItemToDisplace changes.
     
-    // ???: can indexPathForItemToDisplace ever be nil???
     if ([indexPathForItemToDisplace isEqual:self.indexPathForItemLastChecked]) {
         
-        NSLog(@"same item");
         return self.resultForItemLastChecked;
         
     } else {
         
-        NSLog(@"**************** new item *******************");
         self.indexPathForItemLastChecked = indexPathForItemToDisplace;
         
         BOOL delegateAllowsDisplacingItemAtIndexPath = YES;
@@ -456,6 +453,23 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     }
     
     return locationIsInCatchRectangle;
+    
+}
+
+- (void)ensureItemsToMoveAreFrontMost {
+    
+    // It can happen that the cells being exchanged are not the frontmost in the view. In that case
+    // the move animations are obscured behind other collection view items.
+    
+    UICollectionViewCell *cell;
+    
+    cell = [self.collectionView cellForItemAtIndexPath:self.originalIndexPathForDraggedItem];
+    [self.collectionView bringSubviewToFront:cell];
+    
+    cell = [self.collectionView cellForItemAtIndexPath:self.currentIndexPath];
+    [self.collectionView bringSubviewToFront:cell];
+    
+    [self.collectionView bringSubviewToFront:self.snapshot];
     
 }
 

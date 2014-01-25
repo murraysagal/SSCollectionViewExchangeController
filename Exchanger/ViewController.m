@@ -332,32 +332,39 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 //------------------------------------------------------------------------------------
 #pragma mark - SSCollectionViewExchangeControllerDelegate protocol optional methods...
 
-- (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController
-{
-    // If implemented, called before beginning an exchange transaction to determine if it is ok to
-    // allow exchanges. Implement this method if you conditionally allow exchanges. For example, maybe
-    // you allow exchanges only when editing. If not implemented the exchange controller assumes YES.
-
-    // This example always returns YES.
-    return YES;
-}
-
-- (BOOL)exchangeController:(SSCollectionViewExchangeController *)exchangeController
-    canMoveItemAtIndexPath:(NSIndexPath *)indexPath {
-    
-    // If implemented, called after exchangeControllerCanExchange: but before beginning an exchange transaction
-    // to determine if it is ok to begin the exchange transaction with the item at indexPath. The item at indexPath
-    // is the item that will be dragged. Implement this method if your collection view contains items that cannot
-    // be moved. If not implemented the default is YES.
-
-    // This example returns NO for index path 0,0...
-    NSIndexPath *indexPathNotToMove = [NSIndexPath indexPathForItem:0 inSection:0];
-    
-    return ([indexPath isEqual:indexPathNotToMove])? NO:YES;
-}
+// Uncomment to exercise this delegate method...
+//- (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController
+//{
+//    // If implemented, called before beginning an exchange transaction to determine if it is ok to
+//    // allow exchanges. Implement this method if you conditionally allow exchanges. For example, maybe
+//    // you allow exchanges only when editing. If not implemented the exchange controller assumes YES.
+//
+//    // This example randomly returns either YES or NO.
+//    NSUInteger randomZeroOrOne = arc4random_uniform(2);
+//    return (randomZeroOrOne == 0)? NO:YES;
+//}
 
 
-// Uncomment to to see this delegate method in action.
+// Uncomment to exercise this delegate method...
+//- (BOOL)exchangeController:(SSCollectionViewExchangeController *)exchangeController
+//    canMoveItemAtIndexPath:(NSIndexPath *)indexPath {
+//    
+//    // If implemented, called after exchangeControllerCanExchange: but before beginning an exchange transaction
+//    // to determine if it is ok to begin the exchange transaction with the item at indexPath. The item at indexPath
+//    // is the item that will be dragged. Implement this method if your collection view contains items that cannot
+//    // be moved. If not implemented the default is YES.
+//
+//    // This example returns NO for index path 0,0 which prevents the top left item from being moved.
+//    // It is important to understand that this does not prevent that item from being displaced
+//    // during an exchange transaction. If that was also required you would implement that in the
+//    // canDisplaceItem... method.
+//    NSIndexPath *indexPathNotToMove = [NSIndexPath indexPathForItem:0 inSection:0];
+//    
+//    return ([indexPath isEqual:indexPathNotToMove])? NO:YES;
+//}
+
+
+// Uncomment to exercise this delegate method...
 //- (BOOL)          exchangeController:(SSCollectionViewExchangeController *)exchangeController
 //          canDisplaceItemAtIndexPath:(NSIndexPath *)indexPathOfItemToDisplace
 //   withItemBeingDraggedFromIndexPath:(NSIndexPath *)indexPathOfItemBeingDragged {
@@ -367,7 +374,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 //    // exchanged at all or if there may be a situation where the item to displace cannot be exchanged
 //    // with the particular item being dragged. If not implemented, the default is YES.
 //
-//    // In this example, arbitrarily don't allow items on the right to be displaced by items from the left.
+//    // In this example, items on the right can't be displaced by items from the left.
 //        if (indexPathOfItemBeingDragged.section == CollectionViewSectionLeft  &&
 //        indexPathOfItemToDisplace.section == CollectionViewSectionRight) {
 //        
