@@ -299,9 +299,9 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 
 
 // TODO: implement
-- (BOOL)        exchangeController:(SSCollectionViewExchangeController *)exchangeController
-        canDisplaceItemAtIndexPath:(NSIndexPath *)indexPathOfItemToDisplace
-   withItemBeingDraggedAtIndexPath:(NSIndexPath *)indexPathOfItemBeingDragged;
+- (BOOL)          exchangeController:(SSCollectionViewExchangeController *)exchangeController
+          canDisplaceItemAtIndexPath:(NSIndexPath *)indexPathOfItemToDisplace
+   withItemBeingDraggedFromIndexPath:(NSIndexPath *)indexPathOfItemBeingDragged;
 // If implemented, called throughout the exchange transaction to determine if it’s ok to exchange
 // the two items. Implement this method if your collection view contains items that cannot be
 // exchanged at all or if there may be a situation where the item to displace cannot be exchanged

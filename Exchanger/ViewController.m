@@ -357,4 +357,28 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 }
 
 
+// Uncomment to to see this delegate method in action.
+//- (BOOL)          exchangeController:(SSCollectionViewExchangeController *)exchangeController
+//          canDisplaceItemAtIndexPath:(NSIndexPath *)indexPathOfItemToDisplace
+//   withItemBeingDraggedFromIndexPath:(NSIndexPath *)indexPathOfItemBeingDragged {
+//    
+//    // If implemented, called throughout the exchange transaction to determine if it’s ok to exchange
+//    // the two items. Implement this method if your collection view contains items that cannot be
+//    // exchanged at all or if there may be a situation where the item to displace cannot be exchanged
+//    // with the particular item being dragged. If not implemented, the default is YES.
+//
+//    // In this example, arbitrarily don't allow items on the right to be displaced by items from the left.
+//        if (indexPathOfItemBeingDragged.section == CollectionViewSectionLeft  &&
+//        indexPathOfItemToDisplace.section == CollectionViewSectionRight) {
+//        
+//        return NO;
+//        
+//    } else {
+//        
+//        return YES;
+//        
+//    }
+//}
+
+
 @end

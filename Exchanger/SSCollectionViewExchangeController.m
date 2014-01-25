@@ -34,7 +34,8 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     ExchangeEventTypeDraggedFromStartingItem,
     ExchangeEventTypeDraggedToOtherItem,
     ExchangeEventTypeDraggedToStartingItem,
-    ExchangeEventTypeNothingToExchange
+    ExchangeEventTypeNothingToExchange,
+    ExchangeEventTypeCannotDisplaceItem
 };
 
 
@@ -64,6 +65,10 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 @property (nonatomic)           CGPoint             centerOfHiddenCell;
 
 @property (nonatomic, readwrite) BOOL               exchangeTransactionInProgress;
+
+@property (strong, nonatomic) NSIndexPath *indexPathForItemLastChecked;
+@property (nonatomic) BOOL resultForItemLastChecked;
+
 
 @end
 
@@ -182,6 +187,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     }
     
     self.exchangeTransactionInProgress = YES;
+    self.indexPathForItemLastChecked = nil;
     
     UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:startingIndexPath];
     UIView *snapshot = [self snapshotForCell:cell];
@@ -215,9 +221,15 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     // The user is still dragging in the long press. Determine the exchange event type.
     
     self.currentIndexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
+    NSLog(@"[<%@ %p> %@ line= %d] self.currentIndexPath= %@", [self class], self, NSStringFromSelector(_cmd), __LINE__, self.currentIndexPath);
     
     if  ([self isOverSameItemAtIndexPath:self.currentIndexPath] || self.currentIndexPath == nil) {
         return ExchangeEventTypeNothingToExchange;
+    }
+    
+    if (![self delegateAllowsDisplacingItemAtIndexPath:self.currentIndexPath
+                                 withItemFromIndexPath:self.originalIndexPathForDraggedItem]) {
+        return ExchangeEventTypeCannotDisplaceItem;
     }
     
     
@@ -238,6 +250,11 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     switch ([self exchangeEventType]) {
             
         case ExchangeEventTypeNothingToExchange:
+            NSLog(@"ExchangeEventTypeNothingToExchange");
+            break;
+            
+        case ExchangeEventTypeCannotDisplaceItem:
+            NSLog(@"ExchangeEventTypeCannotDisplaceItem");
             break;
             
         case ExchangeEventTypeDraggedFromStartingItem:
@@ -382,6 +399,36 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 }
 
+- (BOOL)delegateAllowsDisplacingItemAtIndexPath:(NSIndexPath *)indexPathForItemToDisplace
+                          withItemFromIndexPath:(NSIndexPath *)indexPathOfItemBeingDragged {
+    
+    // This if() is here to prevent repeated calls to the delegate. With this if() the delegate
+    // is asked only once until indexPathForItemToDisplace changes.
+    
+    // ???: can indexPathForItemToDisplace ever be nil???
+    if ([indexPathForItemToDisplace isEqual:self.indexPathForItemLastChecked]) {
+        
+        NSLog(@"same item");
+        return self.resultForItemLastChecked;
+        
+    } else {
+        
+        NSLog(@"**************** new item *******************");
+        self.indexPathForItemLastChecked = indexPathForItemToDisplace;
+        
+        BOOL delegateAllowsDisplacingItemAtIndexPath = YES;
+        
+        if ([self.delegate respondsToSelector:@selector(exchangeController:canDisplaceItemAtIndexPath:withItemBeingDraggedFromIndexPath:)]) {
+            delegateAllowsDisplacingItemAtIndexPath = [self.delegate exchangeController:self
+                                                             canDisplaceItemAtIndexPath:indexPathForItemToDisplace
+                                                      withItemBeingDraggedFromIndexPath:indexPathOfItemBeingDragged];
+        }
+        
+        self.resultForItemLastChecked = delegateAllowsDisplacingItemAtIndexPath;
+        return delegateAllowsDisplacingItemAtIndexPath;
+    }
+}
+
 - (BOOL)locationIsInCatchRectangleForItemAtIndexPath:(NSIndexPath *)indexPath {
     
     BOOL locationIsInCatchRectangle;
@@ -511,11 +558,13 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (BOOL)isOverSameItemAtIndexPath:(NSIndexPath *)indexPath {
     
+    // TODO: determine the return value if indexPath is nil
     return [indexPath isEqual:self.originalIndexPathForDisplacedItem];
 }
 
 - (BOOL)isBackToStartingItemAtIndexPath:(NSIndexPath *)indexPath {
     
+    // TODO: determine the return value if indexPath is nil
     return [indexPath isEqual:self.originalIndexPathForDraggedItem];
 }
 
