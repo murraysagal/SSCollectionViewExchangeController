@@ -87,6 +87,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         _animationDuration =        0.20;
         _blinkToScaleForCatch =     1.20;
         _blinkToScaleForRelease =   1.05;
+        _animationBacklogDelay =    0.50;
         _snapshotAlpha =            0.80;
         _snapshotBackgroundColor =  [UIColor darkGrayColor];
         
@@ -168,7 +169,9 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
             break;
             
         case UIGestureRecognizerStateCancelled:
-            NSLog(@"UIGestureRecognizerStateCancelled");
+            [self performSelector:@selector(cancelExchangeTransaction)
+                       withObject:nil
+                       afterDelay:self.animationBacklogDelay];
             break;
             
         case UIGestureRecognizerStateFailed:
@@ -341,6 +344,27 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     [self animateRelease];
     
     self.exchangeTransactionInProgress = NO;
+}
+
+- (void)cancelExchangeTransaction {
+    
+    // This will happen, for example, if the user gets a phone call in the middle of the long press.
+    
+    // So the delegate can undo the last exchange in the model and thus
+    // return it to its pre-exchange transaction state...
+    [self.delegate exchangeController:self
+          didExchangeItemAtIndexPath1:self.originalIndexPathForDisplacedItem
+                 withItemAtIndexPath2:self.originalIndexPathForDraggedItem];
+    
+    // So the delegate can upate the view...
+    [self.delegate exchangeControllerDidCancelExchangeTransaction:self];
+    
+    self.originalIndexPathForDisplacedItem = nil;
+    self.originalIndexPathForDraggedItem = nil;
+    [self.snapshot removeFromSuperview];
+    [self.collectionView reloadData];
+    self.exchangeTransactionInProgress = NO;
+    
 }
 
 

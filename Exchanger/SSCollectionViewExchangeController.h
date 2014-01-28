@@ -282,6 +282,17 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 // position and released (effectively nothing was exchanged) the index paths will be the same.
 
 
+- (void)exchangeControllerDidCancelExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController;
+// Called when the long press gesture recognizer's state becomes UIGestureRecognizerStateCancelled. Normally,
+// this only happens if the device receives a phone call during the exchange transaction. When this happens the
+// best course of action is to return to the state before the exchange transaction started. To do this the
+// exchange controller first calls exchangeController:didExchangeItemAtIndexPath1:withItemAtIndexPath2:
+// on the delegate with the index paths for the last items exchanged so the delegate can restore the model.
+// Then this method is called allowing the delegate to perform the actions required to restore its state.
+// Normally, the delegate will not need to take any action on the collection view. The exchange controller
+// return the collection view to its previous state. No animation is applied because the view is hidden. 
+
+
 @optional
 
 - (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController;
@@ -381,5 +392,13 @@ If you implement the animateRelease... method you should do the following...
 @property (strong, nonatomic) UIColor   *snapshotBackgroundColor;   // if you set to nil, no background color will be applied, default: [UIColor darkGrayColor]
 
 @property (nonatomic, readonly) BOOL    exchangeTransactionInProgress; // allows clients to determine if there is an exchange transaction in progress
+
+@property (nonatomic) NSTimeInterval    animationBacklogDelay;
+// When the long press is cancelled, for example by an incoming call, depending on the velocity there
+// may be move animations in progress and pending. Without a delay, the backlog of animations can still
+// be executing when the exchange controller calls reloadData. This prevents reloadData from working
+// properly and restoring the collection view to its previous state. The delay allows the backlog of
+// animations to complete before the exchange controller cancels the exchange. The default is 0.50 and
+// should be sufficient in most cases.
 
 @end

@@ -327,6 +327,12 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     [self prepareForUndoWithIndexPath1:indexPath1 indexPath2:indexPath2];
 }
 
+- (void)exchangeControllerDidCancelExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController {
+    NSLog(@"[<%@ %p> %@ line= %d]", [self class], self, NSStringFromSelector(_cmd), __LINE__);
+    [self updateSumLabels];
+    [self logModel];
+}
+
 
 
 //------------------------------------------------------------------------------------
