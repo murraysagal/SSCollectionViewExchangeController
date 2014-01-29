@@ -165,10 +165,11 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     NSMutableArray *array2 = [self arrayForSection:indexPath2.section];
     
     // as defined in the NSMutableArray category, can exchange items in different arrays...
-    [NSMutableArray exchangeItemInArray:array1
-                                atIndex:indexPath1.item
-                        withItemInArray:array2
-                                atIndex:indexPath2.item];
+    [NSMutableArray exchangeObjectInArray:array1
+                                  atIndex:indexPath1.item
+                   withObjectInOtherArray:array2
+                                  atIndex:indexPath2.item];
+
 }
 
 - (NSMutableArray *)arrayForSection:(NSUInteger)section {

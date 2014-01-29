@@ -24,12 +24,22 @@
 // THE SOFTWARE.
 
 
+// This category on NSMutableArray implements methods that exchange objects
+// which can be in two different NSMutableArray objects. There is a class
+// method appropriate for most situations and an instance method for when
+// that makes more sense.
+
+
 
 #import <Foundation/Foundation.h>
 
 @interface NSMutableArray (SSCollectionViewExchangeControllerAdditions)
 
-+ (void)exchangeItemInArray:(NSMutableArray *)array1 atIndex:(NSUInteger)index1
-            withItemInArray:(NSMutableArray *)array2 atIndex:(NSUInteger)index2;
++ (void)exchangeObjectInArray:(NSMutableArray *)array       atIndex:(NSUInteger)index
+       withObjectInOtherArray:(NSMutableArray *)otherArray  atIndex:(NSUInteger)indexInOtherArray;
+
+- (void)exchangeObjectAtIndex:(NSUInteger)indexInThisArray
+       withObjectInOtherArray:(NSMutableArray *)otherArray
+                      atIndex:(NSUInteger)indexInOtherArray;
 
 @end

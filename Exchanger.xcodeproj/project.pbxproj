@@ -91,6 +91,40 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		72044B6F189929A200D43E2E /* Categories */ = {
+			isa = PBXGroup;
+			children = (
+				72CE362F1885B853004A2402 /* UIGestureRecognizer+SSCollectionViewExchangeControllerAdditions.h */,
+				72CE36301885B853004A2402 /* UIGestureRecognizer+SSCollectionViewExchangeControllerAdditions.m */,
+				72FF890C188044DC00E4DAAB /* NSMutableArray+SSCollectionViewExchangeControllerAdditions.h */,
+				72FF890D188044DC00E4DAAB /* NSMutableArray+SSCollectionViewExchangeControllerAdditions.m */,
+			);
+			name = Categories;
+			sourceTree = "<group>";
+		};
+		72044B7018992A1100D43E2E /* ExchangeController */ = {
+			isa = PBXGroup;
+			children = (
+				72553951187EFBDC000338BB /* SSCollectionViewExchangeController.h */,
+				72553952187EFBDC000338BB /* SSCollectionViewExchangeController.m */,
+				722D2FFB1832927100F82D12 /* SSCollectionViewExchangeLayout.h */,
+				722D2FFC1832927100F82D12 /* SSCollectionViewExchangeLayout.m */,
+				72044B6F189929A200D43E2E /* Categories */,
+			);
+			name = ExchangeController;
+			sourceTree = "<group>";
+		};
+		72044B7118992A3900D43E2E /* ExampleViewController */ = {
+			isa = PBXGroup;
+			children = (
+				722D2FFD1832927100F82D12 /* ViewController.h */,
+				722D2FFE1832927100F82D12 /* ViewController.m */,
+				722D2FFF1832927100F82D12 /* ViewController.xib */,
+				722D30001832927100F82D12 /* ItemCell.xib */,
+			);
+			name = ExampleViewController;
+			sourceTree = "<group>";
+		};
 		722D2FBA183291E300F82D12 = {
 			isa = PBXGroup;
 			children = (
@@ -124,20 +158,8 @@
 		722D2FCC183291E300F82D12 /* Exchanger */ = {
 			isa = PBXGroup;
 			children = (
-				72CE362F1885B853004A2402 /* UIGestureRecognizer+SSCollectionViewExchangeControllerAdditions.h */,
-				72CE36301885B853004A2402 /* UIGestureRecognizer+SSCollectionViewExchangeControllerAdditions.m */,
-				72FF890C188044DC00E4DAAB /* NSMutableArray+SSCollectionViewExchangeControllerAdditions.h */,
-				72FF890D188044DC00E4DAAB /* NSMutableArray+SSCollectionViewExchangeControllerAdditions.m */,
-				722D2FFB1832927100F82D12 /* SSCollectionViewExchangeLayout.h */,
-				722D2FFC1832927100F82D12 /* SSCollectionViewExchangeLayout.m */,
-				72553951187EFBDC000338BB /* SSCollectionViewExchangeController.h */,
-				72553952187EFBDC000338BB /* SSCollectionViewExchangeController.m */,
-				722D2FFD1832927100F82D12 /* ViewController.h */,
-				722D2FFE1832927100F82D12 /* ViewController.m */,
-				722D2FFF1832927100F82D12 /* ViewController.xib */,
-				722D30001832927100F82D12 /* ItemCell.xib */,
-				722D2FD5183291E300F82D12 /* AppDelegate.h */,
-				722D2FD6183291E300F82D12 /* AppDelegate.m */,
+				72044B7018992A1100D43E2E /* ExchangeController */,
+				72044B7118992A3900D43E2E /* ExampleViewController */,
 				722D2FDE183291E300F82D12 /* Images.xcassets */,
 				722D2FCD183291E300F82D12 /* Supporting Files */,
 			);
@@ -147,6 +169,8 @@
 		722D2FCD183291E300F82D12 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				722D2FD5183291E300F82D12 /* AppDelegate.h */,
+				722D2FD6183291E300F82D12 /* AppDelegate.m */,
 				722D2FCE183291E300F82D12 /* Exchanger-Info.plist */,
 				722D2FCF183291E300F82D12 /* InfoPlist.strings */,
 				722D2FD2183291E300F82D12 /* main.m */,

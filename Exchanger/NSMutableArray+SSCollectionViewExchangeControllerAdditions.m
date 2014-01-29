@@ -27,24 +27,38 @@
 
 #import "NSMutableArray+SSCollectionViewExchangeControllerAdditions.h"
 
+
 @implementation NSMutableArray (SSCollectionViewExchangeControllerAdditions)
 
-+ (void)exchangeItemInArray:(NSMutableArray *)array1 atIndex:(NSUInteger)index1
-            withItemInArray:(NSMutableArray *)array2 atIndex:(NSUInteger)index2 {
++ (void)exchangeObjectInArray:(NSMutableArray *)array       atIndex:(NSUInteger)index
+       withObjectInOtherArray:(NSMutableArray *)otherArray  atIndex:(NSUInteger)indexInOtherArray {
     
-    // Exchanges two items that can be in different arrays.
+    // Exchanges two objects that *can* be in different arrays.
     
-    if ([array1 isEqual:array2]) {
+    if ([array isEqual:otherArray]) {
         
-        [array1 exchangeObjectAtIndex:index1 withObjectAtIndex:index2];
+        [array exchangeObjectAtIndex:index withObjectAtIndex:indexInOtherArray];
         
     } else {
         
-        id itemFromArray1 = array1[ index1 ];
+        id objectInArray      = array[ index ];
+        id objectInOtherArray = otherArray[ indexInOtherArray ];
         
-        [array1 replaceObjectAtIndex:index1 withObject:array2[ index2 ]];
-        [array2 replaceObjectAtIndex:index2 withObject:itemFromArray1];
+        [array      replaceObjectAtIndex:index              withObject:objectInOtherArray];
+        [otherArray replaceObjectAtIndex:indexInOtherArray  withObject:objectInArray];
+        
     }
+}
+
+- (void)exchangeObjectAtIndex:(NSUInteger)indexInThisArray
+       withObjectInOtherArray:(NSMutableArray *)otherArray
+                      atIndex:(NSUInteger)indexInOtherArray {
+    
+    [NSMutableArray exchangeObjectInArray:self
+                                  atIndex:indexInThisArray
+                   withObjectInOtherArray:otherArray
+                                  atIndex:indexInOtherArray];
+    
 }
 
 @end
