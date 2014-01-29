@@ -138,6 +138,8 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
             weakSelf.snapshot.alpha = 0.0;
         } completion:^(BOOL finished) {
             [weakSelf.snapshot removeFromSuperview];
+            weakSelf.snapshot = nil;
+            self.longPressGestureRecognizer.enabled = YES;
         }];
     };
 }
@@ -559,6 +561,8 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (void)animateRelease {
     
+    self.longPressGestureRecognizer.enabled = NO;
+
     UICollectionViewCell *cellForOriginalLocation = [self.collectionView cellForItemAtIndexPath:self.originalIndexPathForDraggedItem];
     
     if ([self.delegate respondsToSelector:@selector(animateReleaseForExchangeController:withSnapshot:toPoint:originalIndexPathForDraggedItem:completionBlock:)]) {
