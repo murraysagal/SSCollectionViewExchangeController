@@ -575,6 +575,11 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         CGFloat blinkToScale = self.blinkToScaleForRelease;
         CGFloat finalScale = 1.0;
         
+		[CATransaction begin];
+		[CATransaction setCompletionBlock:^{
+			self.postReleaseCompletionBlock(duration);
+		}];
+		
         [UIView animateWithDuration:duration animations:^ {
             self.snapshot.center = self.centerOfHiddenCell;
             cellForOriginalLocation.alpha = 1.0;
@@ -586,11 +591,11 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
                 
                 [UIView animateWithDuration:duration animations:^ {
                     self.snapshot.transform = CGAffineTransformMakeScale(finalScale, finalScale);
-                } completion:^(BOOL finished) {
-                    self.postReleaseCompletionBlock(duration);
-                }];
+                } completion:nil];
             }];
         }];
+		
+		[CATransaction commit];
     }
 }
 
