@@ -295,18 +295,16 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 
 @optional
 
-- (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController;
-// If implemented, called before beginning an exchange transaction to determine if it is ok to
-// allow exchanges. Implement this method if you conditionally allow exchanges. For example, maybe
-// you allow exchanges only when editing. If not implemented the exchange controller assumes YES.
-
-
-- (BOOL)exchangeController:(SSCollectionViewExchangeController *)exchangeController
-    canMoveItemAtIndexPath:(NSIndexPath *)indexPath;
-// If implemented, called after exchangeControllerCanExchange: but before beginning an exchange transaction
-// to determine if it is ok to begin the exchange transaction with the item at indexPath. The item at indexPath
-// is the item that will be dragged. Implement this method if your collection view contains items that cannot
-// be moved. If not implemented the default is YES.
+- (BOOL)exchangeControllerCanBeginExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController
+                                  withItemAtIndexPath:(NSIndexPath *)indexPath;
+// If implemented, called before beginning an exchange transaction to determine if it is ok to begin.
+// Implement this method if:
+//  1. Your view controller conditionally allows exchanges. For example, maybe exchanges are allowed
+//      only when editing.
+//  2. Some of the items in the collection view can't be moved. The item at indexPath is the item that
+//      will be moved.
+// Return NO if you do not want this exchange transaction to begin. If not implemented the exchange
+// controller assumes YES.
 
 
 - (BOOL)          exchangeController:(SSCollectionViewExchangeController *)exchangeController
@@ -329,9 +327,9 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
                snapshotForCell:(UICollectionViewCell *)cell;
 // SSCollectionViewExchangeController implements a default method for creating a snapshot of the
 // cell using a default background color and alpha. If this does not meet your requirements then
-// implement this delegate method. Before implementing this method remember that the properties for
-// the background colour and alpha used in the default snapshot method are exposed. Consider setting
-// those properties before implementing this method.
+// you may want to implement this delegate method. But before implementing this method remember
+// that the properties for the background colour and alpha used in the default snapshot method
+// are exposed. Consider setting those properties before implementing this method.
 
 
 
@@ -393,7 +391,7 @@ If you implement the animateRelease... method you should do the following...
 
 @property (nonatomic, readonly) BOOL    exchangeTransactionInProgress; // allows clients to determine if there is an exchange transaction in progress
 
-@property (nonatomic) NSTimeInterval    animationBacklogDelay;
+@property (nonatomic) double            animationBacklogDelay;
 // When the long press is cancelled, for example by an incoming call, depending on the velocity there
 // may be move animations in progress and pending. Without a delay, the backlog of animations can still
 // be executing when the exchange controller calls reloadData. This prevents reloadData from working

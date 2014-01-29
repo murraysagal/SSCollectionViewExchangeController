@@ -328,7 +328,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 }
 
 - (void)exchangeControllerDidCancelExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController {
-    NSLog(@"[<%@ %p> %@ line= %d]", [self class], self, NSStringFromSelector(_cmd), __LINE__);
+
     [self updateSumLabels];
     [self logModel];
 }
@@ -339,34 +339,35 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 #pragma mark - SSCollectionViewExchangeControllerDelegate protocol optional methods...
 
 // Uncomment to exercise this delegate method...
-//- (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController
-//{
-//    // If implemented, called before beginning an exchange transaction to determine if it is ok to
-//    // allow exchanges. Implement this method if you conditionally allow exchanges. For example, maybe
-//    // you allow exchanges only when editing. If not implemented the exchange controller assumes YES.
-//
-//    // This example randomly returns either YES or NO.
-//    NSUInteger randomZeroOrOne = arc4random_uniform(2);
-//    return (randomZeroOrOne == 0)? NO:YES;
-//}
-
-
-// Uncomment to exercise this delegate method...
-//- (BOOL)exchangeController:(SSCollectionViewExchangeController *)exchangeController
-//    canMoveItemAtIndexPath:(NSIndexPath *)indexPath {
+//- (BOOL)exchangeControllerCanBeginExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController
+//                                  withItemAtIndexPath:(NSIndexPath *)indexPath {
 //    
-//    // If implemented, called after exchangeControllerCanExchange: but before beginning an exchange transaction
-//    // to determine if it is ok to begin the exchange transaction with the item at indexPath. The item at indexPath
-//    // is the item that will be dragged. Implement this method if your collection view contains items that cannot
-//    // be moved. If not implemented the default is YES.
-//
+//    // If implemented, called before beginning an exchange transaction to determine if it is ok to begin.
+//    // Implement this method if:
+//    //  1. Your view controller conditionally allows exchanges. For example, maybe exchanges are allowed
+//    //      only when editing.
+//    //  2. Some of the items in the collection view can't be moved. The item at indexPath is the item that
+//    //      will be moved.
+//    // Return NO if you do not want this exchange transaction to begin. If not implemented the exchange
+//    // controller assumes YES.
+//    
+//    // Example 1:
+//    // This silly example randomly returns either YES or NO.
+//    NSUInteger randomYESorNO = arc4random_uniform(2);
+//    if (randomYESorNO == NO) {
+//        // You could alert the user here if necessary...
+//        [[[UIAlertView alloc] initWithTitle:nil message:@"The stars were not aligned. Try again." delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil] show];
+//    }
+//    return randomYESorNO;
+//    
+//    // Example 2: comment out example 1 to exercise this example.
 //    // This example returns NO for index path 0,0 which prevents the top left item from being moved.
 //    // It is important to understand that this does not prevent that item from being displaced
 //    // during an exchange transaction. If that was also required you would implement that in the
-//    // canDisplaceItem... method.
-//    NSIndexPath *indexPathNotToMove = [NSIndexPath indexPathForItem:0 inSection:0];
-//    
-//    return ([indexPath isEqual:indexPathNotToMove])? NO:YES;
+//    // canDisplaceItem... delegate method.
+//    NSIndexPath *indexPathForItemThatCantBeMoved = [NSIndexPath indexPathForItem:0 inSection:0];
+//    return ([indexPath isEqual:indexPathForItemThatCantBeMoved])? NO:YES;
+//
 //}
 
 

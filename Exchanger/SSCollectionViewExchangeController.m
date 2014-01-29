@@ -53,6 +53,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 @property (nonatomic)           BOOL                mustUndoPriorExchange;
 
 @property (weak, nonatomic)     UILongPressGestureRecognizer    *longPressGestureRecognizer;
+@property (nonatomic)           BOOL                            longPressWasManuallyCancelled;
 @property (nonatomic, copy)     PostReleaseCompletionBlock      postReleaseCompletionBlock;
 
 // For the view being dragged, this is the offset from the location of the long press to its center...
@@ -90,6 +91,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         _animationBacklogDelay =    0.50;
         _snapshotAlpha =            0.80;
         _snapshotBackgroundColor =  [UIColor darkGrayColor];
+        _longPressWasManuallyCancelled = NO;
         
         
         UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress)];
@@ -171,9 +173,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
             break;
             
         case UIGestureRecognizerStateCancelled:
-            [self performSelector:@selector(cancelExchangeTransaction)
-                       withObject:nil
-                       afterDelay:self.animationBacklogDelay];
+            [self cancelExchangeTransaction];
             break;
             
         case UIGestureRecognizerStateFailed:
@@ -186,7 +186,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     
     NSIndexPath *startingIndexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
     
-    if ([self cannotBeginExchangeTransactionAtIndexPath:startingIndexPath]) {
+    if ([self cannotBeginExchangeTransactionWithItemAtIndexPath:startingIndexPath]) {
         [self cancelLongPressRecognizer];
         return;
     }
@@ -350,24 +350,39 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (void)cancelExchangeTransaction {
     
-    // This will happen, for example, if the user gets a phone call in the middle of the long press.
+    // In certain circumstances the exchange controller can manually cancel the gesture recognizer.
+    // This needs to be distinguished from system events, like an incoming phone call, that can
+    // also cancel the gesture recognizer.
     
-    // So the delegate can undo the last exchange in the model and thus
-    // return it to its pre-exchange transaction state...
-    [self.delegate exchangeController:self
-          didExchangeItemAtIndexPath1:self.originalIndexPathForDisplacedItem
-                 withItemAtIndexPath2:self.originalIndexPathForDraggedItem];
-    
-    // So the delegate can upate the view...
-    [self.delegate exchangeControllerDidCancelExchangeTransaction:self];
-    
-    self.originalIndexPathForDisplacedItem = nil;
-    self.originalIndexPathForDraggedItem = nil;
-    [self.snapshot removeFromSuperview];
-    [self.collectionView reloadData];
-    self.exchangeTransactionInProgress = NO;
-    
+    if (self.longPressWasManuallyCancelled) {
+
+        self.longPressWasManuallyCancelled = NO;
+        
+    } else {
+        
+        // Control reaches here, for example, if the user gets a phone call in the middle of the long press.
+        
+        // So the delegate can undo the last exchange in the model and thus
+        // return it to its pre-exchange transaction state...
+        [self.delegate exchangeController:self
+              didExchangeItemAtIndexPath1:self.originalIndexPathForDisplacedItem
+                     withItemAtIndexPath2:self.originalIndexPathForDraggedItem];
+        
+        // So the delegate can upate its view...
+        [self.delegate exchangeControllerDidCancelExchangeTransaction:self];
+        
+        self.originalIndexPathForDisplacedItem = nil;
+        self.originalIndexPathForDraggedItem = nil;
+        [self.snapshot removeFromSuperview];
+        //        [self.collectionView reloadData];
+        self.exchangeTransactionInProgress = NO;
+        
+        // Why delay? Refer to the comments for the animationBacklogDelay property in the .h file.
+        [self performBlock:^{ [self.collectionView reloadData]; }
+                afterDelay:self.animationBacklogDelay];
+    }
 }
+
 
 
 //---------------------------------------
@@ -375,54 +390,43 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (void)cancelLongPressRecognizer {
     
+    self.longPressWasManuallyCancelled = YES;
     self.longPressGestureRecognizer.enabled = NO;
     self.longPressGestureRecognizer.enabled = YES;
     
 }
 
-- (BOOL)canBeginExchangeTransactionAtIndexPath:(NSIndexPath *)indexPath {
+- (BOOL)canBeginExchangeTransactionWithItemAtIndexPath:(NSIndexPath *)indexPath {
 
     // There are several conditions that must be true to begin a transaction...
     //  1. indexPath must not be nil
-    //  2. the delegate must allow exchanges
-    //  3. the delegate must allow the item at indexPath to be moved
-    //  4. the location (of the user's finger) must be in the catch rectangle
+    //  2. the location (of the user's finger) must be in the catch rectangle
+    //  3. the delegate must allow the exchange to begin
 
-    return (indexPath &&
-            [self delegateAllowsExchange] &&
-            [self delegateAllowsMovingItemAtIndexPath:indexPath] &&
-            [self locationIsInCatchRectangleForItemAtIndexPath:indexPath]);
+    if (indexPath == nil) return NO;
+    if ([self locationIsInCatchRectangleForItemAtIndexPath:indexPath] == NO) return NO;
+    if ([self delegateAllowsExchangeWithItemAtIndexPath:indexPath] == NO) return NO;
+    
+    // Otherwise...
+    return YES;
+}
+
+- (BOOL)cannotBeginExchangeTransactionWithItemAtIndexPath:(NSIndexPath *)indexPath {
+    
+    return ![self canBeginExchangeTransactionWithItemAtIndexPath:indexPath];
     
 }
 
-- (BOOL)cannotBeginExchangeTransactionAtIndexPath:(NSIndexPath *)indexPath {
+- (BOOL)delegateAllowsExchangeWithItemAtIndexPath:(NSIndexPath *)indexPath {
     
-    return ![self canBeginExchangeTransactionAtIndexPath:indexPath];
+    BOOL delegateAllowsExchangeWithItemAtIndexPath = YES;
     
-}
-
-- (BOOL)delegateAllowsExchange {
-    
-    BOOL delegateAllowsExchange = YES;
-    
-    if ([self.delegate respondsToSelector:@selector(exchangeControllerCanExchange:)]) {
-        delegateAllowsExchange = [self.delegate exchangeControllerCanExchange:self];
+    if ([self.delegate respondsToSelector:@selector(exchangeControllerCanBeginExchangeTransaction:withItemAtIndexPath:)]) {
+        delegateAllowsExchangeWithItemAtIndexPath = [self.delegate exchangeControllerCanBeginExchangeTransaction:self
+                                                                                             withItemAtIndexPath:indexPath];
     }
     
-    return delegateAllowsExchange;
-
-}
-
-- (BOOL)delegateAllowsMovingItemAtIndexPath:(NSIndexPath *)indexPath {
-    
-    BOOL delegateAllowsMovingItemAtIndexPath = YES;
-    
-    if ([self.delegate respondsToSelector:@selector(exchangeController:canMoveItemAtIndexPath:)]) {
-        delegateAllowsMovingItemAtIndexPath = [self.delegate exchangeController:self canMoveItemAtIndexPath:indexPath];
-    }
-    
-    return delegateAllowsMovingItemAtIndexPath;
-
+    return delegateAllowsExchangeWithItemAtIndexPath;
 }
 
 - (BOOL)delegateAllowsDisplacingItemAtIndexPath:(NSIndexPath *)indexPathForItemToDisplace
@@ -431,6 +435,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     // This if() is here to prevent repeated calls to the delegate. With this if() the delegate
     // is asked only once until indexPathForItemToDisplace changes.
     
+    // ???: does self.indexPathForItemLastChecked need to be cleared at the end (or at the beginning)???
     if ([indexPathForItemToDisplace isEqual:self.indexPathForItemLastChecked]) {
         
         return self.resultForItemLastChecked;
@@ -600,13 +605,11 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (BOOL)isOverSameItemAtIndexPath:(NSIndexPath *)indexPath {
     
-    // TODO: determine the return value if indexPath is nil
     return [indexPath isEqual:self.originalIndexPathForDisplacedItem];
 }
 
 - (BOOL)isBackToStartingItemAtIndexPath:(NSIndexPath *)indexPath {
     
-    // TODO: determine the return value if indexPath is nil
     return [indexPath isEqual:self.originalIndexPathForDraggedItem];
 }
 
@@ -628,6 +631,15 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 - (CGPoint)locationInCollectionView {
     
     return [self.longPressGestureRecognizer locationInView:self.collectionView];
+}
+
+- (void)performBlock:(void (^) ())block afterDelay:(double)delay {
+    
+    double delayInSeconds = delay;
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
+    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+        block();
+    });
 }
 
 
