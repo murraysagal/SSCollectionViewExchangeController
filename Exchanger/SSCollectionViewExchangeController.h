@@ -285,8 +285,8 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 - (void)exchangeControllerDidCancelExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController;
 // Called when the long press gesture recognizer's state becomes UIGestureRecognizerStateCancelled. Normally,
 // this only happens if the device receives a phone call during the exchange transaction. When this happens the
-// best course of action is to return to the state before the exchange transaction started. To do this the
-// exchange controller first calls exchangeController:didExchangeItemAtIndexPath1:withItemAtIndexPath2:
+// exchange controller helps the delegate return to the state before the exchange transaction started. To do
+// this the exchange controller first calls exchangeController:didExchangeItemAtIndexPath1:withItemAtIndexPath2:
 // on the delegate with the index paths for the last items exchanged so the delegate can restore the model.
 // Then this method is called allowing the delegate to perform the actions required to restore its state.
 // Normally, the delegate will not need to take any action on the collection view. The exchange controller
@@ -299,12 +299,15 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
                                   withItemAtIndexPath:(NSIndexPath *)indexPath;
 // If implemented, called before beginning an exchange transaction to determine if it is ok to begin.
 // Implement this method if:
-//  1. Your view controller conditionally allows exchanges. For example, maybe exchanges are allowed
+//  1. The delegate needs to know when an exchange transaction begins so it can prepare (update
+//      its UI, turn off other gestures, etc). If you return YES it is safe to assume that the
+//      exchange transaction will begin.
+//  2. The delegate conditionally allows exchanges. For example, maybe exchanges are allowed
 //      only when editing.
-//  2. Some of the items in the collection view can't be moved. The item at indexPath is the item that
-//      will be moved.
-// Return NO if you do not want this exchange transaction to begin. If not implemented the exchange
-// controller assumes YES.
+//  3. And/or some of the items in the collection view can't be moved. The item at indexPath is the
+//      item that will be moved.
+// Return NO if you do not want this exchange transaction to begin. If not implemented the
+// exchange controller assumes YES.
 
 
 - (BOOL)          exchangeController:(SSCollectionViewExchangeController *)exchangeController
@@ -379,24 +382,27 @@ If you implement the animateRelease... method you should do the following...
 // to be cast to a UICollectionViewFlowLayout before configuration. This method conveniently
 // returns the layout as a UICollectionViewFlowLayout, ready to be configured.
 
-@property (nonatomic) CFTimeInterval    minimumPressDuration;       // for configuring the long press, default: 0.15
-@property (nonatomic) CGFloat           alphaForDisplacedItem;      // so the user can distinguish the most recently displaced item, default: 0.60
+
+@property (weak, nonatomic, readonly)   UILongPressGestureRecognizer    *longPressGestureRecognizer; // exposed to allow the delegate to set any of its properties as required
+// by default minimumPressDuration is 0.15 and delaysTouchesBegan is YES
+
+@property (nonatomic)                   CGFloat                         alphaForDisplacedItem;      // so the user can distinguish the most recently displaced item, default: 0.60
 
 // Exchange process animation related properties...
-@property (nonatomic) NSTimeInterval    animationDuration;          // the duration of each segment of the default animations, default: 0.20
-@property (nonatomic) CGFloat           blinkToScaleForCatch;       // default: 1.20
-@property (nonatomic) CGFloat           blinkToScaleForRelease;     // default: 1.05
-@property (nonatomic) CGFloat           snapshotAlpha;              // default: 0.80
-@property (strong, nonatomic) UIColor   *snapshotBackgroundColor;   // if you set to nil, no background color will be applied, default: [UIColor darkGrayColor]
+@property (nonatomic)                   NSTimeInterval                  animationDuration;          // the duration of each segment of the default animations, default: 0.20
+@property (nonatomic)                   CGFloat                         blinkToScaleForCatch;       // default: 1.20
+@property (nonatomic)                   CGFloat                         blinkToScaleForRelease;     // default: 1.05
+@property (nonatomic)                   CGFloat                         snapshotAlpha;              // default: 0.80
+@property (strong, nonatomic)           UIColor                         *snapshotBackgroundColor;   // if you set to nil, no background color will be applied, default: [UIColor darkGrayColor]
 
-@property (nonatomic, readonly) BOOL    exchangeTransactionInProgress; // allows clients to determine if there is an exchange transaction in progress
+@property (nonatomic, assign, readonly) BOOL                            exchangeTransactionInProgress; // allows clients to determine if there is an exchange transaction in progress
 
-@property (nonatomic) double            animationBacklogDelay;
+@property (nonatomic)                   double                          animationBacklogDelay;
 // When the long press is cancelled, for example by an incoming call, depending on the velocity there
 // may be move animations in progress and pending. Without a delay, the backlog of animations can still
 // be executing when the exchange controller calls reloadData. This prevents reloadData from working
 // properly and restoring the collection view to its previous state. The delay allows the backlog of
 // animations to complete before the exchange controller cancels the exchange. The default is 0.50 and
-// should be sufficient in most cases.
+// should be sufficient in most cases but is exposed in case that doesn't meet your requirements.
 
 @end

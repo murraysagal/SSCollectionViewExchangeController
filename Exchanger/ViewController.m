@@ -176,7 +176,9 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     
     // Normally each section of a collection view has its own array. This is a simple example of how
     // you might map your sections to actual arrays. Using a technique like this simplifies the
-    // implementation of the exchangeItemAtIndexPath:withItemAtIndexPath: method shown above.
+    // implementation of the exchangeItemAtIndexPath1:withItemAtIndexPath2: method shown above.
+    
+    // If your collection view is represented by a single array you won't need a method like this.
     
     NSMutableArray *array;
     

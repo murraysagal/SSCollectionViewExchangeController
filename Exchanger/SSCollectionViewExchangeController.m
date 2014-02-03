@@ -42,34 +42,35 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 @interface SSCollectionViewExchangeController () <SSCollectionViewExchangeLayoutDelegate>
 
-@property (weak, nonatomic)     id<SSCollectionViewExchangeControllerDelegate> delegate;
+@property (weak, nonatomic)             id<SSCollectionViewExchangeControllerDelegate> delegate;            // the delegate, which must conform to the SSCollectionViewExchangeControllerDelegate protocol
 
-@property (weak, nonatomic)     UICollectionView    *collectionView;
-@property (strong, nonatomic)   UIView              *snapshot;
-@property (nonatomic)           CGPoint             locationInCollectionView;
-@property (strong, nonatomic)   NSIndexPath         *originalIndexPathForDraggedItem;
-@property (strong, nonatomic)   NSIndexPath         *originalIndexPathForDisplacedItem;
-@property (strong, nonatomic)   NSIndexPath         *currentIndexPath;
-@property (nonatomic)           BOOL                mustUndoPriorExchange;
+@property (weak, nonatomic)             UICollectionView                *collectionView;                    // the collection view that this exchange controller responds to
 
-@property (weak, nonatomic)     UILongPressGestureRecognizer    *longPressGestureRecognizer;
-@property (nonatomic)           BOOL                            longPressWasManuallyCancelled;
-@property (nonatomic, copy)     PostReleaseCompletionBlock      postReleaseCompletionBlock;
+@property (weak, nonatomic, readwrite)  UILongPressGestureRecognizer    *longPressGestureRecognizer;        // exposed as readonly in the header to allow configuration if required
+@property (nonatomic)                   CGPoint                         locationInCollectionView;           // the last known location of the long press
 
-// For the view being dragged, this is the offset from the location of the long press to its center...
-@property (nonatomic)           CGPoint             offsetToCenterOfSnapshot;
+@property (strong, nonatomic)           UIView                          *snapshot;                          // this is the view that follows the user's finger during the long press
+@property (nonatomic)                   CGPoint                         offsetToCenterOfSnapshot;           // for the snapshot, this is the offset from the location of the long press to its center
+
+@property (strong, nonatomic)           NSIndexPath                     *originalIndexPathForDraggedItem;   // the index path where the exchange transaction began
+@property (strong, nonatomic)           NSIndexPath                     *originalIndexPathForDisplacedItem; // the original index path for the item most recently displaced item
+@property (strong, nonatomic)           NSIndexPath                     *currentIndexPath;                  // the index path for the item under locationInCollectionView
+
+@property (nonatomic, assign)           BOOL                            mustUndoPriorExchange;              // for each exchange, tells the exchange controller if a prior exchange must be undone first
+@property (nonatomic, assign)           BOOL                            longPressWasManuallyCancelled;      // in some cases the exchange controller needs to cancel the gesture recognizer, this flag distinguishes those cases from cases where the system cancels the recognizer
+@property (nonatomic, assign, readwrite) BOOL                           exchangeTransactionInProgress;      // exposed as readonly in the header to allow the delegate to determine if an exchange transaction is in progress
+
+@property (nonatomic, copy)             PostReleaseCompletionBlock      postReleaseCompletionBlock;         // refer to the comments in the header file
+
+@property (strong, nonatomic)           NSIndexPath                     *indexPathForItemLastChecked;       // refer to the comments in delegateAllowsDisplacingItemAtIndexPath:withItemFromIndexPath:
+@property (nonatomic, assign)           BOOL                            resultForItemLastChecked;           // ditto
+
 
 // At the end of the exchange transation the snapshot is animated to the center of the cell
 // that is hidden. But, as an optimization, the collection view does not create the view for cells
 // that are hidden. So the center can't be determined at that time. So this property is set at
 // the end of each exchange event just before the layout hides the item.
-@property (nonatomic)           CGPoint             centerOfHiddenCell;
-
-@property (nonatomic, readwrite) BOOL               exchangeTransactionInProgress;
-
-@property (strong, nonatomic) NSIndexPath *indexPathForItemLastChecked;
-@property (nonatomic) BOOL resultForItemLastChecked;
-
+@property (nonatomic)                   CGPoint                         centerOfHiddenCell;
 
 @end
 
@@ -83,19 +84,18 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     if (self) {
         
         // defaults...
-        _minimumPressDuration =     0.15;
-        _alphaForDisplacedItem =    0.60;
-        _animationDuration =        0.20;
-        _blinkToScaleForCatch =     1.20;
-        _blinkToScaleForRelease =   1.05;
-        _animationBacklogDelay =    0.50;
-        _snapshotAlpha =            0.80;
-        _snapshotBackgroundColor =  [UIColor darkGrayColor];
+        _alphaForDisplacedItem =        0.60;
+        _animationDuration =            0.20;
+        _blinkToScaleForCatch =         1.20;
+        _blinkToScaleForRelease =       1.05;
+        _animationBacklogDelay =        0.50;
+        _snapshotAlpha =                0.80;
+        _snapshotBackgroundColor =      [UIColor darkGrayColor];
         _longPressWasManuallyCancelled = NO;
         
         
         UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress)];
-        longPress.minimumPressDuration = _minimumPressDuration;
+        longPress.minimumPressDuration = 0.15;
         longPress.delaysTouchesBegan = YES;
         [collectionView addGestureRecognizer:longPress];
         
@@ -113,37 +113,9 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 //-------------------------
 #pragma mark - Accessors...
 
-- (void)setMinimumPressDuration:(CFTimeInterval)minimumPressDuration {
-    
-    if (_minimumPressDuration != minimumPressDuration) {
-        _minimumPressDuration = minimumPressDuration;
-        self.longPressGestureRecognizer.minimumPressDuration = minimumPressDuration;
-    }
-}
-
 - (UICollectionViewFlowLayout *)layout {
     
     return (UICollectionViewFlowLayout *)self.collectionView.collectionViewLayout;
-}
-
-- (PostReleaseCompletionBlock)postReleaseCompletionBlock {
-    
-    __weak SSCollectionViewExchangeController *weakSelf = self;
-    
-    return ^ void (NSTimeInterval duration) {
-        
-        weakSelf.originalIndexPathForDisplacedItem = nil;
-        weakSelf.originalIndexPathForDraggedItem = nil;
-        [weakSelf.collectionView.collectionViewLayout invalidateLayout];
-        
-        [UIView animateWithDuration:duration animations:^ {
-            weakSelf.snapshot.alpha = 0.0;
-        } completion:^(BOOL finished) {
-            [weakSelf.snapshot removeFromSuperview];
-            weakSelf.snapshot = nil;
-            self.longPressGestureRecognizer.enabled = YES;
-        }];
-    };
 }
 
 
@@ -152,7 +124,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 #pragma mark - UILongPressGestureRecognizer action method and exchange methods...
 
 - (void)longPress {
-    
+
     switch (self.longPressGestureRecognizer.state) {
             
         case UIGestureRecognizerStateBegan:
@@ -168,12 +140,12 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
             [self finishExchangeTransaction];
             break;
             
-        case UIGestureRecognizerStatePossible:
-            NSLog(@"UIGestureRecognizerStatePossible");
-            break;
-            
         case UIGestureRecognizerStateCancelled:
             [self cancelExchangeTransaction];
+            break;
+            
+        case UIGestureRecognizerStatePossible:
+            NSLog(@"UIGestureRecognizerStatePossible");
             break;
             
         case UIGestureRecognizerStateFailed:
@@ -362,19 +334,18 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         
         // Control reaches here, for example, if the user gets a phone call in the middle of the long press.
         
-        // So the delegate can undo the last exchange in the model and thus
+        // So the delegate can undo the last exchange in its model and thus
         // return it to its pre-exchange transaction state...
         [self.delegate exchangeController:self
               didExchangeItemAtIndexPath1:self.originalIndexPathForDisplacedItem
                      withItemAtIndexPath2:self.originalIndexPathForDraggedItem];
         
-        // So the delegate can upate its view...
+        // So the delegate has an opportunity to update its view...
         [self.delegate exchangeControllerDidCancelExchangeTransaction:self];
         
         self.originalIndexPathForDisplacedItem = nil;
         self.originalIndexPathForDraggedItem = nil;
         [self.snapshot removeFromSuperview];
-        //        [self.collectionView reloadData];
         self.exchangeTransactionInProgress = NO;
         
         // Why delay? Refer to the comments for the animationBacklogDelay property in the .h file.
@@ -401,11 +372,11 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     // There are several conditions that must be true to begin a transaction...
     //  1. indexPath must not be nil
     //  2. the location (of the user's finger) must be in the catch rectangle
-    //  3. the delegate must allow the exchange to begin
+    //  3. the delegate allows the exchange to begin
 
     if (indexPath == nil) return NO;
     if ([self locationIsInCatchRectangleForItemAtIndexPath:indexPath] == NO) return NO;
-    if ([self delegateAllowsExchangeWithItemAtIndexPath:indexPath] == NO) return NO;
+    if ([self delegateAllowsExchangeToBeginWithItemAtIndexPath:indexPath] == NO) return NO;
     
     // Otherwise...
     return YES;
@@ -417,16 +388,16 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     
 }
 
-- (BOOL)delegateAllowsExchangeWithItemAtIndexPath:(NSIndexPath *)indexPath {
+- (BOOL)delegateAllowsExchangeToBeginWithItemAtIndexPath:(NSIndexPath *)indexPath {
     
-    BOOL delegateAllowsExchangeWithItemAtIndexPath = YES;
+    BOOL delegateAllowsExchangeToBeginWithItemAtIndexPath = YES;
     
     if ([self.delegate respondsToSelector:@selector(exchangeControllerCanBeginExchangeTransaction:withItemAtIndexPath:)]) {
-        delegateAllowsExchangeWithItemAtIndexPath = [self.delegate exchangeControllerCanBeginExchangeTransaction:self
-                                                                                             withItemAtIndexPath:indexPath];
+        delegateAllowsExchangeToBeginWithItemAtIndexPath = [self.delegate exchangeControllerCanBeginExchangeTransaction:self
+                                                                                                    withItemAtIndexPath:indexPath];
     }
     
-    return delegateAllowsExchangeWithItemAtIndexPath;
+    return delegateAllowsExchangeToBeginWithItemAtIndexPath;
 }
 
 - (BOOL)delegateAllowsDisplacingItemAtIndexPath:(NSIndexPath *)indexPathForItemToDisplace
@@ -642,9 +613,29 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     });
 }
 
+- (PostReleaseCompletionBlock)postReleaseCompletionBlock {
+    
+    __weak SSCollectionViewExchangeController *weakSelf = self;
+    
+    return ^ void (NSTimeInterval duration) {
+        
+        weakSelf.originalIndexPathForDisplacedItem = nil;
+        weakSelf.originalIndexPathForDraggedItem = nil;
+        [weakSelf.collectionView.collectionViewLayout invalidateLayout];
+        
+        [UIView animateWithDuration:duration animations:^ {
+            weakSelf.snapshot.alpha = 0.0;
+        } completion:^(BOOL finished) {
+            [weakSelf.snapshot removeFromSuperview];
+            weakSelf.snapshot = nil;
+            self.longPressGestureRecognizer.enabled = YES;
+        }];
+    };
+}
 
 
-//--------------------------------------------------------------------------------
+
+//--------------------------------------------------------------
 #pragma mark - SSCollectionViewExchangeLayoutDelegate methods...
 
 - (NSIndexPath *)indexPathForItemToHide {
