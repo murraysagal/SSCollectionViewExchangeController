@@ -34,13 +34,17 @@
        withObjectInOtherArray:(NSMutableArray *)otherArray  atIndex:(NSUInteger)indexInOtherArray {
     
     // Exchanges two objects that *can* be in different arrays.
+
+    if (array == nil || otherArray == nil) return;
+    if (index >= array.count) return;
+    if (indexInOtherArray >= otherArray.count) return;
     
     if ([array isEqual:otherArray]) {
         
         [array exchangeObjectAtIndex:index withObjectAtIndex:indexInOtherArray];
         
     } else {
-        
+
         id objectInArray      = array[ index ];
         id objectInOtherArray = otherArray[ indexInOtherArray ];
         
@@ -50,6 +54,7 @@
     }
 }
 
+// TODO: remove this
 - (void)exchangeObjectAtIndex:(NSUInteger)indexInThisArray
        withObjectInOtherArray:(NSMutableArray *)otherArray
                       atIndex:(NSUInteger)indexInOtherArray {
