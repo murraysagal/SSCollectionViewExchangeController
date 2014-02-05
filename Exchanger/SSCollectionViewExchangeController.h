@@ -46,6 +46,12 @@
  With an exchange the items between the *to* and the *from* don't move. Only the *from* and *to* items move.
  
  
+ Features
+    • Comprehensive protocol keeps the delegate informed and in control.
+    • Support for items that can't be moved or exchanged.
+    • Default animations at the beginning and end of the process or implement your own.
+    • Safely handles interruptions like a phone call in the middle of an exchange.
+
  
  Conceptual Object Model...
  
@@ -88,11 +94,12 @@
  
  Terminology...
  
- Catch: The user initiates the process with a long press on a cell. The default catch animation 
- runs (you can create any animation you require) to indicate a successul catch to the user.
+ Catch: The catch is the beginning of the exchange process. The user initiates the process with 
+ a long press on a collection view cell. If the gesture is recognized the catch animation runs 
+ (either the default or yours) to indicate a successul catch to the user.
  
- Release: The user releases, usually over another item, ending the process. The default release
- animation runs (again, you can create any animation you require).
+ Release: The user releases, usually over another item, ending the process. The release
+ animation runs (again, either the default or yours).
  
  Exchange Transaction: An exchange transaction begins with a catch and concludes with a release,
  normally over another item, causing the two to be exchanged. However, between the catch and
@@ -125,7 +132,7 @@
  
  
  
- Exchange Transaction and Event Timeline...
+ Timeline: Exchange Transactions and Exchange Events ...
  
                                             Exchange Transaction
  |------------------------------------------------------------------------------------------------------------>|
@@ -179,18 +186,19 @@
         ...
  
  
- 6. Implement the mandatory protocol methods described below.
+ 6. Implement the required protocol methods described below.
  
  
  7. Optional. This example app contains a category on NSMutableArray that implements a method for
     exchanging two items that can be in different arrays. You can import that category and use
     the method in your implementation of the exchangeController:didExchangeItemAtIndexPath1:withItemAtIndexPath2: 
-    delegate method.
+    delegate method. See ViewController.m for an example implementation.
  
-        [NSMutableArray exchangeObjectInArray:array       atIndex:(NSUInteger)index
-                       withObjectInOtherArray:otherArray  atIndex:(NSUInteger)indexInOtherArray];
+        [NSMutableArray exchangeObjectInArray:array       atIndex:indexPath1.item
+                       withObjectInOtherArray:otherArray  atIndex:indexPath2.item];
  
-    Note: see the arrayForSection: method in ViewController.m for an example of how to map your
+    Note: If your collection view has multiple sections with an array for each section refer
+    to the arrayForSection: method in ViewController.m for an example of how to map your
     collection view sections to arrays. You may need to implement something like this.
  
  
@@ -254,7 +262,9 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 // event. In all cases the delegate should just update the model by exchanging the elements at the
 // indicated index paths. Refer to the Exchange Event description and the Exchange Transaction and
 // Event Timeline above. This method provides the delegate with an opportunity to keep its model in
-// sync with changes happening on the view.
+// sync with changes happening on the view. If you are doing any kind of live updating as the user
+// drags, this is usually not the place to invoke that because this method may be called twice for
+// each exchange event. Live updating should be invoked in exchangeControllerDidFinishExchangeEvent:.
 
 
 - (void)exchangeControllerDidFinishExchangeEvent:(SSCollectionViewExchangeController *)exchangeController;
@@ -373,7 +383,7 @@ If you implement the animateRelease... method you should do the following...
 // returns the layout as a UICollectionViewFlowLayout, ready to be configured.
 
 
-@property (weak, nonatomic, readonly)   UILongPressGestureRecognizer    *longPressGestureRecognizer; // exposed to allow the delegate to set any of its properties as required
+@property (weak, nonatomic, readonly)   UILongPressGestureRecognizer    *longPressGestureRecognizer; // exposed to allow the delegate to set its properties as required
 // by default minimumPressDuration is 0.15 and delaysTouchesBegan is YES
 
 @property (nonatomic)                   CGFloat                         alphaForDisplacedItem;      // so the user can distinguish the most recently displaced item, default: 0.60
