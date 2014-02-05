@@ -37,8 +37,8 @@
     if (index >= array.count) return;
     if (indexInOtherArray >= otherArray.count) return;
     
-    if ([array isEqual:otherArray]) {
-        
+    if (array == otherArray) {
+
         [array exchangeObjectAtIndex:index withObjectAtIndex:indexInOtherArray];
         
     } else {
