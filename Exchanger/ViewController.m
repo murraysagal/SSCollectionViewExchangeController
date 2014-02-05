@@ -347,12 +347,15 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 //    
 //    // If implemented, called before beginning an exchange transaction to determine if it is ok to begin.
 //    // Implement this method if:
-//    //  1. Your view controller conditionally allows exchanges. For example, maybe exchanges are allowed
+//    //  1. The delegate needs to know when an exchange transaction begins so it can prepare (update
+//    //      its UI, turn off other gestures, etc). If you return YES it is safe to assume that the
+//    //      exchange transaction will begin.
+//    //  2. And/or the delegate conditionally allows exchanges. For example, maybe exchanges are allowed
 //    //      only when editing.
-//    //  2. Some of the items in the collection view can't be moved. The item at indexPath is the item that
-//    //      will be moved.
-//    // Return NO if you do not want this exchange transaction to begin. If not implemented the exchange
-//    // controller assumes YES.
+//    //  3. And/or some of the items in the collection view can't be moved. The item at indexPath is the
+//    //      item that will be moved.
+//    // Return NO if you do not want this exchange transaction to begin. If not implemented the
+//    // exchange controller assumes YES.
 //    
 //    // Example 1:
 //    // This silly example randomly returns either YES or NO.
