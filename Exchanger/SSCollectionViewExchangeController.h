@@ -146,10 +146,10 @@
  
  Installation...
  
-     Copy these files to your Xcode project:
+     Copy these 8 files to your Xcode project:
         - SSCollectionViewExchangeController.h and .m
         - SSCollectionViewExchangeLayout.h and .m
-        - UIGestureRecognizer+SSCollectionViewExchangeControllerAdditions.h and .m
+        - UIView+SSCollectionViewExchangeControllerAdditions.h and .m
         - NSMutableArray+SSCollectionViewExchangeControllerAdditions.h and .m
  
  
@@ -179,15 +179,7 @@
         ...
  
  
- 6. Implement the mandatory protocol methods...
-        - (BOOL)exchangeControllerCanExchange:(SSCollectionViewExchangeController *)exchangeController;
-        - (void)exchangeController:(SSCollectionViewExchangeController *)exchangeController
-       didExchangeItemAtIndexPath1:(NSIndexPath *)indexPath1
-              withItemAtIndexPath2:(NSIndexPath *)indexPath2;
-        - (void)exchangeControllerDidFinishExchangeEvent:(SSCollectionViewExchangeController *)exchangeController;
-        - (void)exchangeControllerDidFinishExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController
-                                                withIndexPath1:(NSIndexPath *)indexPath1
-                                                    indexPath2:(NSIndexPath *)indexPath2;
+ 6. Implement the mandatory protocol methods described below.
  
  
  7. Optional. This example app contains a category on NSMutableArray that implements a method for
@@ -195,10 +187,8 @@
     the method in your implementation of the exchangeController:didExchangeItemAtIndexPath1:withItemAtIndexPath2: 
     delegate method.
  
-        [NSMutableArray exchangeItemInArray:array1
-                                    atIndex:indexPath1.item
-                            withItemInArray:array2
-                                    atIndex:indexPath2.item];
+        [NSMutableArray exchangeObjectInArray:array       atIndex:(NSUInteger)index
+                       withObjectInOtherArray:otherArray  atIndex:(NSUInteger)indexInOtherArray];
  
     Note: see the arrayForSection: method in ViewController.m for an example of how to map your
     collection view sections to arrays. You may need to implement something like this.
@@ -223,9 +213,9 @@
         between collection views.
     - Scrolling is not supported. All the cells that can be exchanged need to be visible on the screen.
     - The exchange controller does not provide direct support for rotation. But if your view controller
-        allows rotation and manages the layout as required the exchange controller will continue to work.
-        But the rotation event should not occur during an exchange transaction. Your view controller can
-        ask the exchange controller if an exchange transaction is in progress.
+        allows rotation and manages the layout as required the exchange controller will continue to work
+        (needs testing). But the rotation event should not occur during an exchange transaction. Your 
+        view controller can ask the exchange controller if an exchange transaction is in progress.
  
  
  
@@ -302,7 +292,7 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 //  1. The delegate needs to know when an exchange transaction begins so it can prepare (update
 //      its UI, turn off other gestures, etc). If you return YES it is safe to assume that the
 //      exchange transaction will begin.
-//  2. The delegate conditionally allows exchanges. For example, maybe exchanges are allowed
+//  2. And/or the delegate conditionally allows exchanges. For example, maybe exchanges are allowed
 //      only when editing.
 //  3. And/or some of the items in the collection view can't be moved. The item at indexPath is the
 //      item that will be moved.

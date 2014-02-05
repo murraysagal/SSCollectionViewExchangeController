@@ -27,7 +27,7 @@
 
 #import "SSCollectionViewExchangeController.h"
 #import "SSCollectionViewExchangeLayout.h"
-#import "UIGestureRecognizer+SSCollectionViewExchangeControllerAdditions.h"
+#import "UIView+SSCollectionViewExchangeControllerAdditions.h"
 
 
 typedef NS_ENUM(NSInteger, ExchangeEventType) {
@@ -172,7 +172,8 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     
     [self animateCatch:snapshot];
     
-    self.offsetToCenterOfSnapshot = [self.longPressGestureRecognizer offsetFromLocationToCenterForView:cell];
+    CGPoint locationInCell = [self.longPressGestureRecognizer locationInView:cell];
+    self.offsetToCenterOfSnapshot = [cell offsetToCenterFromPoint:locationInCell];
     self.snapshot = snapshot;
     self.centerOfHiddenCell = cell.center;
     self.originalIndexPathForDraggedItem = startingIndexPath;
