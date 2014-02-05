@@ -341,7 +341,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 //------------------------------------------------------------------------------------
 #pragma mark - SSCollectionViewExchangeControllerDelegate protocol optional methods...
 
-// Uncomment to exercise this delegate method...
+// Uncomment to exercise this optional delegate method...
 //- (BOOL)exchangeControllerCanBeginExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController
 //                                  withItemAtIndexPath:(NSIndexPath *)indexPath {
 //    
@@ -374,7 +374,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 //}
 
 
-// Uncomment to exercise this delegate method...
+// Uncomment to exercise this optional delegate method...
 //- (BOOL)          exchangeController:(SSCollectionViewExchangeController *)exchangeController
 //          canDisplaceItemAtIndexPath:(NSIndexPath *)indexPathOfItemToDisplace
 //   withItemBeingDraggedFromIndexPath:(NSIndexPath *)indexPathOfItemBeingDragged {
@@ -395,6 +395,19 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 //        return YES;
 //        
 //    }
+//}
+
+
+// Uncomment to exercise this optional delegate method...
+//- (UIView *)             exchangeController:(SSCollectionViewExchangeController *)exchangeController
+//    viewForCatchRectangleForItemAtIndexPath:(NSIndexPath *)indexPath {
+//    
+//    // When implemented, this method returns the grey UIView on the right side of the ItemCell.xib.
+//    // The exchange transaction does not begin if the catch does not occur in that view.
+//    UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:indexPath];
+//    UIView *catchRectangle = [cell viewWithTag:999999999];
+//    return catchRectangle;
+//    
 //}
 
 

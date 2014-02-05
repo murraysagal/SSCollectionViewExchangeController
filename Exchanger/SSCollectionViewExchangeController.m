@@ -444,10 +444,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     if (viewForCatchRectangle) {
         
         CGPoint locationInCatchRectangle = [self.longPressGestureRecognizer locationInView:viewForCatchRectangle];
-        locationIsInCatchRectangle = (locationInCatchRectangle.x < 0 ||
-                                      locationInCatchRectangle.y < 0 ||
-                                      locationInCatchRectangle.x > viewForCatchRectangle.frame.size.width ||
-                                      locationInCatchRectangle.y > viewForCatchRectangle.frame.size.height)? NO:YES;
+        locationIsInCatchRectangle = [viewForCatchRectangle pointInside:locationInCatchRectangle withEvent:nil];
         
     } else {
         

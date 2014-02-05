@@ -33,8 +33,6 @@
 + (void)exchangeObjectInArray:(NSMutableArray *)array       atIndex:(NSUInteger)index
        withObjectInOtherArray:(NSMutableArray *)otherArray  atIndex:(NSUInteger)indexInOtherArray {
     
-    // Exchanges two objects that *can* be in different arrays.
-
     if (array == nil || otherArray == nil) return;
     if (index >= array.count) return;
     if (indexInOtherArray >= otherArray.count) return;

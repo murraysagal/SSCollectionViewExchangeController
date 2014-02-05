@@ -24,10 +24,6 @@
 // THE SOFTWARE.
 
 
-// This category on NSMutableArray implements a class method that exchange objects
-// which can be in two different NSMutableArray objects.
-
-
 
 #import <Foundation/Foundation.h>
 
@@ -35,5 +31,6 @@
 
 + (void)exchangeObjectInArray:(NSMutableArray *)array       atIndex:(NSUInteger)index
        withObjectInOtherArray:(NSMutableArray *)otherArray  atIndex:(NSUInteger)indexInOtherArray;
+// exchanges two objects that *can* be in two different arrays.
 
 @end
