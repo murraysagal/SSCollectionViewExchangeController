@@ -320,7 +320,6 @@
         
         firstIndex = arc4random_uniform(self.testArray1.count);
         secondIndex = arc4random_uniform(self.testArray1.count);
-        NSLog(@"%i and %i", firstIndex, secondIndex);
         
         [NSMutableArray exchangeObjectInArray:self.testArray1
                                       atIndex:firstIndex

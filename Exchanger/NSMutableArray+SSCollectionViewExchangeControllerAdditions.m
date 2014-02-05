@@ -54,16 +54,4 @@
     }
 }
 
-// TODO: remove this
-- (void)exchangeObjectAtIndex:(NSUInteger)indexInThisArray
-       withObjectInOtherArray:(NSMutableArray *)otherArray
-                      atIndex:(NSUInteger)indexInOtherArray {
-    
-    [NSMutableArray exchangeObjectInArray:self
-                                  atIndex:indexInThisArray
-                   withObjectInOtherArray:otherArray
-                                  atIndex:indexInOtherArray];
-    
-}
-
 @end

@@ -24,10 +24,8 @@
 // THE SOFTWARE.
 
 
-// This category on NSMutableArray implements methods that exchange objects
-// which can be in two different NSMutableArray objects. There is a class
-// method appropriate for most situations and an instance method for when
-// that makes more sense.
+// This category on NSMutableArray implements a class method that exchange objects
+// which can be in two different NSMutableArray objects.
 
 
 
@@ -37,9 +35,5 @@
 
 + (void)exchangeObjectInArray:(NSMutableArray *)array       atIndex:(NSUInteger)index
        withObjectInOtherArray:(NSMutableArray *)otherArray  atIndex:(NSUInteger)indexInOtherArray;
-
-- (void)exchangeObjectAtIndex:(NSUInteger)indexInThisArray
-       withObjectInOtherArray:(NSMutableArray *)otherArray
-                      atIndex:(NSUInteger)indexInOtherArray;
 
 @end
