@@ -156,7 +156,8 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (void)beginExchangeTransaction {
     
-    NSIndexPath *startingIndexPath = [self.collectionView indexPathForItemAtPoint:self.locationInCollectionView];
+    CGPoint locationInCollectionView = [self.longPressGestureRecognizer locationInView:self.collectionView];
+    NSIndexPath *startingIndexPath = [self.collectionView indexPathForItemAtPoint:locationInCollectionView];
     
     if ([self cannotBeginExchangeTransactionWithItemAtIndexPath:startingIndexPath]) {
         [self cancelLongPressRecognizer];
@@ -190,8 +191,10 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (void)updateSnapshotLocation {
     
+    self.locationInCollectionView = [self.longPressGestureRecognizer locationInView:self.collectionView];
     CGPoint offsetLocationInCollectionView = CGPointMake(self.locationInCollectionView.x - self.offsetToCenterOfSnapshot.x, self.locationInCollectionView.y - self.offsetToCenterOfSnapshot.y);
     self.snapshot.center = offsetLocationInCollectionView;
+    
 }
 
 - (ExchangeEventType)exchangeEventType {
@@ -204,8 +207,8 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         return ExchangeEventTypeNothingToExchange;
     }
     
-    if (![self delegateAllowsDisplacingItemAtIndexPath:self.currentIndexPath
-                                 withItemFromIndexPath:self.originalIndexPathForDraggedItem]) {
+    if ([self delegateAllowsDisplacingItemAtIndexPath:self.currentIndexPath
+                                withItemFromIndexPath:self.originalIndexPathForDraggedItem] == NO) {
         return ExchangeEventTypeCannotDisplaceItem;
     }
     
@@ -407,7 +410,6 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     // This if() is here to prevent repeated calls to the delegate. With this if() the delegate
     // is asked only once until indexPathForItemToDisplace changes.
     
-    // ???: does self.indexPathForItemLastChecked need to be cleared at the end (or at the beginning)???
     if ([indexPathForItemToDisplace isEqual:self.indexPathForItemLastChecked]) {
         
         return self.resultForItemLastChecked;
@@ -595,11 +597,6 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
     view.alpha = originialAlpha;
     return snapshot;
     
-}
-
-- (CGPoint)locationInCollectionView {
-    
-    return [self.longPressGestureRecognizer locationInView:self.collectionView];
 }
 
 - (void)performBlock:(void (^) ())block afterDelay:(double)delay {
