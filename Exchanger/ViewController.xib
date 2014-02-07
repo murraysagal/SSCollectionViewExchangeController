@@ -11,7 +11,7 @@
                 <outlet property="catchRectangleSwitch" destination="us8-c7-VBG" id="X9s-oo-Gtq"/>
                 <outlet property="collectionView" destination="8" id="PZC-YD-uKb"/>
                 <outlet property="conditionalExchangeSwitch" destination="toz-Uf-0KZ" id="IPj-Dl-ttF"/>
-                <outlet property="lockItemAtZeroZeroSwitch" destination="bFH-qv-Cqr" id="vsB-dG-fx3"/>
+                <outlet property="lockItemSwitch" destination="bFH-qv-Cqr" id="yvj-xO-0cb"/>
                 <outlet property="sumLeft" destination="jAN-ny-5Ax" id="8HJ-1u-qQ6"/>
                 <outlet property="sumMiddle" destination="vUK-hM-fED" id="MEG-bo-ZVH"/>
                 <outlet property="sumRight" destination="v7G-Zi-O9m" id="ymu-kf-b1Q"/>
@@ -81,7 +81,7 @@
                     <rect key="frame" x="251" y="427" width="51" height="31"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <connections>
-                        <action selector="someSwitchChanged" destination="-1" eventType="valueChanged" id="gAS-pC-neQ"/>
+                        <action selector="catchRectangleSwitchChanged:" destination="-1" eventType="valueChanged" id="tZD-rm-5ai"/>
                     </connections>
                 </switch>
                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Use Catch Rectangle" textAlignment="right" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="prg-06-Eo2">
@@ -95,7 +95,7 @@
                     <rect key="frame" x="94" y="427" width="51" height="31"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <connections>
-                        <action selector="someSwitchChanged" destination="-1" eventType="valueChanged" id="b4V-bs-Fa4"/>
+                        <action selector="conditionalExchangeSwitchChanged:" destination="-1" eventType="valueChanged" id="G4L-LX-9Ze"/>
                     </connections>
                 </switch>
                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Conditional Exchange" textAlignment="right" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="L42-F1-TFV">
@@ -109,7 +109,7 @@
                     <rect key="frame" x="94" y="380" width="51" height="31"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <connections>
-                        <action selector="someSwitchChanged" destination="-1" eventType="valueChanged" id="3Zm-Wu-H80"/>
+                        <action selector="allowExchangesSwitchChanged:" destination="-1" eventType="valueChanged" id="uNr-LB-tHc"/>
                     </connections>
                 </switch>
                 <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Allow Exchanges" textAlignment="right" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="KPO-bG-rPY">
@@ -123,10 +123,10 @@
                     <rect key="frame" x="251" y="380" width="51" height="31"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <connections>
-                        <action selector="someSwitchChanged" destination="-1" eventType="valueChanged" id="zuc-Th-whp"/>
+                        <action selector="lockItemSwitchChanged:" destination="-1" eventType="valueChanged" id="C2a-jW-ViL"/>
                     </connections>
                 </switch>
-                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Lock Item At 0,0" textAlignment="right" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="IOn-hm-yqg">
+                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Lock Item" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="IOn-hm-yqg">
                     <rect key="frame" x="164" y="379" width="79" height="34"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <fontDescription key="fontDescription" type="system" pointSize="14"/>

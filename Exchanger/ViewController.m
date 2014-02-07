@@ -38,6 +38,7 @@
 #import "ViewController.h"
 #import "SSCollectionViewExchangeController.h"
 #import "NSMutableArray+SSCollectionViewExchangeControllerAdditions.h"
+#import "NSIndexPath+RandomAdditons.h"
 
 
 #define CELL_LABEL_TAG      1
@@ -80,20 +81,20 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 - (IBAction)catchRectangleSwitchChanged:(UISwitch *)sender;
 @property (weak, nonatomic) IBOutlet UISwitch *catchRectangleSwitch;
 
-- (IBAction)lockItemAtZeroZeroSwitchChanged:(UISwitch *)sender;
-@property (weak, nonatomic) IBOutlet UISwitch *lockItemAtZeroZeroSwitch;
+- (IBAction)lockItemSwitchChanged:(UISwitch *)sender;
+@property (weak, nonatomic) IBOutlet UISwitch *lockItemSwitch;
+@property (strong, nonatomic) NSIndexPath *indexPathForLockedItem;
+@property (strong, nonatomic) NSString *lockLabelText;
 
 - (IBAction)conditionalExchangeSwitchChanged:(UISwitch *)sender;
 @property (weak, nonatomic) IBOutlet UISwitch *conditionalExchangeSwitch;
+@property (strong, nonatomic) NSString *conditionalDisplacementLabelText;
+@property (strong, nonatomic) NSIndexPath *indexPath1ForConditionalDisplacement;
+@property (strong, nonatomic) NSIndexPath *indexPath2ForConditionalDisplacement;
 
 - (IBAction)allowExchangesSwitchChanged:(UISwitch *)sender;
 @property (weak, nonatomic) IBOutlet UISwitch *allowExchangesSwitch;
 
-@property (strong, nonatomic) NSString *lockLabelText;
-@property (strong, nonatomic) NSString *conditionalDisplacementLabelText;
-@property (strong, nonatomic) NSIndexPath *indexPath1ForconditionalDisplacement;
-@property (strong, nonatomic) NSIndexPath *indexPath2ForconditionalDisplacement;
-@property (strong, nonatomic) NSIndexPath *indexPathZeroZero;
 
 @end
 
@@ -133,10 +134,10 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     
     self.lockLabelText = @"🔒";
     self.conditionalDisplacementLabelText = @"🔐";
-    self.indexPathZeroZero = [NSIndexPath indexPathForItem:0 inSection:0];
-    self.indexPath1ForconditionalDisplacement = [NSIndexPath indexPathForItem:0 inSection:1];
-    self.indexPath2ForconditionalDisplacement = [NSIndexPath indexPathForItem:0 inSection:2];
-    
+    self.indexPathForLockedItem = [NSIndexPath indexPathForItem:0 inSection:0];
+    self.indexPath1ForConditionalDisplacement = [NSIndexPath indexPathForItem:0 inSection:1];
+    self.indexPath2ForConditionalDisplacement = [NSIndexPath indexPathForItem:0 inSection:2];
+ 
 }
 
 
@@ -282,30 +283,38 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 //-----------------------------------------------
 #pragma mark - Action methods for the switches...
 
-- (IBAction)someSwitchChanged {
+- (IBAction)allowExchangesSwitchChanged:(UISwitch *)sender {
     
     [self.collectionView reloadData];
     
 }
 
+- (IBAction)lockItemSwitchChanged:(UISwitch *)sender {
+    
+    NSArray *arrays = @[self.leftSide, self.middle, self.rightSide];
+    NSSet *excludingIndexPaths = [[NSSet alloc] initWithObjects:self.indexPath1ForConditionalDisplacement, self.indexPath2ForConditionalDisplacement, nil];
+    
+    self.indexPathForLockedItem = (sender.on)? [NSIndexPath randomIndexPathInArrays:arrays excludingIndexPaths:excludingIndexPaths] : nil;
+    
+    [self.collectionView reloadData];
+    
+}
 
-- (IBAction)catchRectangleSwitchChanged:(UISwitch *)sender {
-    
-    [self.collectionView reloadData];
-    
-}
-- (IBAction)lockItemAtZeroZeroSwitchChanged:(UISwitch *)sender {
-    
-    [self.collectionView reloadData];
-    
-}
 - (IBAction)conditionalExchangeSwitchChanged:(UISwitch *)sender {
     
+    NSArray *arrays = @[self.leftSide, self.middle, self.rightSide];
+    NSSet *excludingIndexPaths = [[NSSet alloc] initWithObjects:self.indexPathForLockedItem, nil];
+    
+    self.indexPath1ForConditionalDisplacement = (sender.on)? [NSIndexPath randomIndexPathInArrays:arrays excludingIndexPaths:excludingIndexPaths] : nil;
+    
+    excludingIndexPaths = [[NSSet alloc] initWithObjects:self.indexPath1ForConditionalDisplacement, self.indexPathForLockedItem, nil]; // order critical
+    self.indexPath2ForConditionalDisplacement = (sender.on)? [NSIndexPath randomIndexPathInArrays:arrays excludingIndexPaths:excludingIndexPaths] : nil;
+    
     [self.collectionView reloadData];
     
 }
 
-- (IBAction)allowExchangesSwitchChanged:(UISwitch *)sender {
+- (IBAction)catchRectangleSwitchChanged:(UISwitch *)sender {
     
     [self.collectionView reloadData];
     
@@ -338,10 +347,10 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     
     catchRectangle.hidden = (self.catchRectangleSwitch.on)? NO:YES;
     
-    BOOL showLock = self.lockItemAtZeroZeroSwitch.on && [indexPath isEqual:self.indexPathZeroZero];
+    BOOL showLock = self.lockItemSwitch.on && [indexPath isEqual:self.indexPathForLockedItem];
     BOOL showConditionalExchangeLock = (self.conditionalExchangeSwitch.on &&
-                                        ([indexPath isEqual:self.indexPath1ForconditionalDisplacement] ||
-                                         [indexPath isEqual:self.indexPath2ForconditionalDisplacement]))? YES:NO;
+                                        ([indexPath isEqual:self.indexPath1ForConditionalDisplacement] ||
+                                         [indexPath isEqual:self.indexPath2ForConditionalDisplacement]))? YES:NO;
 
     if (showLock) {
         lockLabel.text = self.lockLabelText;
@@ -428,8 +437,8 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     
     if (self.allowExchangesSwitch.on == NO) return NO;
     
-    if (self.lockItemAtZeroZeroSwitch.on && [indexPath isEqual:self.indexPathZeroZero]) return NO;
-    // It is important to understand that this does not prevent the item at 0,0 from being displaced
+    if (self.lockItemSwitch.on && [indexPath isEqual:self.indexPathForLockedItem]) return NO;
+    // It is important to understand that this does not prevent the locked item from being displaced
     // later during an exchange transaction. If that was also required you would implement that in the
     // canDisplaceItem... delegate method.
 
@@ -451,7 +460,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
     BOOL canDisplace = YES;
     
-    if (self.lockItemAtZeroZeroSwitch.on && [indexPathOfItemToDisplace isEqual:self.indexPathZeroZero]) {
+    if (self.lockItemSwitch.on && [indexPathOfItemToDisplace isEqual:self.indexPathForLockedItem]) {
         
         canDisplace = NO;
         
@@ -463,10 +472,10 @@ NS_ENUM(NSInteger, CollectionViewSection) {
         // The logic is a bit twisted but the point is that you can implement your own logic here
         // to manage whatever conditional exchange requirements you have.
 
-        BOOL indexPathOfItemBeingDraggedMatches = ([indexPathOfItemBeingDragged isEqual:self.indexPath1ForconditionalDisplacement] ||
-                                                   [indexPathOfItemBeingDragged isEqual:self.indexPath2ForconditionalDisplacement])? YES:NO;
-        BOOL indexPathOfItemToDisplaceMatches = ([indexPathOfItemToDisplace isEqual:self.indexPath1ForconditionalDisplacement] ||
-                                                 [indexPathOfItemToDisplace isEqual:self.indexPath2ForconditionalDisplacement])? YES:NO;
+        BOOL indexPathOfItemBeingDraggedMatches = ([indexPathOfItemBeingDragged isEqual:self.indexPath1ForConditionalDisplacement] ||
+                                                   [indexPathOfItemBeingDragged isEqual:self.indexPath2ForConditionalDisplacement])? YES:NO;
+        BOOL indexPathOfItemToDisplaceMatches = ([indexPathOfItemToDisplace isEqual:self.indexPath1ForConditionalDisplacement] ||
+                                                 [indexPathOfItemToDisplace isEqual:self.indexPath2ForConditionalDisplacement])? YES:NO;
         
         if (indexPathOfItemBeingDraggedMatches) {
             
