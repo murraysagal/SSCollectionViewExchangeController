@@ -330,23 +330,6 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 {
     UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"itemCell" forIndexPath:indexPath];
     
-    NSNumber *itemNumber;
-    
-    switch (indexPath.section) {
-            
-        case CollectionViewSectionLeft:
-            itemNumber = self.leftSide[ indexPath.item ];
-            break;
-            
-        case CollectionViewSectionMiddle:
-            itemNumber = self.middle[ indexPath.item ];
-            break;
-            
-        case CollectionViewSectionRight:
-            itemNumber = self.rightSide[ indexPath.item ];
-            break;
-    }
-    
     // The collection view cell doesn't have a class.
     // So subviews are retrieved with a tag.
     UIView *catchRectangle = [cell viewWithTag:CATCH_RECTANGLE_TAG];
@@ -369,7 +352,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     }
     
     itemLabel.alpha = (self.allowExchangesSwitch.on)? 1.0:0.5;
-    itemLabel.text = [NSString stringWithFormat:@" %@", itemNumber];
+    itemLabel.text = [NSString stringWithFormat:@" %@", [self arrayForSection:indexPath.section][ indexPath.item ]];
     
     return cell;
 }
