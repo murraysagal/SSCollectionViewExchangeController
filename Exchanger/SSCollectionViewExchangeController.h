@@ -305,7 +305,9 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 //  2. And/or the delegate conditionally allows exchanges. For example, maybe exchanges are allowed
 //      only when editing.
 //  3. And/or some of the items in the collection view can't be moved. The item at indexPath is the
-//      item that will be moved.
+//      item that will be moved. Important note: Whether an item can be moved is determined here.
+//      Whether an item can be displaced is determined in the canDisplaceItemAtIndexPath: method.
+//      If an item can't be moved and can't be displaced you need to implement both methods.
 // Return NO if you do not want this exchange transaction to begin. If not implemented the
 // exchange controller assumes YES.
 

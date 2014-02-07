@@ -40,6 +40,11 @@
 #import "NSMutableArray+SSCollectionViewExchangeControllerAdditions.h"
 
 
+#define CELL_LABEL_TAG      1
+#define CATCH_RECTANGLE_TAG 2
+#define LOCK_LABEL_TAG      3
+
+
 NS_ENUM(NSInteger, CollectionViewSection) {
     CollectionViewSectionLeft,
     CollectionViewSectionMiddle,
@@ -71,6 +76,24 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 @property (strong, nonatomic) NSIndexPath *indexPath2ForLastExchange;
 
 @property (strong, nonatomic) SSCollectionViewExchangeController *exchangeController;
+
+- (IBAction)catchRectangleSwitchChanged:(UISwitch *)sender;
+@property (weak, nonatomic) IBOutlet UISwitch *catchRectangleSwitch;
+
+- (IBAction)lockItemAtZeroZeroSwitchChanged:(UISwitch *)sender;
+@property (weak, nonatomic) IBOutlet UISwitch *lockItemAtZeroZeroSwitch;
+
+- (IBAction)conditionalExchangeSwitchChanged:(UISwitch *)sender;
+@property (weak, nonatomic) IBOutlet UISwitch *conditionalExchangeSwitch;
+
+- (IBAction)allowExchangesSwitchChanged:(UISwitch *)sender;
+@property (weak, nonatomic) IBOutlet UISwitch *allowExchangesSwitch;
+
+@property (strong, nonatomic) NSString *lockLabelText;
+@property (strong, nonatomic) NSString *conditionalDisplacementLabelText;
+@property (strong, nonatomic) NSIndexPath *indexPath1ForconditionalDisplacement;
+@property (strong, nonatomic) NSIndexPath *indexPath2ForconditionalDisplacement;
+@property (strong, nonatomic) NSIndexPath *indexPathZeroZero;
 
 @end
 
@@ -107,6 +130,12 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     layout.minimumInteritemSpacing = 1;
     layout.sectionInset = UIEdgeInsetsMake(5, 3, 5, 3);
     layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
+    
+    self.lockLabelText = @"🔒";
+    self.conditionalDisplacementLabelText = @"🔐";
+    self.indexPathZeroZero = [NSIndexPath indexPathForItem:0 inSection:0];
+    self.indexPath1ForconditionalDisplacement = [NSIndexPath indexPathForItem:0 inSection:1];
+    self.indexPath2ForconditionalDisplacement = [NSIndexPath indexPathForItem:0 inSection:2];
     
 }
 
@@ -220,9 +249,12 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
 - (void)prepareForUndoWithIndexPath1:(NSIndexPath *)indexPath1 indexPath2:(NSIndexPath *)indexPath2 {
     
-    self.indexPath1ForLastExchange = indexPath1;
-    self.indexPath2ForLastExchange = indexPath2;
-    
+    if (![indexPath1 isEqual:indexPath2]) {
+        
+        self.indexPath1ForLastExchange = indexPath1;
+        self.indexPath2ForLastExchange = indexPath2;
+        
+    }
 }
 
 - (void)logModel
@@ -243,6 +275,40 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     NSLog(@" ");
     NSLog(@" sumLeft= %ld        sumMiddle= %ld      sumRight= %ld", (long)sumLeft, (long)sumMiddle, (long)sumRight);
     NSLog(@" ");
+}
+
+
+
+//-----------------------------------------------
+#pragma mark - Action methods for the switches...
+
+- (IBAction)someSwitchChanged {
+    
+    [self.collectionView reloadData];
+    
+}
+
+
+- (IBAction)catchRectangleSwitchChanged:(UISwitch *)sender {
+    
+    [self.collectionView reloadData];
+    
+}
+- (IBAction)lockItemAtZeroZeroSwitchChanged:(UISwitch *)sender {
+    
+    [self.collectionView reloadData];
+    
+}
+- (IBAction)conditionalExchangeSwitchChanged:(UISwitch *)sender {
+    
+    [self.collectionView reloadData];
+    
+}
+
+- (IBAction)allowExchangesSwitchChanged:(UISwitch *)sender {
+    
+    [self.collectionView reloadData];
+    
 }
 
 
@@ -281,9 +347,28 @@ NS_ENUM(NSInteger, CollectionViewSection) {
             break;
     }
     
-    // To keep this example simple the custom collection view cell doesn't have a class.
-    // So the label is retrieved with a tag...
-    UILabel *itemLabel = (UILabel *)[cell viewWithTag:999];
+    // The collection view cell doesn't have a class.
+    // So subviews are retrieved with a tag.
+    UIView *catchRectangle = [cell viewWithTag:CATCH_RECTANGLE_TAG];
+    UILabel *lockLabel = (UILabel *)[cell viewWithTag:LOCK_LABEL_TAG];
+    UILabel *itemLabel = (UILabel *)[cell viewWithTag:CELL_LABEL_TAG];
+    
+    catchRectangle.hidden = (self.catchRectangleSwitch.on)? NO:YES;
+    
+    BOOL showLock = self.lockItemAtZeroZeroSwitch.on && [indexPath isEqual:self.indexPathZeroZero];
+    BOOL showConditionalExchangeLock = (self.conditionalExchangeSwitch.on &&
+                                        ([indexPath isEqual:self.indexPath1ForconditionalDisplacement] ||
+                                         [indexPath isEqual:self.indexPath2ForconditionalDisplacement]))? YES:NO;
+
+    if (showLock) {
+        lockLabel.text = self.lockLabelText;
+    } else if (showConditionalExchangeLock) {
+        lockLabel.text = self.conditionalDisplacementLabelText;
+    } else {
+        lockLabel.text = nil;
+    }
+    
+    itemLabel.alpha = (self.allowExchangesSwitch.on)? 1.0:0.5;
     itemLabel.text = [NSString stringWithFormat:@" %@", itemNumber];
     
     return cell;
@@ -341,77 +426,98 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 //------------------------------------------------------------------------------------
 #pragma mark - SSCollectionViewExchangeControllerDelegate protocol optional methods...
 
-// Uncomment to exercise this optional delegate method...
-//- (BOOL)exchangeControllerCanBeginExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController
-//                                  withItemAtIndexPath:(NSIndexPath *)indexPath {
-//    
-//    // If implemented, called before beginning an exchange transaction to determine if it is ok to begin.
-//    // Implement this method if:
-//    //  1. The delegate needs to know when an exchange transaction begins so it can prepare (update
-//    //      its UI, turn off other gestures, etc). If you return YES it is safe to assume that the
-//    //      exchange transaction will begin.
-//    //  2. And/or the delegate conditionally allows exchanges. For example, maybe exchanges are allowed
-//    //      only when editing.
-//    //  3. And/or some of the items in the collection view can't be moved. The item at indexPath is the
-//    //      item that will be moved.
-//    // Return NO if you do not want this exchange transaction to begin. If not implemented the
-//    // exchange controller assumes YES.
-//    
-//    // Example 1:
-//    // This silly example randomly returns either YES or NO.
-//    NSUInteger randomYESorNO = arc4random_uniform(2);
-//    if (randomYESorNO == NO) {
-//        // You could alert the user here if necessary...
-//        [[[UIAlertView alloc] initWithTitle:nil message:@"The stars were not aligned. Try again." delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil] show];
-//    }
-//    return randomYESorNO;
-//    
-//    // Example 2: comment out example 1 to exercise this example.
-//    // This example returns NO for index path 0,0 which prevents the top left item from being moved.
-//    // It is important to understand that this does not prevent that item from being displaced
-//    // during an exchange transaction. If that was also required you would implement that in the
-//    // canDisplaceItem... delegate method.
-//    NSIndexPath *indexPathForItemThatCantBeMoved = [NSIndexPath indexPathForItem:0 inSection:0];
-//    return ([indexPath isEqual:indexPathForItemThatCantBeMoved])? NO:YES;
-//
-//}
+- (BOOL)exchangeControllerCanBeginExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController
+                                  withItemAtIndexPath:(NSIndexPath *)indexPath {
+    
+    // If implemented, called before beginning an exchange transaction to determine if it is ok to begin.
+    // Implement this method if:
+    //  1. The delegate needs to know when an exchange transaction begins so it can prepare (update
+    //      its UI, turn off other gestures, etc). If you return YES it is safe to assume that the
+    //      exchange transaction will begin.
+    //  2. And/or the delegate conditionally allows exchanges. For example, maybe exchanges are allowed
+    //      only when editing.
+    //  3. And/or some of the items in the collection view can't be moved. The item at indexPath is the
+    //      item that will be moved. Important note: Whether an item can be moved is determined here.
+    //      Whether an item can be displaced is determined in the canDisplaceItemAtIndexPath: method.
+    //      If an item can't be moved and can't be displaced you need to implement both methods.
+    // Return NO if you do not want this exchange transaction to begin. If not implemented the
+    // exchange controller assumes YES.
+    
+    if (self.allowExchangesSwitch.on == NO) return NO;
+    
+    if (self.lockItemAtZeroZeroSwitch.on && [indexPath isEqual:self.indexPathZeroZero]) return NO;
+    // It is important to understand that this does not prevent the item at 0,0 from being displaced
+    // later during an exchange transaction. If that was also required you would implement that in the
+    // canDisplaceItem... delegate method.
+
+    
+    // Otherwise...
+    return YES;
+    
+}
 
 
-// Uncomment to exercise this optional delegate method...
-//- (BOOL)          exchangeController:(SSCollectionViewExchangeController *)exchangeController
-//          canDisplaceItemAtIndexPath:(NSIndexPath *)indexPathOfItemToDisplace
-//   withItemBeingDraggedFromIndexPath:(NSIndexPath *)indexPathOfItemBeingDragged {
-//    
-//    // If implemented, called throughout the exchange transaction to determine if it’s ok to exchange
-//    // the two items. Implement this method if your collection view contains items that cannot be
-//    // exchanged at all or if there may be a situation where the item to displace cannot be exchanged
-//    // with the particular item being dragged. If not implemented, the default is YES.
-//
-//    // In this example, items on the right can't be displaced by items from the left.
-//        if (indexPathOfItemBeingDragged.section == CollectionViewSectionLeft  &&
-//        indexPathOfItemToDisplace.section == CollectionViewSectionRight) {
-//        
-//        return NO;
-//        
-//    } else {
-//        
-//        return YES;
-//        
-//    }
-//}
+- (BOOL)          exchangeController:(SSCollectionViewExchangeController *)exchangeController
+          canDisplaceItemAtIndexPath:(NSIndexPath *)indexPathOfItemToDisplace
+   withItemBeingDraggedFromIndexPath:(NSIndexPath *)indexPathOfItemBeingDragged {
+    
+    // If implemented, called throughout the exchange transaction to determine if it’s ok to exchange
+    // the two items. Implement this method if your collection view contains items that cannot be
+    // exchanged at all or if there may be a situation where the item to displace cannot be exchanged
+    // with the particular item being dragged. If not implemented, the default is YES.
+
+    BOOL canDisplace = YES;
+    
+    if (self.lockItemAtZeroZeroSwitch.on && [indexPathOfItemToDisplace isEqual:self.indexPathZeroZero]) {
+        
+        canDisplace = NO;
+        
+    } else if (self.conditionalExchangeSwitch.on) {
+
+        // In this completely contrived case if the conditional exchange switch is on
+        // the two conditional index paths can be exchanged only with each other.
+        //
+        // The logic is a bit twisted but the point is that you can implement your own logic here
+        // to manage whatever conditional exchange requirements you have.
+
+        BOOL indexPathOfItemBeingDraggedMatches = ([indexPathOfItemBeingDragged isEqual:self.indexPath1ForconditionalDisplacement] ||
+                                                   [indexPathOfItemBeingDragged isEqual:self.indexPath2ForconditionalDisplacement])? YES:NO;
+        BOOL indexPathOfItemToDisplaceMatches = ([indexPathOfItemToDisplace isEqual:self.indexPath1ForconditionalDisplacement] ||
+                                                 [indexPathOfItemToDisplace isEqual:self.indexPath2ForconditionalDisplacement])? YES:NO;
+        
+        if (indexPathOfItemBeingDraggedMatches) {
+            
+            // The item being dragged is one of the mutually exchangeable items...
+            // Allow only if the other one is too.
+            
+            if (!indexPathOfItemToDisplaceMatches) canDisplace = NO;
+            
+        } else {
+            
+            // The item being dragged isn't one of the mutually exchangeable items.
+            // But the one to be displaced might be...
+            
+            if (indexPathOfItemToDisplaceMatches) canDisplace = NO;
+        }
+    }
+    
+    return canDisplace;
+
+}
 
 
-// Uncomment to exercise this optional delegate method...
-//- (UIView *)             exchangeController:(SSCollectionViewExchangeController *)exchangeController
-//    viewForCatchRectangleForItemAtIndexPath:(NSIndexPath *)indexPath {
-//    
-//    // When implemented, this method returns the grey UIView on the right side of the ItemCell.xib.
-//    // The exchange transaction does not begin if the catch does not occur in that view.
-//    UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:indexPath];
-//    UIView *catchRectangle = [cell viewWithTag:999999999];
-//    return catchRectangle;
-//    
-//}
-
+- (UIView *)             exchangeController:(SSCollectionViewExchangeController *)exchangeController
+    viewForCatchRectangleForItemAtIndexPath:(NSIndexPath *)indexPath {
+    
+    UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:indexPath];
+    
+    if (self.catchRectangleSwitch.on) {
+        UIView *catchRectangle = [cell viewWithTag:CATCH_RECTANGLE_TAG];
+        return catchRectangle;
+    } else {
+        return cell;
+    }
+    
+}
 
 @end
