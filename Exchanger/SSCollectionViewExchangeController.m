@@ -511,7 +511,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         // But when that runs on an iPad (device or simulator) there is an annoying screen
         // flash. The flash doesn't happen if NO is passed to snapshotViewAfterScreenUpdates:
         // but then the default background colour and alpha aren't applied. So for now
-        // I've gone back to the Core Graphics method for generating the snapshot.
+        // I've gone back to the UIGraphics method for generating the snapshot.
         
         //////////////////////////////////////////////////////
         UIGraphicsBeginImageContextWithOptions(cell.bounds.size, cell.opaque, 0.0f);
@@ -522,6 +522,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         //////////////////////////////////////////////////////
 
 //        snapshot = [cell snapshotViewAfterScreenUpdates:YES];
+        // This can replace the UIGraphics code above if it starts to work on the iPad.
         
         snapshot.frame = cell.frame;
         
