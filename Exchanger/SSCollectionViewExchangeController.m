@@ -484,6 +484,8 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
 
 - (UIView *)snapshotForCell:(UICollectionViewCell *)cell {
     
+    UIView *snapshot;
+    
     if ([self.delegate respondsToSelector:@selector(exchangeController:snapshotForCell:)]) {
         
         return [self.delegate exchangeController:self snapshotForCell:cell];
@@ -500,7 +502,27 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         
         float originalAlpha = cell.alpha;
         cell.alpha = self.snapshotAlpha;
-        UIView *snapshot = [cell snapshotViewAfterScreenUpdates:YES];
+        
+        // Normally, it would be appropriate to use UIView's snapshotViewAfterScreenUpdates:.
+        // Like this...
+        //
+        //      snapshot = [cell snapshotViewAfterScreenUpdates:YES];
+        //
+        // But when that runs on an iPad (device or simulator) there is an annoying screen
+        // flash. The flash doesn't happen if NO is passed to snapshotViewAfterScreenUpdates:
+        // but then the default background colour and alpha aren't applied. So for now
+        // I've gone back to the Core Graphics method for generating the snapshot.
+        
+        //////////////////////////////////////////////////////
+        UIGraphicsBeginImageContextWithOptions(cell.bounds.size, cell.opaque, 0.0f);
+        [cell.layer renderInContext:UIGraphicsGetCurrentContext()];
+        UIImage *cellImage = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+        snapshot = [[UIImageView alloc] initWithImage:cellImage];
+        //////////////////////////////////////////////////////
+
+//        snapshot = [cell snapshotViewAfterScreenUpdates:YES];
+        
         snapshot.frame = cell.frame;
         
         if (shouldApplyBackgroundColor) {
@@ -508,6 +530,7 @@ typedef NS_ENUM(NSInteger, ExchangeEventType) {
         }
         
         cell.alpha = originalAlpha;
+        
         return snapshot;
         
     }
