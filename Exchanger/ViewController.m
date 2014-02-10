@@ -39,13 +39,48 @@
 #import "SSCollectionViewExchangeController.h"
 #import "NSMutableArray+SSCollectionViewExchangeControllerAdditions.h"
 #import "NSIndexPath+RandomAdditons.h"
+#import "NSMutableSet+AddObjectIfNotNil.h"
 
 
-#define CELL_LABEL_TAG      1
-#define CATCH_RECTANGLE_TAG 2
-#define LOCK_LABEL_TAG      3
+// Constants for NSUserDefault keys...
+
+static NSString * const kFirstRunKey = @"firstRun";
+
+// switches...
+static NSString * const kAllowExchangesSwitchStateKey = @"allowExchangesSwitchState";
+static NSString * const kConditionalExchangeSwitchStateKey = @"conditionalExchangeSwitchState";
+static NSString * const kLockItemSwitchStateKey = @"lockItemSwitchState";
+static NSString * const kCatchRectangleSwitchStateKey = @"catchRectangleSwitchState";
+
+// index paths...
+static NSString * const kIndexPathForLockedItem_SectionKey = @"indexPathForLockedItem_Section";
+static NSString * const kIndexPathForLockedItem_ItemKey = @"indexPathForLockedItem_Item";
+
+static NSString * const kIndexPath1ForConditionalDisplacement_SectionKey = @"indexPath1ForConditionalDisplacement_Section";
+static NSString * const kIndexPath1ForConditionalDisplacement_ItemKey = @"indexPath1ForConditionalDisplacement_Item";
+
+static NSString * const kIndexPath2ForConditionalDisplacement_SectionKey = @"indexPath2ForConditionalDisplacement_Section";
+static NSString * const kIndexPath2ForConditionalDisplacement_ItemKey = @"indexPath2ForConditionalDisplacement_Item";
+
+static NSString * const kIndexPath1ForLastExchange_SectionKey = @"indexPath1ForLastExchange_Section";
+static NSString * const kIndexPath1ForLastExchange_ItemKey = @"indexPath1ForLastExchange_Item";
+
+static NSString * const kIndexPath2ForLastExchange_SectionKey = @"indexPath2ForLastExchange_Section";
+static NSString * const kIndexPath2ForLastExchange_ItemKey = @"indexPath2ForLastExchange_Item";
+
+// model...
+static NSString * const kLeftSideKey = @"leftSide";
+static NSString * const kMiddleKey = @"middle";
+static NSString * const kRightSideKey = @"rightSide";
+
+// cell...
+static NSUInteger const kCellLabelTag = 1;
+static NSUInteger const kCatchRectangleTag = 2;
+static NSUInteger const kLockLabelTag = 3;
 
 
+
+// helps map collection view sections to arrays...
 NS_ENUM(NSInteger, CollectionViewSection) {
     CollectionViewSectionLeft,
     CollectionViewSectionMiddle,
@@ -95,6 +130,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 - (IBAction)allowExchangesSwitchChanged:(UISwitch *)sender;
 @property (weak, nonatomic) IBOutlet UISwitch *allowExchangesSwitch;
 
+@property (strong, nonatomic) NSUserDefaults *userDefaults;
 
 @end
 
@@ -103,12 +139,30 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
 @implementation ViewController
 
-- (void)viewDidLoad
-{
+
+- (void)viewDidLoad {
+    
     [super viewDidLoad];
     
-    // Prepare...
-    [self prepareModel];
+    self.userDefaults = [NSUserDefaults standardUserDefaults];
+    
+    if ([self isFirstRun]) {
+        NSLog(@"is first run");
+        [self useDefaultModel];
+        [self saveModel];
+        [self useDefaultSwitchStates];
+        [self saveSwitchStates];
+        [self saveIndexPaths];
+        [self saveFirstRun];
+        
+    } else {
+        NSLog(@"is not first run");
+        [self useSavedModel];
+        [self useSavedSwitchStates];
+        [self useSavedIndexPaths];
+        
+    }
+    
     [self updateSumLabels];
     [self logModel];
     
@@ -134,236 +188,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     
     self.lockLabelText = @"🔒";
     self.conditionalDisplacementLabelText = @"🔐";
-    self.indexPathForLockedItem = [NSIndexPath indexPathForItem:0 inSection:0];
-    self.indexPath1ForConditionalDisplacement = [NSIndexPath indexPathForItem:0 inSection:1];
-    self.indexPath2ForConditionalDisplacement = [NSIndexPath indexPathForItem:0 inSection:2];
- 
-}
-
-
-
-//---------------------------------
-#pragma mark - Instance methods...
-
-- (void)prepareModel
-{    
-    NSArray *temp1to10 =    @[  @1,  @2,  @3,  @4,  @5,  @6,  @7,  @8,  @9, @10 ];
-    NSArray *temp11to20 =   @[ @11, @12, @13, @14, @15, @16, @17, @18, @19, @20 ];
-    NSArray *temp21to30 =   @[ @21, @22, @23, @24, @25, @26, @27, @28, @29, @30 ];
     
-    self.leftSide = [NSMutableArray arrayWithArray:temp1to10];
-    self.middle = [NSMutableArray arrayWithArray:temp11to20];
-    self.rightSide = [NSMutableArray arrayWithArray:temp21to30];
-}
-
-- (void)updateSumLabels
-{
-    // Demonstrates how live updating is enabled by the exchangeControllerDidFinishExchangeEvent: delegate method.
-    
-    self.sumLeft.text =     [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.leftSide]];
-    self.sumMiddle.text =   [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.middle]];
-    self.sumRight.text =    [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.rightSide]];
-}
-
-- (IBAction)undo:(id)sender
-{
-    // Demonstrates how undo is enabled by the
-    // exchangeControllerDidFinishExchangeTransaction:withIndexPath1:indexPath2:: delegate method.
-    
-    if (self.indexPath1ForLastExchange != nil) {
-        
-        [self.collectionView performBatchUpdates:^ {
-            
-            [self.collectionView moveItemAtIndexPath:self.indexPath1ForLastExchange toIndexPath:self.indexPath2ForLastExchange];
-            [self.collectionView moveItemAtIndexPath:self.indexPath2ForLastExchange toIndexPath:self.indexPath1ForLastExchange];
-            
-        }
-                                      completion:^(BOOL finished) {
-                                          
-                                          [self exchangeItemAtIndexPath1:self.indexPath1ForLastExchange
-                                                    withItemAtIndexPath2:self.indexPath2ForLastExchange]; // sync the model
-                                          [self updateSumLabels];
-                                          [self logModel];
-                                          
-                                      }];
-    }
-}
-
-- (void)exchangeItemAtIndexPath1:(NSIndexPath *)indexPath1 withItemAtIndexPath2:(NSIndexPath *)indexPath2 {
-    
-    NSMutableArray *array1 = [self arrayForSection:indexPath1.section];
-    NSMutableArray *array2 = [self arrayForSection:indexPath2.section];
-    
-    // as defined in the NSMutableArray category, can exchange items in different arrays...
-    [NSMutableArray exchangeObjectInArray:array1
-                                  atIndex:indexPath1.item
-                   withObjectInOtherArray:array2
-                                  atIndex:indexPath2.item];
-
-}
-
-- (NSMutableArray *)arrayForSection:(NSUInteger)section {
-    
-    // Normally each section of a collection view has its own array. This is a simple example of how
-    // you might map your sections to actual arrays. Using a technique like this simplifies the
-    // implementation of the exchangeItemAtIndexPath1:withItemAtIndexPath2: method shown above.
-    
-    // If your collection view is represented by a single array you won't need a method like this.
-    
-    NSMutableArray *array;
-    
-    switch (section) {
-            
-        case CollectionViewSectionLeft:
-            array = self.leftSide;
-            break;
-            
-        case CollectionViewSectionMiddle:
-            array = self.middle;
-            break;
-            
-        case CollectionViewSectionRight:
-            array = self.rightSide;
-            break;
-    }
-    return array;
-}
-
-- (IBAction)reset:(id)sender
-{
-    [self prepareModel];
-    [self.collectionView reloadData];
-    [self updateSumLabels];
-    self.indexPath1ForLastExchange = nil;
-    self.indexPath2ForLastExchange = nil;
-    [self logModel];
-}
-
-- (NSInteger)sumArray:(NSArray *)array
-{
-    NSInteger sum = 0;
-    for (NSNumber *number in array) {
-        sum += [number integerValue];
-    }
-    return sum;
-}
-
-- (void)prepareForUndoWithIndexPath1:(NSIndexPath *)indexPath1 indexPath2:(NSIndexPath *)indexPath2 {
-    
-    if (![indexPath1 isEqual:indexPath2]) {
-        
-        self.indexPath1ForLastExchange = indexPath1;
-        self.indexPath2ForLastExchange = indexPath2;
-        
-    }
-}
-
-- (void)logModel
-{
-    // so you can verify that the model is staying in sync with the changes occurring on the view...
-    
-    NSLog(@" ");
-    NSLog(@"self.leftSide   |    self.middle    |    self.rightSide");
-    
-    for (int i=0; i<[self.leftSide count]; i++) {
-        NSLog(@"          %@     |         %@        |          %@", self.leftSide[i], self.middle[i], self.rightSide[i]);
-    }
-    
-    NSInteger sumLeft =     [self sumArray:self.leftSide];
-    NSInteger sumMiddle =   [self sumArray:self.middle];
-    NSInteger sumRight =    [self sumArray:self.rightSide];
-    
-    NSLog(@" ");
-    NSLog(@" sumLeft= %ld        sumMiddle= %ld      sumRight= %ld", (long)sumLeft, (long)sumMiddle, (long)sumRight);
-    NSLog(@" ");
-}
-
-
-
-//-----------------------------------------------
-#pragma mark - Action methods for the switches...
-
-- (IBAction)allowExchangesSwitchChanged:(UISwitch *)sender {
-    
-    [self.collectionView reloadData];
-    
-}
-
-- (IBAction)lockItemSwitchChanged:(UISwitch *)sender {
-    
-    NSArray *arrays = @[self.leftSide, self.middle, self.rightSide];
-    NSSet *excludingIndexPaths = [[NSSet alloc] initWithObjects:self.indexPath1ForConditionalDisplacement, self.indexPath2ForConditionalDisplacement, nil];
-    
-    self.indexPathForLockedItem = (sender.on)? [NSIndexPath randomIndexPathInArrays:arrays excludingIndexPaths:excludingIndexPaths] : nil;
-    
-    [self.collectionView reloadData];
-    
-}
-
-- (IBAction)conditionalExchangeSwitchChanged:(UISwitch *)sender {
-    
-    NSArray *arrays = @[self.leftSide, self.middle, self.rightSide];
-    NSSet *excludingIndexPaths = [[NSSet alloc] initWithObjects:self.indexPathForLockedItem, nil];
-    
-    self.indexPath1ForConditionalDisplacement = (sender.on)? [NSIndexPath randomIndexPathInArrays:arrays excludingIndexPaths:excludingIndexPaths] : nil;
-    
-    excludingIndexPaths = [[NSSet alloc] initWithObjects:self.indexPath1ForConditionalDisplacement, self.indexPathForLockedItem, nil]; // order critical
-    self.indexPath2ForConditionalDisplacement = (sender.on)? [NSIndexPath randomIndexPathInArrays:arrays excludingIndexPaths:excludingIndexPaths] : nil;
-    
-    [self.collectionView reloadData];
-    
-}
-
-- (IBAction)catchRectangleSwitchChanged:(UISwitch *)sender {
-    
-    [self.collectionView reloadData];
-    
-}
-
-
-
-//-----------------------------------------------------------------
-#pragma mark - UICollectionView data source and delegate methods...
-
-- (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView
-{
-    return 3;
-}
-
-- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
-{
-    return 10;
-}
-
-- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
-{
-    UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"itemCell" forIndexPath:indexPath];
-    
-    // The collection view cell doesn't have a class.
-    // So subviews are retrieved with a tag.
-    UIView *catchRectangle = [cell viewWithTag:CATCH_RECTANGLE_TAG];
-    UILabel *lockLabel = (UILabel *)[cell viewWithTag:LOCK_LABEL_TAG];
-    UILabel *itemLabel = (UILabel *)[cell viewWithTag:CELL_LABEL_TAG];
-    
-    catchRectangle.hidden = (self.catchRectangleSwitch.on)? NO:YES;
-    
-    BOOL showLock = self.lockItemSwitch.on && [indexPath isEqual:self.indexPathForLockedItem];
-    BOOL showConditionalExchangeLock = (self.conditionalExchangeSwitch.on &&
-                                        ([indexPath isEqual:self.indexPath1ForConditionalDisplacement] ||
-                                         [indexPath isEqual:self.indexPath2ForConditionalDisplacement]))? YES:NO;
-
-    if (showLock) {
-        lockLabel.text = self.lockLabelText;
-    } else if (showConditionalExchangeLock) {
-        lockLabel.text = self.conditionalDisplacementLabelText;
-    } else {
-        lockLabel.text = nil;
-    }
-    
-    itemLabel.alpha = (self.allowExchangesSwitch.on)? 1.0:0.5;
-    itemLabel.text = [NSString stringWithFormat:@" %@", [self arrayForSection:indexPath.section][ indexPath.item ]];
-    
-    return cell;
 }
 
 
@@ -373,8 +198,8 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
 - (void)    exchangeController:(SSCollectionViewExchangeController *)exchangeController
    didExchangeItemAtIndexPath1:(NSIndexPath *)indexPath1
-          withItemAtIndexPath2:(NSIndexPath *)indexPath2
-{
+          withItemAtIndexPath2:(NSIndexPath *)indexPath2 {
+    
     // Called for each individual exchange within an exchange event. There may be one exchange or two per
     // event. In all cases the delegate should just update the model by exchanging the elements at the
     // indicated index paths. Refer to the Exchange Event description and the Exchange Transaction and
@@ -382,35 +207,39 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     // sync with changes happening on the view.
     
     [self exchangeItemAtIndexPath1:indexPath1 withItemAtIndexPath2:indexPath2];
+    
 }
 
-- (void)exchangeControllerDidFinishExchangeEvent:(SSCollectionViewExchangeController *)exchangeController
-{
+- (void)exchangeControllerDidFinishExchangeEvent:(SSCollectionViewExchangeController *)exchangeController {
+    
     // Called when an exchange event finishes within an exchange transaction. This method
     // provides the delegate with an opportunity to perform live updating as the user drags.
     
     [self updateSumLabels];
     [self logModel];
+    
 }
 
 - (void)exchangeControllerDidFinishExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController
                                         withIndexPath1:(NSIndexPath *)indexPath1
-                                            indexPath2:(NSIndexPath *)indexPath2
-{
+                                            indexPath2:(NSIndexPath *)indexPath2 {
+    
     // Called when an exchange transaction completes (the user lifts his/her finger). The
     // index paths represent the two items in the final exchange. Do not exchange these items,
     // you already have. This method allows the delegate to perform any task required at the end
     // of the transaction such as setting up for undo. If the user dragged back to the starting
     // position and released (effectively nothing was exchanged) the index paths will be the same.
     
-    // In this example, prepare for undo...
+    [self saveModel];
     [self prepareForUndoWithIndexPath1:indexPath1 indexPath2:indexPath2];
+    
 }
 
 - (void)exchangeControllerDidCancelExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController {
-
+    
     [self updateSumLabels];
     [self logModel];
+    
 }
 
 
@@ -441,7 +270,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     // It is important to understand that this does not prevent the locked item from being displaced
     // later during an exchange transaction. If that was also required you would implement that in the
     // canDisplaceItem... delegate method.
-
+    
     
     // Otherwise...
     return YES;
@@ -457,7 +286,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     // the two items. Implement this method if your collection view contains items that cannot be
     // exchanged at all or if there may be a situation where the item to displace cannot be exchanged
     // with the particular item being dragged. If not implemented, the default is YES.
-
+    
     BOOL canDisplace = YES;
     
     if (self.lockItemSwitch.on && [indexPathOfItemToDisplace isEqual:self.indexPathForLockedItem]) {
@@ -465,13 +294,13 @@ NS_ENUM(NSInteger, CollectionViewSection) {
         canDisplace = NO;
         
     } else if (self.conditionalExchangeSwitch.on) {
-
+        
         // In this completely contrived case if the conditional exchange switch is on
         // the two conditional index paths can be exchanged only with each other.
         //
         // The logic is a bit twisted but the point is that you can implement your own logic here
         // to manage whatever conditional exchange requirements you have.
-
+        
         BOOL indexPathOfItemBeingDraggedMatches = ([indexPathOfItemBeingDragged isEqual:self.indexPath1ForConditionalDisplacement] ||
                                                    [indexPathOfItemBeingDragged isEqual:self.indexPath2ForConditionalDisplacement])? YES:NO;
         BOOL indexPathOfItemToDisplaceMatches = ([indexPathOfItemToDisplace isEqual:self.indexPath1ForConditionalDisplacement] ||
@@ -494,7 +323,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     }
     
     return canDisplace;
-
+    
 }
 
 
@@ -504,7 +333,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:indexPath];
     
     if (self.catchRectangleSwitch.on) {
-        UIView *catchRectangle = [cell viewWithTag:CATCH_RECTANGLE_TAG];
+        UIView *catchRectangle = [cell viewWithTag:kCatchRectangleTag];
         return catchRectangle;
     } else {
         return cell;
@@ -512,4 +341,401 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     
 }
 
+
+
+//-----------------------------------------------------------------
+#pragma mark - UICollectionView data source and delegate methods...
+
+- (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
+    
+    return 3;
+    
+}
+
+- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
+    
+    return 10;
+    
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
+    
+    UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"itemCell" forIndexPath:indexPath];
+    
+    // The collection view cell doesn't have a class.
+    // So subviews are retrieved with a tag.
+    UIView *catchRectangle = [cell viewWithTag:kCatchRectangleTag];
+    UILabel *lockLabel = (UILabel *)[cell viewWithTag:kLockLabelTag];
+    UILabel *itemLabel = (UILabel *)[cell viewWithTag:kCellLabelTag];
+    
+    catchRectangle.hidden = (self.catchRectangleSwitch.on)? NO:YES;
+    
+    BOOL showLock = self.lockItemSwitch.on && [indexPath isEqual:self.indexPathForLockedItem];
+    BOOL showConditionalExchangeLock = (self.conditionalExchangeSwitch.on &&
+                                        ([indexPath isEqual:self.indexPath1ForConditionalDisplacement] ||
+                                         [indexPath isEqual:self.indexPath2ForConditionalDisplacement]))? YES:NO;
+    
+    if (showLock) {
+        lockLabel.text = self.lockLabelText;
+    } else if (showConditionalExchangeLock) {
+        lockLabel.text = self.conditionalDisplacementLabelText;
+    } else {
+        lockLabel.text = nil;
+    }
+    
+    itemLabel.alpha = (self.allowExchangesSwitch.on)? 1.0:0.5;
+    itemLabel.text = [NSString stringWithFormat:@" %@", [self arrayForSection:indexPath.section][ indexPath.item ]];
+    
+    return cell;
+}
+
+
+
+//---------------------------------
+#pragma mark - Instance methods...
+
+- (void)updateSumLabels {
+    
+    // Demonstrates how live updating is enabled by the exchangeControllerDidFinishExchangeEvent: delegate method.
+    
+    self.sumLeft.text =     [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.leftSide]];
+    self.sumMiddle.text =   [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.middle]];
+    self.sumRight.text =    [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.rightSide]];
+}
+
+- (IBAction)undo:(id)sender {
+    
+    // Demonstrates how undo is enabled by the
+    // exchangeControllerDidFinishExchangeTransaction:withIndexPath1:indexPath2:: delegate method.
+    
+    if (self.indexPath1ForLastExchange != nil) {
+        
+        [self.collectionView performBatchUpdates:^ {
+            
+            [self.collectionView moveItemAtIndexPath:self.indexPath1ForLastExchange toIndexPath:self.indexPath2ForLastExchange];
+            [self.collectionView moveItemAtIndexPath:self.indexPath2ForLastExchange toIndexPath:self.indexPath1ForLastExchange];
+            
+        }
+                                      completion:^(BOOL finished) {
+                                          
+                                          [self exchangeItemAtIndexPath1:self.indexPath1ForLastExchange
+                                                    withItemAtIndexPath2:self.indexPath2ForLastExchange];
+                                          [self saveModel];
+                                          [self updateSumLabels];
+                                          
+                                          [self logModel];
+                                          
+                                      }];
+    }
+}
+
+- (void)exchangeItemAtIndexPath1:(NSIndexPath *)indexPath1 withItemAtIndexPath2:(NSIndexPath *)indexPath2 {
+    
+    NSMutableArray *array1 = [self arrayForSection:indexPath1.section];
+    NSMutableArray *array2 = [self arrayForSection:indexPath2.section];
+    
+    // as defined in the NSMutableArray category, can exchange items in different arrays...
+    [NSMutableArray exchangeObjectInArray:array1
+                                  atIndex:indexPath1.item
+                   withObjectInOtherArray:array2
+                                  atIndex:indexPath2.item];
+    
+}
+
+- (NSMutableArray *)arrayForSection:(NSUInteger)section {
+    
+    // Normally each section of a collection view has its own array. This is a simple example of how
+    // you might map your sections to actual arrays. Using a technique like this simplifies the
+    // implementation of the exchangeItemAtIndexPath1:withItemAtIndexPath2: method.
+    
+    // If your collection view is represented by a single array you won't need a method like this.
+    
+    NSMutableArray *array;
+    
+    switch (section) {
+            
+        case CollectionViewSectionLeft:
+            array = self.leftSide;
+            break;
+            
+        case CollectionViewSectionMiddle:
+            array = self.middle;
+            break;
+            
+        case CollectionViewSectionRight:
+            array = self.rightSide;
+            break;
+    }
+    return array;
+}
+
+- (IBAction)reset:(id)sender {
+    
+    [self useDefaultModel];
+    [self saveModel];
+    [self logModel];
+    
+    [self.collectionView reloadData];
+    [self updateSumLabels];
+    
+    self.indexPath1ForLastExchange = nil;
+    self.indexPath2ForLastExchange = nil;
+    [self saveIndexPaths];
+}
+
+- (NSInteger)sumArray:(NSArray *)array {
+    
+    NSInteger sum = 0;
+    for (NSNumber *number in array) {
+        sum += [number integerValue];
+    }
+    return sum;
+}
+
+- (void)prepareForUndoWithIndexPath1:(NSIndexPath *)indexPath1 indexPath2:(NSIndexPath *)indexPath2 {
+    
+    if (![indexPath1 isEqual:indexPath2]) {
+        
+        self.indexPath1ForLastExchange = indexPath1;
+        self.indexPath2ForLastExchange = indexPath2;
+        [self saveIndexPaths];
+        
+    }
+}
+
+- (void)logModel {
+    
+    // so you can verify that the model is staying in sync with the changes occurring on the view...
+    
+    NSLog(@" ");
+    NSLog(@"self.leftSide   |    self.middle    |    self.rightSide");
+    
+    for (int i=0; i<[self.leftSide count]; i++) {
+        NSLog(@"          %@     |         %@        |          %@", self.leftSide[i], self.middle[i], self.rightSide[i]);
+    }
+    
+    NSInteger sumLeft =     [self sumArray:self.leftSide];
+    NSInteger sumMiddle =   [self sumArray:self.middle];
+    NSInteger sumRight =    [self sumArray:self.rightSide];
+    
+    NSLog(@" ");
+    NSLog(@" sumLeft= %ld        sumMiddle= %ld      sumRight= %ld", (long)sumLeft, (long)sumMiddle, (long)sumRight);
+    NSLog(@" ");
+}
+
+
+
+//-----------------------------------------------
+#pragma mark - Action methods for the switches...
+
+- (IBAction)allowExchangesSwitchChanged:(UISwitch *)sender {
+    
+    [self.collectionView reloadData];
+    [self saveSwitchStates];
+    
+}
+
+- (IBAction)lockItemSwitchChanged:(UISwitch *)sender {
+    
+    if (sender.on) {
+        
+        NSArray *arrays = @[self.leftSide, self.middle, self.rightSide];
+        
+        NSMutableSet *excludingIndexPaths = [[NSMutableSet alloc] init];
+        [excludingIndexPaths addObjectIfNotNil:self.indexPathForLockedItem];
+        [excludingIndexPaths addObjectIfNotNil:self.indexPath1ForLastExchange];
+        [excludingIndexPaths addObjectIfNotNil:self.indexPath2ForLastExchange];
+        [excludingIndexPaths addObjectIfNotNil:self.indexPath1ForConditionalDisplacement];
+        [excludingIndexPaths addObjectIfNotNil:self.indexPath2ForConditionalDisplacement];
+        
+        self.indexPathForLockedItem = [NSIndexPath randomIndexPathInArrays:arrays excludingIndexPaths:excludingIndexPaths];
+        
+    } else {
+        
+        self.indexPathForLockedItem = nil;
+        
+    }
+    
+    [self.collectionView reloadData];
+    [self saveSwitchStates];
+    [self saveIndexPaths];
+    
+}
+
+- (IBAction)conditionalExchangeSwitchChanged:(UISwitch *)sender {
+    
+    if (sender.on) {
+        
+        NSArray *arrays = @[self.leftSide, self.middle, self.rightSide];
+        
+        NSMutableSet *excludingIndexPaths = [[NSMutableSet alloc] init];
+        [excludingIndexPaths addObjectIfNotNil:self.indexPathForLockedItem];
+        [excludingIndexPaths addObjectIfNotNil:self.indexPath1ForLastExchange];
+        [excludingIndexPaths addObjectIfNotNil:self.indexPath2ForLastExchange];
+        self.indexPath1ForConditionalDisplacement =[NSIndexPath randomIndexPathInArrays:arrays excludingIndexPaths:excludingIndexPaths];
+        
+        [excludingIndexPaths addObjectIfNotNil:self.indexPath1ForConditionalDisplacement];
+        self.indexPath2ForConditionalDisplacement = [NSIndexPath randomIndexPathInArrays:arrays excludingIndexPaths:excludingIndexPaths];
+        
+    } else {
+        
+        self.indexPath1ForConditionalDisplacement = nil;
+        self.indexPath2ForConditionalDisplacement = nil;
+        
+    }
+    
+    [self.collectionView reloadData];
+    [self saveSwitchStates];
+    [self saveIndexPaths];
+    
+}
+
+- (IBAction)catchRectangleSwitchChanged:(UISwitch *)sender {
+    
+    [self.collectionView reloadData];
+    [self saveSwitchStates];
+    
+}
+
+
+
+//--------------------------------------------------
+#pragma mark - Defaults and model related methods...
+
+- (BOOL)isFirstRun {
+    
+    id firstRunObject = [self.userDefaults objectForKey:kFirstRunKey];
+    
+    if (firstRunObject == nil) {
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
+- (void)saveFirstRun {
+    
+    [self.userDefaults setObject:@0 forKey:kFirstRunKey];
+    [self.userDefaults synchronize]; // important moment
+    
+}
+
+- (void)useDefaultSwitchStates {
+    
+    self.allowExchangesSwitch.on = YES;
+    self.conditionalExchangeSwitch.on = NO;
+    self.lockItemSwitch.on = NO;
+    self.catchRectangleSwitch.on = NO;
+    
+}
+
+- (void)useSavedSwitchStates {
+    
+    self.allowExchangesSwitch.on = [self.userDefaults boolForKey:kAllowExchangesSwitchStateKey];
+    self.conditionalExchangeSwitch.on = [self.userDefaults boolForKey:kConditionalExchangeSwitchStateKey];
+    self.lockItemSwitch.on = [self.userDefaults boolForKey:kLockItemSwitchStateKey];
+    self.catchRectangleSwitch.on = [self.userDefaults boolForKey:kCatchRectangleSwitchStateKey];
+    
+}
+
+- (void)saveSwitchStates {
+    
+    [self.userDefaults setBool:self.allowExchangesSwitch.on forKey:kAllowExchangesSwitchStateKey];
+    [self.userDefaults setBool:self.conditionalExchangeSwitch.on forKey:kConditionalExchangeSwitchStateKey];
+    [self.userDefaults setBool:self.lockItemSwitch.on forKey:kLockItemSwitchStateKey];
+    [self.userDefaults setBool:self.catchRectangleSwitch.on forKey:kCatchRectangleSwitchStateKey];
+    
+}
+
+- (void)useSavedIndexPaths {
+    
+    NSInteger section;
+    NSInteger item;
+    
+    section = [self.userDefaults integerForKey:kIndexPathForLockedItem_SectionKey];
+    item = [self.userDefaults integerForKey:kIndexPathForLockedItem_ItemKey];
+    self.indexPathForLockedItem = (section < 0)? nil : [NSIndexPath indexPathForItem:item inSection:section];
+
+    section = [self.userDefaults integerForKey:kIndexPath1ForConditionalDisplacement_SectionKey];
+    item = [self.userDefaults integerForKey:kIndexPath1ForConditionalDisplacement_ItemKey];
+    self.indexPath1ForConditionalDisplacement = (section < 0)? nil : [NSIndexPath indexPathForItem:item inSection:section];
+    
+    section = [self.userDefaults integerForKey:kIndexPath2ForConditionalDisplacement_SectionKey];
+    item = [self.userDefaults integerForKey:kIndexPath2ForConditionalDisplacement_ItemKey];
+    self.indexPath2ForConditionalDisplacement = (section < 0)? nil : [NSIndexPath indexPathForItem:item inSection:section];
+    
+    section = [self.userDefaults integerForKey:kIndexPath1ForLastExchange_SectionKey];
+    item = [self.userDefaults integerForKey:kIndexPath1ForLastExchange_ItemKey];
+    self.indexPath1ForLastExchange = (section < 0)? nil : [NSIndexPath indexPathForItem:item inSection:section];
+    
+    section = [self.userDefaults integerForKey:kIndexPath2ForLastExchange_SectionKey];
+    item = [self.userDefaults integerForKey:kIndexPath2ForLastExchange_ItemKey];
+    self.indexPath2ForLastExchange = (section < 0)? nil : [NSIndexPath indexPathForItem:item inSection:section];
+    
+}
+
+- (void)saveIndexPaths {
+    
+    // index paths that are nil get saved with -1
+    
+    NSInteger section;
+    NSInteger item;
+    
+    section = (self.indexPathForLockedItem)? self.indexPathForLockedItem.section : -1;
+    item = (self.indexPathForLockedItem)? self.indexPathForLockedItem.item : -1;
+    [self.userDefaults setInteger:section forKey:kIndexPathForLockedItem_SectionKey];
+    [self.userDefaults setInteger:item forKey:kIndexPathForLockedItem_ItemKey];
+    
+    section = (self.indexPath1ForConditionalDisplacement)? self.indexPath1ForConditionalDisplacement.section : -1;
+    item = (self.indexPath1ForConditionalDisplacement)? self.indexPath1ForConditionalDisplacement.item : -1;
+    [self.userDefaults setInteger:section forKey:kIndexPath1ForConditionalDisplacement_SectionKey];
+    [self.userDefaults setInteger:item forKey:kIndexPath1ForConditionalDisplacement_ItemKey];
+    
+    section = (self.indexPath2ForConditionalDisplacement)? self.indexPath2ForConditionalDisplacement.section : -1;
+    item = (self.indexPath2ForConditionalDisplacement)? self.indexPath2ForConditionalDisplacement.item : -1;
+    [self.userDefaults setInteger:section forKey:kIndexPath2ForConditionalDisplacement_SectionKey];
+    [self.userDefaults setInteger:item forKey:kIndexPath2ForConditionalDisplacement_ItemKey];
+    
+    section = (self.indexPath1ForLastExchange)? self.indexPath1ForLastExchange.section : -1;
+    item = (self.indexPath1ForLastExchange)? self.indexPath1ForLastExchange.item : -1;
+    [self.userDefaults setInteger:section forKey:kIndexPath1ForLastExchange_SectionKey];
+    [self.userDefaults setInteger:item forKey:kIndexPath1ForLastExchange_ItemKey];
+    
+    section = (self.indexPath2ForLastExchange)? self.indexPath2ForLastExchange.section : -1;
+    item = (self.indexPath2ForLastExchange)? self.indexPath2ForLastExchange.item : -1;
+    [self.userDefaults setInteger:section forKey:kIndexPath2ForLastExchange_SectionKey];
+    [self.userDefaults setInteger:item forKey:kIndexPath2ForLastExchange_ItemKey];
+    
+}
+
+- (void)useDefaultModel {
+    
+    NSArray *temp1to10 =    @[  @1,  @2,  @3,  @4,  @5,  @6,  @7,  @8,  @9, @10 ];
+    NSArray *temp11to20 =   @[ @11, @12, @13, @14, @15, @16, @17, @18, @19, @20 ];
+    NSArray *temp21to30 =   @[ @21, @22, @23, @24, @25, @26, @27, @28, @29, @30 ];
+    
+    self.leftSide = [NSMutableArray arrayWithArray:temp1to10];
+    self.middle = [NSMutableArray arrayWithArray:temp11to20];
+    self.rightSide = [NSMutableArray arrayWithArray:temp21to30];
+    
+}
+
+- (void)useSavedModel {
+    
+    self.leftSide = [self.userDefaults objectForKey:kLeftSideKey];
+    self.middle = [self.userDefaults objectForKey:kMiddleKey];
+    self.rightSide = [self.userDefaults objectForKey:kRightSideKey];
+    
+}
+
+- (void)saveModel {
+    
+    [self.userDefaults setObject:self.leftSide forKey:kLeftSideKey];
+    [self.userDefaults setObject:self.middle forKey:kMiddleKey];
+    [self.userDefaults setObject:self.rightSide forKey:kRightSideKey];
+    
+}
+
 @end
+
+

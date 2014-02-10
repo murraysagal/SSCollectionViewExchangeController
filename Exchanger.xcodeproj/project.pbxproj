@@ -26,6 +26,7 @@
 		722D30041832927100F82D12 /* ItemCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 722D30001832927100F82D12 /* ItemCell.xib */; };
 		72553953187EFBDC000338BB /* SSCollectionViewExchangeController.m in Sources */ = {isa = PBXBuildFile; fileRef = 72553952187EFBDC000338BB /* SSCollectionViewExchangeController.m */; };
 		72ACF56418A268F9003DEF34 /* UIView+SSCollectionViewExchangeControllerAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 72ACF56318A268F9003DEF34 /* UIView+SSCollectionViewExchangeControllerAdditions.m */; };
+		72DA905F18A81CF2000E98EA /* NSMutableSet+AddObjectIfNotNil.m in Sources */ = {isa = PBXBuildFile; fileRef = 72DA905E18A81CF2000E98EA /* NSMutableSet+AddObjectIfNotNil.m */; };
 		72FF890E188044DC00E4DAAB /* NSMutableArray+SSCollectionViewExchangeControllerAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 72FF890D188044DC00E4DAAB /* NSMutableArray+SSCollectionViewExchangeControllerAdditions.m */; };
 /* End PBXBuildFile section */
 
@@ -69,6 +70,8 @@
 		72553952187EFBDC000338BB /* SSCollectionViewExchangeController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SSCollectionViewExchangeController.m; sourceTree = "<group>"; };
 		72ACF56218A268F9003DEF34 /* UIView+SSCollectionViewExchangeControllerAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIView+SSCollectionViewExchangeControllerAdditions.h"; sourceTree = "<group>"; };
 		72ACF56318A268F9003DEF34 /* UIView+SSCollectionViewExchangeControllerAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+SSCollectionViewExchangeControllerAdditions.m"; sourceTree = "<group>"; };
+		72DA905D18A81CF2000E98EA /* NSMutableSet+AddObjectIfNotNil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableSet+AddObjectIfNotNil.h"; sourceTree = "<group>"; };
+		72DA905E18A81CF2000E98EA /* NSMutableSet+AddObjectIfNotNil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableSet+AddObjectIfNotNil.m"; sourceTree = "<group>"; };
 		72FF890C188044DC00E4DAAB /* NSMutableArray+SSCollectionViewExchangeControllerAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableArray+SSCollectionViewExchangeControllerAdditions.h"; sourceTree = "<group>"; };
 		72FF890D188044DC00E4DAAB /* NSMutableArray+SSCollectionViewExchangeControllerAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableArray+SSCollectionViewExchangeControllerAdditions.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -134,6 +137,8 @@
 		7207F34A18A51DF9006EF43B /* Categories */ = {
 			isa = PBXGroup;
 			children = (
+				72DA905D18A81CF2000E98EA /* NSMutableSet+AddObjectIfNotNil.h */,
+				72DA905E18A81CF2000E98EA /* NSMutableSet+AddObjectIfNotNil.m */,
 				7207F34718A50C83006EF43B /* NSIndexPath+RandomAdditons.h */,
 				7207F34818A50C83006EF43B /* NSIndexPath+RandomAdditons.m */,
 			);
@@ -317,6 +322,7 @@
 				72FF890E188044DC00E4DAAB /* NSMutableArray+SSCollectionViewExchangeControllerAdditions.m in Sources */,
 				72553953187EFBDC000338BB /* SSCollectionViewExchangeController.m in Sources */,
 				72ACF56418A268F9003DEF34 /* UIView+SSCollectionViewExchangeControllerAdditions.m in Sources */,
+				72DA905F18A81CF2000E98EA /* NSMutableSet+AddObjectIfNotNil.m in Sources */,
 				722D2FD3183291E300F82D12 /* main.m in Sources */,
 				7207F34918A50C83006EF43B /* NSIndexPath+RandomAdditons.m in Sources */,
 			);
