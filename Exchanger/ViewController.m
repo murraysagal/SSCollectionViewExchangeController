@@ -38,7 +38,7 @@
 #import "ViewController.h"
 #import "SSCollectionViewExchangeController.h"
 #import "NSMutableArray+SSCollectionViewExchangeControllerAdditions.h"
-#import "NSIndexPath+RandomAdditons.h"
+#import "NSIndexPath+RandomAdditions.h"
 #import "NSMutableSet+AddObjectIfNotNil.h"
 
 

@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		7207F34918A50C83006EF43B /* NSIndexPath+RandomAdditons.m in Sources */ = {isa = PBXBuildFile; fileRef = 7207F34818A50C83006EF43B /* NSIndexPath+RandomAdditons.m */; };
+		7207F34918A50C83006EF43B /* NSIndexPath+RandomAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 7207F34818A50C83006EF43B /* NSIndexPath+RandomAdditions.m */; };
 		720F35DC189FA20500D875A6 /* NSMutableArrayCategoryTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 720F35DB189FA20500D875A6 /* NSMutableArrayCategoryTests.m */; };
 		722D2FC7183291E300F82D12 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 722D2FC6183291E300F82D12 /* Foundation.framework */; };
 		722D2FCB183291E300F82D12 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 722D2FCA183291E300F82D12 /* UIKit.framework */; };
@@ -41,8 +41,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		7207F34718A50C83006EF43B /* NSIndexPath+RandomAdditons.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSIndexPath+RandomAdditons.h"; sourceTree = "<group>"; };
-		7207F34818A50C83006EF43B /* NSIndexPath+RandomAdditons.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSIndexPath+RandomAdditons.m"; sourceTree = "<group>"; };
+		7207F34718A50C83006EF43B /* NSIndexPath+RandomAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSIndexPath+RandomAdditions.h"; sourceTree = "<group>"; };
+		7207F34818A50C83006EF43B /* NSIndexPath+RandomAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSIndexPath+RandomAdditions.m"; sourceTree = "<group>"; };
 		720F35DB189FA20500D875A6 /* NSMutableArrayCategoryTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSMutableArrayCategoryTests.m; sourceTree = "<group>"; };
 		722D2FC3183291E300F82D12 /* Exchanger.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Exchanger.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		722D2FC6183291E300F82D12 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -139,8 +139,8 @@
 			children = (
 				72DA905D18A81CF2000E98EA /* NSMutableSet+AddObjectIfNotNil.h */,
 				72DA905E18A81CF2000E98EA /* NSMutableSet+AddObjectIfNotNil.m */,
-				7207F34718A50C83006EF43B /* NSIndexPath+RandomAdditons.h */,
-				7207F34818A50C83006EF43B /* NSIndexPath+RandomAdditons.m */,
+				7207F34718A50C83006EF43B /* NSIndexPath+RandomAdditions.h */,
+				7207F34818A50C83006EF43B /* NSIndexPath+RandomAdditions.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -324,7 +324,7 @@
 				72ACF56418A268F9003DEF34 /* UIView+SSCollectionViewExchangeControllerAdditions.m in Sources */,
 				72DA905F18A81CF2000E98EA /* NSMutableSet+AddObjectIfNotNil.m in Sources */,
 				722D2FD3183291E300F82D12 /* main.m in Sources */,
-				7207F34918A50C83006EF43B /* NSIndexPath+RandomAdditons.m in Sources */,
+				7207F34918A50C83006EF43B /* NSIndexPath+RandomAdditions.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

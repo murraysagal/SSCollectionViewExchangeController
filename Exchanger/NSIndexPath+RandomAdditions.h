@@ -1,5 +1,5 @@
 //
-//  NSIndexPath+RandomAdditons.h
+//  NSIndexPath+RandomAdditions.h
 //  Exchanger
 //
 //  Created by Murray Sagal on 2012-10-30.
@@ -26,7 +26,7 @@
 
 #import <Foundation/Foundation.h>
 
-@interface NSIndexPath (RandomAdditons)
+@interface NSIndexPath (RandomAdditions)
 
 + (NSIndexPath *)randomIndexPathInArrays:(NSArray *)arrays
                      excludingIndexPaths:(NSSet *)excludedIndexPaths;

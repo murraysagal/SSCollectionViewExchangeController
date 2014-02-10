@@ -1,5 +1,5 @@
 //
-//  NSIndexPath+RandomAdditons.m
+//  NSIndexPath+RandomAdditions.m
 //  Exchanger
 //
 //  Created by Murray Sagal on 2012-10-30.
@@ -24,9 +24,9 @@
 // THE SOFTWARE.
 
 
-#import "NSIndexPath+RandomAdditons.h"
+#import "NSIndexPath+RandomAdditions.h"
 
-@implementation NSIndexPath (RandomAdditons)
+@implementation NSIndexPath (RandomAdditions)
 
 + (NSIndexPath *)randomIndexPathInArrays:(NSArray *)arrays
                      excludingIndexPaths:(NSSet *)excludedIndexPaths {
