@@ -15,6 +15,7 @@
                 <outlet property="sumLeft" destination="jAN-ny-5Ax" id="8HJ-1u-qQ6"/>
                 <outlet property="sumMiddle" destination="vUK-hM-fED" id="MEG-bo-ZVH"/>
                 <outlet property="sumRight" destination="v7G-Zi-O9m" id="ymu-kf-b1Q"/>
+                <outlet property="undoButton" destination="1od-QV-ahH" id="jC1-1V-6PU"/>
                 <outlet property="view" destination="6" id="7"/>
             </connections>
         </placeholder>

@@ -42,7 +42,7 @@
 #import "NSMutableSet+AddObjectIfNotNil.h"
 
 
-// Constants for NSUserDefault keys...
+// Constants for NSUserDefault keys and other strings...
 
 static NSString * const kFirstRunKey = @"firstRun";
 
@@ -78,6 +78,10 @@ static NSUInteger const kCellLabelTag = 1;
 static NSUInteger const kCatchRectangleTag = 2;
 static NSUInteger const kLockLabelTag = 3;
 
+// undo button...
+static NSString * const kUndoText = @"Undo";
+static NSString * const kRedoText = @"Redo";
+
 
 
 // helps map collection view sections to arrays...
@@ -103,6 +107,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
 - (IBAction)reset:(id)sender;
 - (IBAction)undo:(id)sender;
+@property (weak, nonatomic) IBOutlet UIButton *undoButton;
 
 @property (strong, nonatomic) NSMutableArray *leftSide;
 @property (strong, nonatomic) NSMutableArray *middle;
@@ -426,6 +431,9 @@ NS_ENUM(NSInteger, CollectionViewSection) {
                                           [self logModel];
                                           
                                       }];
+        
+        NSString *title = ([[self.undoButton titleForState:UIControlStateNormal] isEqualToString:kUndoText])? kRedoText : kUndoText;
+        [self.undoButton setTitle:title forState:UIControlStateNormal];
     }
 }
 
@@ -478,6 +486,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     [self.collectionView reloadData];
     [self updateSumLabels];
     
+    [self.undoButton setTitle:kUndoText forState:UIControlStateNormal];
     self.indexPath1ForLastExchange = nil;
     self.indexPath2ForLastExchange = nil;
     [self saveIndexPaths];
