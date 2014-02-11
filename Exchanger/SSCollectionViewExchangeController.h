@@ -38,8 +38,8 @@
         item2    item3    item4    item5    item1
  
  With a move, the all items between the *from* and *to* items reposition themselves 
- toward the *from* item. In an exchange scenario, when item1 is moved to item5 
- this is the result...
+ toward the original location of the *from* item. In an exchange scenario, when item1 
+ is moved to item5 this is the result...
  
         item5    item2    item3    item4    item1
  

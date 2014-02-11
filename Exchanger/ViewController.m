@@ -152,7 +152,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     self.userDefaults = [NSUserDefaults standardUserDefaults];
     
     if ([self isFirstRun]) {
-        NSLog(@"is first run");
+
         [self useDefaultModel];
         [self saveModel];
         [self useDefaultSwitchStates];
@@ -161,7 +161,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
         [self saveFirstRun];
         
     } else {
-        NSLog(@"is not first run");
+
         [self useSavedModel];
         [self useSavedSwitchStates];
         [self useSavedIndexPaths];
