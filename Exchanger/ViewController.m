@@ -42,36 +42,26 @@
 #import "NSMutableSet+AddObjectIfNotNil.h"
 
 
+#define OBJC_STRINGIFY(x) @#x
+
+#define setDefaultForBOOL(bool)     [[NSUserDefaults standardUserDefaults] setBool:bool forKey:OBJC_STRINGIFY(bool)]
+#define defaultForBOOL(bool)        bool = [[NSUserDefaults standardUserDefaults] boolForKey:OBJC_STRINGIFY(bool)]
+
+#define setDefaultForInteger(integer)     [[NSUserDefaults standardUserDefaults] setInteger:integer forKey:OBJC_STRINGIFY(integer)]
+#define defaultForInteger(integer)        integer = [[NSUserDefaults standardUserDefaults] integerForKey:OBJC_STRINGIFY(integer)]
+
+#define defaultForMutableArray(mutableArray)    mutableArray = [[[NSUserDefaults standardUserDefaults] arrayForKey:OBJC_STRINGIFY(mutableArray)] mutableCopy]
+
+#define setDefaultForObject(object) [[NSUserDefaults standardUserDefaults] setObject:object forKey:OBJC_STRINGIFY(object)]
+#define defaultForObject(object)    object = [[NSUserDefaults standardUserDefaults] objectForKey:OBJC_STRINGIFY(object)]
+
+#define defaultForObjectDoesNotExist(object)    [[NSUserDefaults standardUserDefaults] objectForKey:OBJC_STRINGIFY(object)] == nil
+#define defaultForObjectExists(object)          [[NSUserDefaults standardUserDefaults] objectForKey:OBJC_STRINGIFY(object)] != nil
+
+
 // Constants for NSUserDefault keys and other strings...
 
 static NSString * const kFirstRunKey = @"firstRun";
-
-// switches...
-static NSString * const kAllowExchangesSwitchStateKey = @"allowExchangesSwitchState";
-static NSString * const kConditionalExchangeSwitchStateKey = @"conditionalExchangeSwitchState";
-static NSString * const kLockItemSwitchStateKey = @"lockItemSwitchState";
-static NSString * const kCatchRectangleSwitchStateKey = @"catchRectangleSwitchState";
-
-// index paths...
-static NSString * const kIndexPathForLockedItem_SectionKey = @"indexPathForLockedItem_Section";
-static NSString * const kIndexPathForLockedItem_ItemKey = @"indexPathForLockedItem_Item";
-
-static NSString * const kIndexPath1ForConditionalDisplacement_SectionKey = @"indexPath1ForConditionalDisplacement_Section";
-static NSString * const kIndexPath1ForConditionalDisplacement_ItemKey = @"indexPath1ForConditionalDisplacement_Item";
-
-static NSString * const kIndexPath2ForConditionalDisplacement_SectionKey = @"indexPath2ForConditionalDisplacement_Section";
-static NSString * const kIndexPath2ForConditionalDisplacement_ItemKey = @"indexPath2ForConditionalDisplacement_Item";
-
-static NSString * const kIndexPath1ForLastExchange_SectionKey = @"indexPath1ForLastExchange_Section";
-static NSString * const kIndexPath1ForLastExchange_ItemKey = @"indexPath1ForLastExchange_Item";
-
-static NSString * const kIndexPath2ForLastExchange_SectionKey = @"indexPath2ForLastExchange_Section";
-static NSString * const kIndexPath2ForLastExchange_ItemKey = @"indexPath2ForLastExchange_Item";
-
-// model...
-static NSString * const kLeftSideKey = @"leftSide";
-static NSString * const kMiddleKey = @"middle";
-static NSString * const kRightSideKey = @"rightSide";
 
 // cell...
 static NSUInteger const kCellLabelTag = 1;
@@ -155,7 +145,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
         [self useDefaultModel];
         [self saveModel];
-        [self useDefaultSwitchStates];
+        [self useInitialSwitchStates];
         [self saveSwitchStates];
         [self saveIndexPaths];
         [self saveFirstRun];
@@ -613,23 +603,18 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
 - (BOOL)isFirstRun {
     
-    id firstRunObject = [self.userDefaults objectForKey:kFirstRunKey];
+    return defaultForObjectDoesNotExist(kFirstRunKey);
     
-    if (firstRunObject == nil) {
-        return YES;
-    } else {
-        return NO;
-    }
 }
 
 - (void)saveFirstRun {
     
-    [self.userDefaults setObject:@0 forKey:kFirstRunKey];
+    setDefaultForObject(kFirstRunKey);
     [self.userDefaults synchronize]; // important moment
     
 }
 
-- (void)useDefaultSwitchStates {
+- (void)useInitialSwitchStates {
     
     self.allowExchangesSwitch.on = YES;
     self.conditionalExchangeSwitch.on = NO;
@@ -640,80 +625,68 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
 - (void)useSavedSwitchStates {
     
-    self.allowExchangesSwitch.on = [self.userDefaults boolForKey:kAllowExchangesSwitchStateKey];
-    self.conditionalExchangeSwitch.on = [self.userDefaults boolForKey:kConditionalExchangeSwitchStateKey];
-    self.lockItemSwitch.on = [self.userDefaults boolForKey:kLockItemSwitchStateKey];
-    self.catchRectangleSwitch.on = [self.userDefaults boolForKey:kCatchRectangleSwitchStateKey];
+    defaultForBOOL(self.allowExchangesSwitch.on);
+    defaultForBOOL(self.conditionalExchangeSwitch.on);
+    defaultForBOOL(self.lockItemSwitch.on);
+    defaultForBOOL(self.catchRectangleSwitch.on);
     
 }
 
 - (void)saveSwitchStates {
     
-    [self.userDefaults setBool:self.allowExchangesSwitch.on forKey:kAllowExchangesSwitchStateKey];
-    [self.userDefaults setBool:self.conditionalExchangeSwitch.on forKey:kConditionalExchangeSwitchStateKey];
-    [self.userDefaults setBool:self.lockItemSwitch.on forKey:kLockItemSwitchStateKey];
-    [self.userDefaults setBool:self.catchRectangleSwitch.on forKey:kCatchRectangleSwitchStateKey];
+    setDefaultForBOOL(self.allowExchangesSwitch.on);
+    setDefaultForBOOL(self.conditionalExchangeSwitch.on);
+    setDefaultForBOOL(self.lockItemSwitch.on);
+    setDefaultForBOOL(self.catchRectangleSwitch.on);
     
+}
+
+- (NSString *)documentsDirectory {
+    
+    return [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+    
+}
+
+- (NSString *)filePathInDocumentsForFileName:(NSString *)fileName {
+    
+    return [[self documentsDirectory] stringByAppendingPathComponent:fileName];
+}
+
+- (void)archiveObject:(id)object toDocumentDirectoryWithFileName:(NSString *)fileName {
+    
+    NSString *filePath = [self filePathInDocumentsForFileName:fileName];
+
+    if (object) {
+        (void) [NSKeyedArchiver archiveRootObject:object toFile:filePath];
+    } else {
+        (void) [[NSFileManager defaultManager] removeItemAtPath:filePath error:nil];  // if it's nil the file needs to be deleted...
+    }
+}
+
+- (NSIndexPath *)unarchiveObjectWithFileName:(NSString *)fileName {
+    
+    NSString *filePath = [[self documentsDirectory] stringByAppendingPathComponent:fileName];
+    NSIndexPath *indexPath = [NSKeyedUnarchiver unarchiveObjectWithFile:filePath];
+    return indexPath;
 }
 
 - (void)useSavedIndexPaths {
     
-    NSInteger section;
-    NSInteger item;
-    
-    section = [self.userDefaults integerForKey:kIndexPathForLockedItem_SectionKey];
-    item = [self.userDefaults integerForKey:kIndexPathForLockedItem_ItemKey];
-    self.indexPathForLockedItem = (section < 0)? nil : [NSIndexPath indexPathForItem:item inSection:section];
-
-    section = [self.userDefaults integerForKey:kIndexPath1ForConditionalDisplacement_SectionKey];
-    item = [self.userDefaults integerForKey:kIndexPath1ForConditionalDisplacement_ItemKey];
-    self.indexPath1ForConditionalDisplacement = (section < 0)? nil : [NSIndexPath indexPathForItem:item inSection:section];
-    
-    section = [self.userDefaults integerForKey:kIndexPath2ForConditionalDisplacement_SectionKey];
-    item = [self.userDefaults integerForKey:kIndexPath2ForConditionalDisplacement_ItemKey];
-    self.indexPath2ForConditionalDisplacement = (section < 0)? nil : [NSIndexPath indexPathForItem:item inSection:section];
-    
-    section = [self.userDefaults integerForKey:kIndexPath1ForLastExchange_SectionKey];
-    item = [self.userDefaults integerForKey:kIndexPath1ForLastExchange_ItemKey];
-    self.indexPath1ForLastExchange = (section < 0)? nil : [NSIndexPath indexPathForItem:item inSection:section];
-    
-    section = [self.userDefaults integerForKey:kIndexPath2ForLastExchange_SectionKey];
-    item = [self.userDefaults integerForKey:kIndexPath2ForLastExchange_ItemKey];
-    self.indexPath2ForLastExchange = (section < 0)? nil : [NSIndexPath indexPathForItem:item inSection:section];
+    self.indexPathForLockedItem = [self unarchiveObjectWithFileName:OBJC_STRINGIFY(_indexPathForLockedItem)];
+    self.indexPath1ForConditionalDisplacement = [self unarchiveObjectWithFileName:OBJC_STRINGIFY(_indexPath1ForConditionalDisplacement)];
+    self.indexPath2ForConditionalDisplacement = [self unarchiveObjectWithFileName:OBJC_STRINGIFY(_indexPath2ForConditionalDisplacement)];
+    self.indexPath1ForLastExchange = [self unarchiveObjectWithFileName:OBJC_STRINGIFY(_indexPath1ForLastExchange)];
+    self.indexPath2ForLastExchange = [self unarchiveObjectWithFileName:OBJC_STRINGIFY(_indexPath2ForLastExchange)];
     
 }
 
 - (void)saveIndexPaths {
     
-    // index paths that are nil get saved with -1
-    
-    NSInteger section;
-    NSInteger item;
-    
-    section = (self.indexPathForLockedItem)? self.indexPathForLockedItem.section : -1;
-    item = (self.indexPathForLockedItem)? self.indexPathForLockedItem.item : -1;
-    [self.userDefaults setInteger:section forKey:kIndexPathForLockedItem_SectionKey];
-    [self.userDefaults setInteger:item forKey:kIndexPathForLockedItem_ItemKey];
-    
-    section = (self.indexPath1ForConditionalDisplacement)? self.indexPath1ForConditionalDisplacement.section : -1;
-    item = (self.indexPath1ForConditionalDisplacement)? self.indexPath1ForConditionalDisplacement.item : -1;
-    [self.userDefaults setInteger:section forKey:kIndexPath1ForConditionalDisplacement_SectionKey];
-    [self.userDefaults setInteger:item forKey:kIndexPath1ForConditionalDisplacement_ItemKey];
-    
-    section = (self.indexPath2ForConditionalDisplacement)? self.indexPath2ForConditionalDisplacement.section : -1;
-    item = (self.indexPath2ForConditionalDisplacement)? self.indexPath2ForConditionalDisplacement.item : -1;
-    [self.userDefaults setInteger:section forKey:kIndexPath2ForConditionalDisplacement_SectionKey];
-    [self.userDefaults setInteger:item forKey:kIndexPath2ForConditionalDisplacement_ItemKey];
-    
-    section = (self.indexPath1ForLastExchange)? self.indexPath1ForLastExchange.section : -1;
-    item = (self.indexPath1ForLastExchange)? self.indexPath1ForLastExchange.item : -1;
-    [self.userDefaults setInteger:section forKey:kIndexPath1ForLastExchange_SectionKey];
-    [self.userDefaults setInteger:item forKey:kIndexPath1ForLastExchange_ItemKey];
-    
-    section = (self.indexPath2ForLastExchange)? self.indexPath2ForLastExchange.section : -1;
-    item = (self.indexPath2ForLastExchange)? self.indexPath2ForLastExchange.item : -1;
-    [self.userDefaults setInteger:section forKey:kIndexPath2ForLastExchange_SectionKey];
-    [self.userDefaults setInteger:item forKey:kIndexPath2ForLastExchange_ItemKey];
+    [self archiveObject:self.indexPathForLockedItem toDocumentDirectoryWithFileName:OBJC_STRINGIFY(_indexPathForLockedItem)];
+    [self archiveObject:self.indexPath1ForConditionalDisplacement toDocumentDirectoryWithFileName:OBJC_STRINGIFY(_indexPath1ForConditionalDisplacement)];
+    [self archiveObject:self.indexPath2ForConditionalDisplacement toDocumentDirectoryWithFileName:OBJC_STRINGIFY(_indexPath2ForConditionalDisplacement)];
+    [self archiveObject:self.indexPath1ForLastExchange toDocumentDirectoryWithFileName:OBJC_STRINGIFY(_indexPath1ForLastExchange)];
+    [self archiveObject:self.indexPath2ForLastExchange toDocumentDirectoryWithFileName:OBJC_STRINGIFY(_indexPath2ForLastExchange)];
     
 }
 
@@ -731,17 +704,17 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
 - (void)useSavedModel {
     
-    self.leftSide = [self.userDefaults objectForKey:kLeftSideKey];
-    self.middle = [self.userDefaults objectForKey:kMiddleKey];
-    self.rightSide = [self.userDefaults objectForKey:kRightSideKey];
+    defaultForMutableArray(_leftSide);
+    defaultForMutableArray(_middle);
+    defaultForMutableArray(_rightSide);
     
 }
 
 - (void)saveModel {
     
-    [self.userDefaults setObject:self.leftSide forKey:kLeftSideKey];
-    [self.userDefaults setObject:self.middle forKey:kMiddleKey];
-    [self.userDefaults setObject:self.rightSide forKey:kRightSideKey];
+    setDefaultForObject(_leftSide);
+    setDefaultForObject(_middle);
+    setDefaultForObject(_rightSide);
     
 }
 
