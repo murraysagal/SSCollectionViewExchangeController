@@ -42,6 +42,7 @@
 #import "NSMutableSet+AddObjectIfNotNil.h"
 
 
+
 #define OBJC_STRINGIFY(x) @#x
 
 #define setDefaultForBOOL(bool)     [[NSUserDefaults standardUserDefaults] setBool:bool forKey:OBJC_STRINGIFY(bool)]
@@ -59,27 +60,29 @@
 #define defaultForObjectExists(object)          [[NSUserDefaults standardUserDefaults] objectForKey:OBJC_STRINGIFY(object)] != nil
 
 
-// Constants for NSUserDefault keys and other strings...
+
+// Constants for keys, tags, and strings...
 
 static NSString * const kFirstRunKey = @"firstRun";
 
-// cell...
 static NSUInteger const kCellLabelTag = 1;
 static NSUInteger const kCatchRectangleTag = 2;
 static NSUInteger const kLockLabelTag = 3;
 
-// undo button...
 static NSString * const kUndoText = @"Undo";
 static NSString * const kRedoText = @"Redo";
 
+static NSString * const kCellNibName = @"ItemCell";
 
 
-// helps map collection view sections to arrays...
+
+// Helps map collection view sections to arrays...
 NS_ENUM(NSInteger, CollectionViewSection) {
     CollectionViewSectionLeft,
     CollectionViewSectionMiddle,
     CollectionViewSectionRight
 };
+
 
 
 @interface ViewController ()
@@ -125,8 +128,6 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 - (IBAction)allowExchangesSwitchChanged:(UISwitch *)sender;
 @property (weak, nonatomic) IBOutlet UISwitch *allowExchangesSwitch;
 
-@property (strong, nonatomic) NSUserDefaults *userDefaults;
-
 @end
 
 
@@ -139,10 +140,15 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     
     [super viewDidLoad];
     
-    self.userDefaults = [NSUserDefaults standardUserDefaults];
+    [self prepareApp];
+    [self prepareCollectionView];
+    
+}
+
+- (void)prepareApp {
     
     if ([self isFirstRun]) {
-
+        
         [self useDefaultModel];
         [self saveModel];
         [self useInitialSwitchStates];
@@ -151,19 +157,25 @@ NS_ENUM(NSInteger, CollectionViewSection) {
         [self saveFirstRun];
         
     } else {
-
+        
         [self useSavedModel];
         [self useSavedSwitchStates];
         [self useSavedIndexPaths];
-        
+
     }
     
     [self updateSumLabels];
     [self logModel];
     
-    // Register the cell with the collection view...
-    UINib *cellNib = [UINib nibWithNibName:@"ItemCell" bundle:nil];
-    [self.collectionView registerNib:cellNib forCellWithReuseIdentifier:@"itemCell"];
+    self.lockLabelText = @"🔒";
+    self.conditionalDisplacementLabelText = @"🔐";
+    
+}
+
+- (void)prepareCollectionView {
+    
+    UINib *cellNib = [UINib nibWithNibName:kCellNibName bundle:nil];
+    [self.collectionView registerNib:cellNib forCellWithReuseIdentifier:kCellNibName];
     
     self.exchangeController = [[SSCollectionViewExchangeController alloc] initWithDelegate:self
                                                                             collectionView:self.collectionView];
@@ -180,10 +192,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     layout.minimumInteritemSpacing = 1;
     layout.sectionInset = UIEdgeInsetsMake(5, 3, 5, 3);
     layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
-    
-    self.lockLabelText = @"🔒";
-    self.conditionalDisplacementLabelText = @"🔐";
-    
+
 }
 
 
@@ -355,7 +364,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     
-    UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"itemCell" forIndexPath:indexPath];
+    UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:kCellNibName forIndexPath:indexPath];
     
     // The collection view cell doesn't have a class.
     // So subviews are retrieved with a tag.
@@ -389,13 +398,28 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 //---------------------------------
 #pragma mark - Instance methods...
 
-- (void)updateSumLabels {
+- (void)exchangeItemAtIndexPath1:(NSIndexPath *)indexPath1 withItemAtIndexPath2:(NSIndexPath *)indexPath2 {
     
-    // Demonstrates how live updating is enabled by the exchangeControllerDidFinishExchangeEvent: delegate method.
+    NSMutableArray *array1 = [self arrayForSection:indexPath1.section];
+    NSMutableArray *array2 = [self arrayForSection:indexPath2.section];
     
-    self.sumLeft.text =     [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.leftSide]];
-    self.sumMiddle.text =   [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.middle]];
-    self.sumRight.text =    [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.rightSide]];
+    // as defined in the NSMutableArray category, can exchange items in different arrays...
+    [NSMutableArray exchangeObjectInArray:array1
+                                  atIndex:indexPath1.item
+                   withObjectInOtherArray:array2
+                                  atIndex:indexPath2.item];
+    
+}
+
+- (void)prepareForUndoWithIndexPath1:(NSIndexPath *)indexPath1 indexPath2:(NSIndexPath *)indexPath2 {
+    
+    if (![indexPath1 isEqual:indexPath2]) {
+        
+        self.indexPath1ForLastExchange = indexPath1;
+        self.indexPath2ForLastExchange = indexPath2;
+        [self saveIndexPaths];
+        
+    }
 }
 
 - (IBAction)undo:(id)sender {
@@ -427,17 +451,19 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     }
 }
 
-- (void)exchangeItemAtIndexPath1:(NSIndexPath *)indexPath1 withItemAtIndexPath2:(NSIndexPath *)indexPath2 {
+- (IBAction)reset:(id)sender {
     
-    NSMutableArray *array1 = [self arrayForSection:indexPath1.section];
-    NSMutableArray *array2 = [self arrayForSection:indexPath2.section];
+    [self useDefaultModel];
+    [self saveModel];
+    [self logModel];
     
-    // as defined in the NSMutableArray category, can exchange items in different arrays...
-    [NSMutableArray exchangeObjectInArray:array1
-                                  atIndex:indexPath1.item
-                   withObjectInOtherArray:array2
-                                  atIndex:indexPath2.item];
+    [self.collectionView reloadData];
+    [self updateSumLabels];
     
+    [self.undoButton setTitle:kUndoText forState:UIControlStateNormal];
+    self.indexPath1ForLastExchange = nil;
+    self.indexPath2ForLastExchange = nil;
+    [self saveIndexPaths];
 }
 
 - (NSMutableArray *)arrayForSection:(NSUInteger)section {
@@ -467,21 +493,6 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     return array;
 }
 
-- (IBAction)reset:(id)sender {
-    
-    [self useDefaultModel];
-    [self saveModel];
-    [self logModel];
-    
-    [self.collectionView reloadData];
-    [self updateSumLabels];
-    
-    [self.undoButton setTitle:kUndoText forState:UIControlStateNormal];
-    self.indexPath1ForLastExchange = nil;
-    self.indexPath2ForLastExchange = nil;
-    [self saveIndexPaths];
-}
-
 - (NSInteger)sumArray:(NSArray *)array {
     
     NSInteger sum = 0;
@@ -491,15 +502,13 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     return sum;
 }
 
-- (void)prepareForUndoWithIndexPath1:(NSIndexPath *)indexPath1 indexPath2:(NSIndexPath *)indexPath2 {
+- (void)updateSumLabels {
     
-    if (![indexPath1 isEqual:indexPath2]) {
-        
-        self.indexPath1ForLastExchange = indexPath1;
-        self.indexPath2ForLastExchange = indexPath2;
-        [self saveIndexPaths];
-        
-    }
+    // Demonstrates how live updating is enabled by the exchangeControllerDidFinishExchangeEvent: delegate method.
+    
+    self.sumLeft.text =     [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.leftSide]];
+    self.sumMiddle.text =   [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.middle]];
+    self.sumRight.text =    [NSString stringWithFormat:@"%ld", (long)[self sumArray:self.rightSide]];
 }
 
 - (void)logModel {
@@ -610,7 +619,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 - (void)saveFirstRun {
     
     setDefaultForObject(kFirstRunKey);
-    [self.userDefaults synchronize]; // important moment
+    [[NSUserDefaults standardUserDefaults] synchronize]; // important moment
     
 }
 
@@ -639,35 +648,6 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     setDefaultForBOOL(self.lockItemSwitch.on);
     setDefaultForBOOL(self.catchRectangleSwitch.on);
     
-}
-
-- (NSString *)documentsDirectory {
-    
-    return [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
-    
-}
-
-- (NSString *)filePathInDocumentsForFileName:(NSString *)fileName {
-    
-    return [[self documentsDirectory] stringByAppendingPathComponent:fileName];
-}
-
-- (void)archiveObject:(id)object toDocumentDirectoryWithFileName:(NSString *)fileName {
-    
-    NSString *filePath = [self filePathInDocumentsForFileName:fileName];
-
-    if (object) {
-        (void) [NSKeyedArchiver archiveRootObject:object toFile:filePath];
-    } else {
-        (void) [[NSFileManager defaultManager] removeItemAtPath:filePath error:nil];  // if it's nil the file needs to be deleted...
-    }
-}
-
-- (NSIndexPath *)unarchiveObjectWithFileName:(NSString *)fileName {
-    
-    NSString *filePath = [[self documentsDirectory] stringByAppendingPathComponent:fileName];
-    NSIndexPath *indexPath = [NSKeyedUnarchiver unarchiveObjectWithFile:filePath];
-    return indexPath;
 }
 
 - (void)useSavedIndexPaths {
@@ -715,6 +695,41 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     setDefaultForObject(_leftSide);
     setDefaultForObject(_middle);
     setDefaultForObject(_rightSide);
+    
+}
+
+
+
+//--------------------------------------------------------------------------------
+#pragma mark - Utility methods...
+
+- (NSString *)documentsDirectory {
+    
+    return [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+    
+}
+
+- (NSString *)filePathInDocumentsForFileName:(NSString *)fileName {
+    
+    return [[self documentsDirectory] stringByAppendingPathComponent:fileName];
+}
+
+- (void)archiveObject:(id)object toDocumentDirectoryWithFileName:(NSString *)fileName {
+    
+    NSString *filePath = [self filePathInDocumentsForFileName:fileName];
+    
+    if (object) {
+        (void) [NSKeyedArchiver archiveRootObject:object toFile:filePath];
+    } else {
+        (void) [[NSFileManager defaultManager] removeItemAtPath:filePath error:nil];  // if object is nil the file needs to be deleted...
+    }
+}
+
+- (id)unarchiveObjectWithFileName:(NSString *)fileName {
+    
+    NSString *filePath = [self filePathInDocumentsForFileName:fileName];
+    id object = [NSKeyedUnarchiver unarchiveObjectWithFile:filePath];
+    return object;
     
 }
 
