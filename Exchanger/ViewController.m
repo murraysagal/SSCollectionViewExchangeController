@@ -40,24 +40,25 @@
 #import "NSMutableArray+SSCollectionViewExchangeControllerAdditions.h"
 #import "NSIndexPath+RandomAdditions.h"
 #import "NSMutableSet+AddObjectIfNotNil.h"
+#import "MSStringifyMacros_UserDefaults.h"
+#import "MSStringifyMacros_Archiving.h"
 
+//#define OBJC_STRINGIFY(x) @#x
+//
+//#define setDefaultForBOOL(bool)     [[NSUserDefaults standardUserDefaults] setBool:bool forKey:OBJC_STRINGIFY(bool)]
+//#define defaultForBOOL(bool)        bool = [[NSUserDefaults standardUserDefaults] boolForKey:OBJC_STRINGIFY(bool)]
+//
+//#define setDefaultForInteger(integer)     [[NSUserDefaults standardUserDefaults] setInteger:integer forKey:OBJC_STRINGIFY(integer)]
+//#define defaultForInteger(integer)        integer = [[NSUserDefaults standardUserDefaults] integerForKey:OBJC_STRINGIFY(integer)]
+//
+//#define defaultForMutableArray(mutableArray)    mutableArray = [[[NSUserDefaults standardUserDefaults] arrayForKey:OBJC_STRINGIFY(mutableArray)] mutableCopy]
+//
+//#define setDefaultForObject(object) [[NSUserDefaults standardUserDefaults] setObject:object forKey:OBJC_STRINGIFY(object)]
+//#define defaultForObject(object)    object = [[NSUserDefaults standardUserDefaults] objectForKey:OBJC_STRINGIFY(object)]
+//
+//#define defaultForObjectDoesNotExist(object)    [[NSUserDefaults standardUserDefaults] objectForKey:OBJC_STRINGIFY(object)] == nil
+//#define defaultForObjectExists(object)          [[NSUserDefaults standardUserDefaults] objectForKey:OBJC_STRINGIFY(object)] != nil
 
-
-#define OBJC_STRINGIFY(x) @#x
-
-#define setDefaultForBOOL(bool)     [[NSUserDefaults standardUserDefaults] setBool:bool forKey:OBJC_STRINGIFY(bool)]
-#define defaultForBOOL(bool)        bool = [[NSUserDefaults standardUserDefaults] boolForKey:OBJC_STRINGIFY(bool)]
-
-#define setDefaultForInteger(integer)     [[NSUserDefaults standardUserDefaults] setInteger:integer forKey:OBJC_STRINGIFY(integer)]
-#define defaultForInteger(integer)        integer = [[NSUserDefaults standardUserDefaults] integerForKey:OBJC_STRINGIFY(integer)]
-
-#define defaultForMutableArray(mutableArray)    mutableArray = [[[NSUserDefaults standardUserDefaults] arrayForKey:OBJC_STRINGIFY(mutableArray)] mutableCopy]
-
-#define setDefaultForObject(object) [[NSUserDefaults standardUserDefaults] setObject:object forKey:OBJC_STRINGIFY(object)]
-#define defaultForObject(object)    object = [[NSUserDefaults standardUserDefaults] objectForKey:OBJC_STRINGIFY(object)]
-
-#define defaultForObjectDoesNotExist(object)    [[NSUserDefaults standardUserDefaults] objectForKey:OBJC_STRINGIFY(object)] == nil
-#define defaultForObjectExists(object)          [[NSUserDefaults standardUserDefaults] objectForKey:OBJC_STRINGIFY(object)] != nil
 
 
 
@@ -302,8 +303,8 @@ NS_ENUM(NSInteger, CollectionViewSection) {
         // In this completely contrived case if the conditional exchange switch is on
         // the two conditional index paths can be exchanged only with each other.
         //
-        // The logic is a bit twisted but the point is that you can implement your own logic here
-        // to manage whatever conditional exchange requirements you have.
+        // The logic of this example is a bit twisted but the point is that you can implement
+        // your own logic here to manage whatever conditional exchange requirements you have.
         
         BOOL indexPathOfItemBeingDraggedMatches = ([indexPathOfItemBeingDragged isEqual:self.indexPath1ForConditionalDisplacement] ||
                                                    [indexPathOfItemBeingDragged isEqual:self.indexPath2ForConditionalDisplacement])? YES:NO;
@@ -612,7 +613,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
 - (BOOL)isFirstRun {
     
-    return defaultForObjectDoesNotExist(kFirstRunKey);
+    return defaultDoesNotExistForObject(kFirstRunKey);
     
 }
 
@@ -634,39 +635,39 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
 - (void)useSavedSwitchStates {
     
-    defaultForBOOL(self.allowExchangesSwitch.on);
-    defaultForBOOL(self.conditionalExchangeSwitch.on);
-    defaultForBOOL(self.lockItemSwitch.on);
-    defaultForBOOL(self.catchRectangleSwitch.on);
+    defaultForBool(self.allowExchangesSwitch.on);
+    defaultForBool(self.conditionalExchangeSwitch.on);
+    defaultForBool(self.lockItemSwitch.on);
+    defaultForBool(self.catchRectangleSwitch.on);
     
 }
 
 - (void)saveSwitchStates {
     
-    setDefaultForBOOL(self.allowExchangesSwitch.on);
-    setDefaultForBOOL(self.conditionalExchangeSwitch.on);
-    setDefaultForBOOL(self.lockItemSwitch.on);
-    setDefaultForBOOL(self.catchRectangleSwitch.on);
+    setDefaultForBool(self.allowExchangesSwitch.on);
+    setDefaultForBool(self.conditionalExchangeSwitch.on);
+    setDefaultForBool(self.lockItemSwitch.on);
+    setDefaultForBool(self.catchRectangleSwitch.on);
     
 }
 
 - (void)useSavedIndexPaths {
     
-    self.indexPathForLockedItem = [self unarchiveObjectWithFileName:OBJC_STRINGIFY(_indexPathForLockedItem)];
-    self.indexPath1ForConditionalDisplacement = [self unarchiveObjectWithFileName:OBJC_STRINGIFY(_indexPath1ForConditionalDisplacement)];
-    self.indexPath2ForConditionalDisplacement = [self unarchiveObjectWithFileName:OBJC_STRINGIFY(_indexPath2ForConditionalDisplacement)];
-    self.indexPath1ForLastExchange = [self unarchiveObjectWithFileName:OBJC_STRINGIFY(_indexPath1ForLastExchange)];
-    self.indexPath2ForLastExchange = [self unarchiveObjectWithFileName:OBJC_STRINGIFY(_indexPath2ForLastExchange)];
+    self.indexPathForLockedItem = [self unarchiveObjectWithFileName:NS_STRINGIFY(_indexPathForLockedItem)];
+    self.indexPath1ForConditionalDisplacement = [self unarchiveObjectWithFileName:NS_STRINGIFY(_indexPath1ForConditionalDisplacement)];
+    self.indexPath2ForConditionalDisplacement = [self unarchiveObjectWithFileName:NS_STRINGIFY(_indexPath2ForConditionalDisplacement)];
+    self.indexPath1ForLastExchange = [self unarchiveObjectWithFileName:NS_STRINGIFY(_indexPath1ForLastExchange)];
+    self.indexPath2ForLastExchange = [self unarchiveObjectWithFileName:NS_STRINGIFY(_indexPath2ForLastExchange)];
     
 }
 
 - (void)saveIndexPaths {
     
-    [self archiveObject:self.indexPathForLockedItem toDocumentDirectoryWithFileName:OBJC_STRINGIFY(_indexPathForLockedItem)];
-    [self archiveObject:self.indexPath1ForConditionalDisplacement toDocumentDirectoryWithFileName:OBJC_STRINGIFY(_indexPath1ForConditionalDisplacement)];
-    [self archiveObject:self.indexPath2ForConditionalDisplacement toDocumentDirectoryWithFileName:OBJC_STRINGIFY(_indexPath2ForConditionalDisplacement)];
-    [self archiveObject:self.indexPath1ForLastExchange toDocumentDirectoryWithFileName:OBJC_STRINGIFY(_indexPath1ForLastExchange)];
-    [self archiveObject:self.indexPath2ForLastExchange toDocumentDirectoryWithFileName:OBJC_STRINGIFY(_indexPath2ForLastExchange)];
+    [self archiveObject:self.indexPathForLockedItem toDocumentDirectoryWithFileName:NS_STRINGIFY(_indexPathForLockedItem)];
+    [self archiveObject:self.indexPath1ForConditionalDisplacement toDocumentDirectoryWithFileName:NS_STRINGIFY(_indexPath1ForConditionalDisplacement)];
+    [self archiveObject:self.indexPath2ForConditionalDisplacement toDocumentDirectoryWithFileName:NS_STRINGIFY(_indexPath2ForConditionalDisplacement)];
+    [self archiveObject:self.indexPath1ForLastExchange toDocumentDirectoryWithFileName:NS_STRINGIFY(_indexPath1ForLastExchange)];
+    [self archiveObject:self.indexPath2ForLastExchange toDocumentDirectoryWithFileName:NS_STRINGIFY(_indexPath2ForLastExchange)];
     
 }
 
