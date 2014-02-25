@@ -408,6 +408,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
         self.indexPath1ForLastExchange = indexPath1;
         self.indexPath2ForLastExchange = indexPath2;
         [self saveIndexPaths];
+        [self.undoButton setTitle:kUndoText forState:UIControlStateNormal];
         
     }
 }
