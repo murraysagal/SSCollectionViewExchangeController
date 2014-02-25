@@ -43,24 +43,6 @@
 #import "MSStringifyMacros_UserDefaults.h"
 #import "MSStringifyMacros_Archiving.h"
 
-//#define OBJC_STRINGIFY(x) @#x
-//
-//#define setDefaultForBOOL(bool)     [[NSUserDefaults standardUserDefaults] setBool:bool forKey:OBJC_STRINGIFY(bool)]
-//#define defaultForBOOL(bool)        bool = [[NSUserDefaults standardUserDefaults] boolForKey:OBJC_STRINGIFY(bool)]
-//
-//#define setDefaultForInteger(integer)     [[NSUserDefaults standardUserDefaults] setInteger:integer forKey:OBJC_STRINGIFY(integer)]
-//#define defaultForInteger(integer)        integer = [[NSUserDefaults standardUserDefaults] integerForKey:OBJC_STRINGIFY(integer)]
-//
-//#define defaultForMutableArray(mutableArray)    mutableArray = [[[NSUserDefaults standardUserDefaults] arrayForKey:OBJC_STRINGIFY(mutableArray)] mutableCopy]
-//
-//#define setDefaultForObject(object) [[NSUserDefaults standardUserDefaults] setObject:object forKey:OBJC_STRINGIFY(object)]
-//#define defaultForObject(object)    object = [[NSUserDefaults standardUserDefaults] objectForKey:OBJC_STRINGIFY(object)]
-//
-//#define defaultForObjectDoesNotExist(object)    [[NSUserDefaults standardUserDefaults] objectForKey:OBJC_STRINGIFY(object)] == nil
-//#define defaultForObjectExists(object)          [[NSUserDefaults standardUserDefaults] objectForKey:OBJC_STRINGIFY(object)] != nil
-
-
-
 
 // Constants for keys, tags, and strings...
 
@@ -129,6 +111,10 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 - (IBAction)allowExchangesSwitchChanged:(UISwitch *)sender;
 @property (weak, nonatomic) IBOutlet UISwitch *allowExchangesSwitch;
 
+- (IBAction)minimumPressDurationSliderValueChanged:(UISlider *)sender;
+@property (weak, nonatomic) IBOutlet UISlider *minimumPressDurationSlider;
+@property (weak, nonatomic) IBOutlet UILabel *minimumPressDurationLabel;
+
 @end
 
 
@@ -152,15 +138,15 @@ NS_ENUM(NSInteger, CollectionViewSection) {
         
         [self useDefaultModel];
         [self saveModel];
-        [self useInitialSwitchStates];
-        [self saveSwitchStates];
+        [self useInitialControlStates];
+        [self saveControlStates];
         [self saveIndexPaths];
         [self saveFirstRun];
         
     } else {
         
         [self useSavedModel];
-        [self useSavedSwitchStates];
+        [self useSavedControlStates];
         [self useSavedIndexPaths];
 
     }
@@ -170,6 +156,8 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     
     self.lockLabelText = @"🔒";
     self.conditionalDisplacementLabelText = @"🔐";
+    
+    [self minimumPressDurationSliderValueChanged:self.minimumPressDurationSlider];
     
 }
 
@@ -188,10 +176,10 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     // layout, as a UICollectionViewFlowLayout, which you can configure as required.
     
     UICollectionViewFlowLayout *layout = self.exchangeController.layout;
-    layout.itemSize = CGSizeMake(100, 30);
+    layout.itemSize = CGSizeMake(102, 45);
     layout.minimumLineSpacing = 1;
     layout.minimumInteritemSpacing = 1;
-    layout.sectionInset = UIEdgeInsetsMake(5, 3, 5, 3);
+    layout.sectionInset = UIEdgeInsetsMake(3, 2, 4, 2);
     layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
 
 }
@@ -359,7 +347,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
     
-    return 10;
+    return self.leftSide.count;
     
 }
 
@@ -388,7 +376,8 @@ NS_ENUM(NSInteger, CollectionViewSection) {
         lockLabel.text = nil;
     }
     
-    itemLabel.alpha = (self.allowExchangesSwitch.on)? 1.0:0.5;
+    itemLabel.alpha = (self.allowExchangesSwitch.on)? 1.0:0.2;
+    lockLabel.alpha = (self.allowExchangesSwitch.on)? 1.0:0.2;
     itemLabel.text = [NSString stringWithFormat:@" %@", [self arrayForSection:indexPath.section][ indexPath.item ]];
     
     return cell;
@@ -534,13 +523,13 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
 
 
-//-----------------------------------------------
-#pragma mark - Action methods for the switches...
+//------------------------------
+#pragma mark - Action methods...
 
 - (IBAction)allowExchangesSwitchChanged:(UISwitch *)sender {
     
     [self.collectionView reloadData];
-    [self saveSwitchStates];
+    [self saveControlStates];
     
 }
 
@@ -566,7 +555,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     }
     
     [self.collectionView reloadData];
-    [self saveSwitchStates];
+    [self saveControlStates];
     [self saveIndexPaths];
     
 }
@@ -594,7 +583,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     }
     
     [self.collectionView reloadData];
-    [self saveSwitchStates];
+    [self saveControlStates];
     [self saveIndexPaths];
     
 }
@@ -602,7 +591,15 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 - (IBAction)catchRectangleSwitchChanged:(UISwitch *)sender {
     
     [self.collectionView reloadData];
-    [self saveSwitchStates];
+    [self saveControlStates];
+    
+}
+
+- (IBAction)minimumPressDurationSliderValueChanged:(UISlider *)sender {
+    
+    self.minimumPressDurationLabel.text = [NSString stringWithFormat:@"Minimum Press Duration: %0.2f", sender.value];
+    self.exchangeController.longPressGestureRecognizer.minimumPressDuration = sender.value;
+    [self saveControlStates];
     
 }
 
@@ -624,30 +621,33 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     
 }
 
-- (void)useInitialSwitchStates {
+- (void)useInitialControlStates {
     
     self.allowExchangesSwitch.on = YES;
     self.conditionalExchangeSwitch.on = NO;
     self.lockItemSwitch.on = NO;
     self.catchRectangleSwitch.on = NO;
+    self.minimumPressDurationSlider.value = 0.15;
     
 }
 
-- (void)useSavedSwitchStates {
+- (void)useSavedControlStates {
     
     defaultForBool(self.allowExchangesSwitch.on);
     defaultForBool(self.conditionalExchangeSwitch.on);
     defaultForBool(self.lockItemSwitch.on);
     defaultForBool(self.catchRectangleSwitch.on);
+    defaultForFloat(self.minimumPressDurationSlider.value);
     
 }
 
-- (void)saveSwitchStates {
+- (void)saveControlStates {
     
     setDefaultForBool(self.allowExchangesSwitch.on);
     setDefaultForBool(self.conditionalExchangeSwitch.on);
     setDefaultForBool(self.lockItemSwitch.on);
     setDefaultForBool(self.catchRectangleSwitch.on);
+    setDefaultForFloat(self.minimumPressDurationSlider.value);
     
 }
 
@@ -673,13 +673,13 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
 - (void)useDefaultModel {
     
-    NSArray *temp1to10 =    @[  @1,  @2,  @3,  @4,  @5,  @6,  @7,  @8,  @9, @10 ];
-    NSArray *temp11to20 =   @[ @11, @12, @13, @14, @15, @16, @17, @18, @19, @20 ];
-    NSArray *temp21to30 =   @[ @21, @22, @23, @24, @25, @26, @27, @28, @29, @30 ];
+    NSArray *temp1 =   @[ @1,  @2,  @3,  @4  ];
+    NSArray *temp2 =   @[ @5,  @6,  @7,  @8  ];
+    NSArray *temp3 =   @[ @9,  @10, @11, @12 ];
     
-    self.leftSide = [NSMutableArray arrayWithArray:temp1to10];
-    self.middle = [NSMutableArray arrayWithArray:temp11to20];
-    self.rightSide = [NSMutableArray arrayWithArray:temp21to30];
+    self.leftSide = [NSMutableArray arrayWithArray:temp1];
+    self.middle = [NSMutableArray arrayWithArray:temp2];
+    self.rightSide = [NSMutableArray arrayWithArray:temp3];
     
 }
 
