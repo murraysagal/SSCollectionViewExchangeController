@@ -157,8 +157,6 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     self.lockLabelText = @"🔒";
     self.conditionalDisplacementLabelText = @"🔐";
     
-    [self minimumPressDurationSliderValueChanged:self.minimumPressDurationSlider];
-    
 }
 
 - (void)prepareCollectionView {
@@ -181,6 +179,8 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     layout.minimumInteritemSpacing = 1;
     layout.sectionInset = UIEdgeInsetsMake(3, 2, 4, 2);
     layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
+
+    self.exchangeController.longPressGestureRecognizer.minimumPressDuration = self.minimumPressDurationSlider.value;
 
 }
 
@@ -439,6 +439,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
         
         NSString *title = ([[self.undoButton titleForState:UIControlStateNormal] isEqualToString:kUndoText])? kRedoText : kUndoText;
         [self.undoButton setTitle:title forState:UIControlStateNormal];
+        [self saveControlStates];
     }
 }
 
@@ -629,6 +630,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     self.lockItemSwitch.on = NO;
     self.catchRectangleSwitch.on = NO;
     self.minimumPressDurationSlider.value = 0.15;
+    [self.undoButton setTitle:kUndoText forState:UIControlStateNormal];
     
 }
 
@@ -639,6 +641,9 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     defaultForBool(self.lockItemSwitch.on);
     defaultForBool(self.catchRectangleSwitch.on);
     defaultForFloat(self.minimumPressDurationSlider.value);
+    NSString *undoButtonTitle;
+    defaultForString(undoButtonTitle);
+    [self.undoButton setTitle:undoButtonTitle forState:UIControlStateNormal];
     
 }
 
@@ -649,6 +654,8 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     setDefaultForBool(self.lockItemSwitch.on);
     setDefaultForBool(self.catchRectangleSwitch.on);
     setDefaultForFloat(self.minimumPressDurationSlider.value);
+    NSString *undoButtonTitle = [self.undoButton titleForState:UIControlStateNormal];
+    setDefaultForObject(undoButtonTitle);
     
 }
 
