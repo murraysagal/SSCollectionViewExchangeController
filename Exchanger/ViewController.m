@@ -174,10 +174,10 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     // layout, as a UICollectionViewFlowLayout, which you can configure as required.
     
     UICollectionViewFlowLayout *layout = self.exchangeController.layout;
-    layout.itemSize = CGSizeMake(102, 45);
+    layout.itemSize = CGSizeMake(102.5, 45);
     layout.minimumLineSpacing = 1;
     layout.minimumInteritemSpacing = 1;
-    layout.sectionInset = UIEdgeInsetsMake(3, 2, 4, 2);
+    layout.sectionInset = UIEdgeInsetsMake(2,2,2,2);
     layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
 
     self.exchangeController.longPressGestureRecognizer.minimumPressDuration = self.minimumPressDurationSlider.value;
