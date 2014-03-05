@@ -19,7 +19,6 @@
 		722D2FE7183291E300F82D12 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 722D2FC6183291E300F82D12 /* Foundation.framework */; };
 		722D2FE8183291E300F82D12 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 722D2FCA183291E300F82D12 /* UIKit.framework */; };
 		722D2FF0183291E300F82D12 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 722D2FEE183291E300F82D12 /* InfoPlist.strings */; };
-		722D2FF2183291E300F82D12 /* ExchangerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 722D2FF1183291E300F82D12 /* ExchangerTests.m */; };
 		722D30011832927100F82D12 /* SSCollectionViewExchangeLayout.m in Sources */ = {isa = PBXBuildFile; fileRef = 722D2FFC1832927100F82D12 /* SSCollectionViewExchangeLayout.m */; };
 		722D30021832927100F82D12 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 722D2FFE1832927100F82D12 /* ViewController.m */; };
 		722D30031832927100F82D12 /* ViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 722D2FFF1832927100F82D12 /* ViewController.xib */; };
@@ -61,13 +60,14 @@
 		722D2FE5183291E300F82D12 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		722D2FED183291E300F82D12 /* ExchangerTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ExchangerTests-Info.plist"; sourceTree = "<group>"; };
 		722D2FEF183291E300F82D12 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		722D2FF1183291E300F82D12 /* ExchangerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ExchangerTests.m; sourceTree = "<group>"; };
 		722D2FFB1832927100F82D12 /* SSCollectionViewExchangeLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SSCollectionViewExchangeLayout.h; sourceTree = "<group>"; };
 		722D2FFC1832927100F82D12 /* SSCollectionViewExchangeLayout.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SSCollectionViewExchangeLayout.m; sourceTree = "<group>"; };
 		722D2FFD1832927100F82D12 /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		722D2FFE1832927100F82D12 /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		722D2FFF1832927100F82D12 /* ViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ViewController.xib; sourceTree = "<group>"; };
 		722D30001832927100F82D12 /* ItemCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ItemCell.xib; sourceTree = "<group>"; };
+		72493DCD18C7688F00931DAE /* README.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
+		72493DCE18C7688F00931DAE /* SSCollectionViewExchangeController.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; path = SSCollectionViewExchangeController.podspec; sourceTree = "<group>"; };
 		72553951187EFBDC000338BB /* SSCollectionViewExchangeController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SSCollectionViewExchangeController.h; sourceTree = "<group>"; };
 		72553952187EFBDC000338BB /* SSCollectionViewExchangeController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SSCollectionViewExchangeController.m; sourceTree = "<group>"; };
 		72871BD718BB6EEF006A9F87 /* MSStringifyMacro.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSStringifyMacro.h; sourceTree = "<group>"; };
@@ -155,6 +155,8 @@
 				722D2FEB183291E300F82D12 /* ExchangerTests */,
 				722D2FC5183291E300F82D12 /* Frameworks */,
 				722D2FC4183291E300F82D12 /* Products */,
+				72493DCD18C7688F00931DAE /* README.md */,
+				72493DCE18C7688F00931DAE /* SSCollectionViewExchangeController.podspec */,
 			);
 			sourceTree = "<group>";
 		};
@@ -208,7 +210,6 @@
 		722D2FEB183291E300F82D12 /* ExchangerTests */ = {
 			isa = PBXGroup;
 			children = (
-				722D2FF1183291E300F82D12 /* ExchangerTests.m */,
 				720F35DB189FA20500D875A6 /* NSMutableArrayCategoryTests.m */,
 				722D2FEC183291E300F82D12 /* Supporting Files */,
 			);
@@ -338,7 +339,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				722D2FF2183291E300F82D12 /* ExchangerTests.m in Sources */,
 				720F35DC189FA20500D875A6 /* NSMutableArrayCategoryTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -35,7 +35,7 @@
     
     NSUInteger totalElementsInArrays = 0;
     for (NSArray *array in arrays) {
-        if (array.count == 0) return nil;
+        if (![array isKindOfClass:[NSArray class]] || array.count == 0) return nil;
         totalElementsInArrays += array.count;
     }
     
@@ -48,17 +48,15 @@
     
     // Otherwise we are good to go...
     NSIndexPath *randomIndexPath;
-    BOOL indexPathIsExcluded;
     
     do {
         
-        NSUInteger randomSection = arc4random_uniform(arrays.count);
-        NSArray *array = arrays[ randomSection ];
-        NSUInteger randomItem = arc4random_uniform(array.count);
+        NSInteger randomSection = arc4random_uniform(arrays.count);
+        NSArray *randomArray = arrays[ randomSection ];
+        NSInteger randomItem = arc4random_uniform(randomArray.count);
         randomIndexPath = [NSIndexPath indexPathForItem:randomItem inSection:randomSection];
-        indexPathIsExcluded = [excludedIndexPaths containsObject:randomIndexPath];
         
-    } while (indexPathIsExcluded);
+    } while ([excludedIndexPaths containsObject:randomIndexPath]);
     
     return randomIndexPath;
     

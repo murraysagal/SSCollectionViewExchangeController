@@ -290,7 +290,7 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 // on the delegate with the index paths for the last items exchanged so the delegate can restore the model.
 // Then this method is called allowing the delegate to perform the actions required to restore its state.
 // Normally, the delegate will not need to take any action on the collection view. The exchange controller
-// return the collection view to its previous state. No animation is applied because the view is hidden. 
+// returns the collection view to its previous state. No animation is applied because the view is hidden. 
 
 
 @optional

@@ -156,6 +156,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     
     self.lockLabelText = @"🔒";
     self.conditionalDisplacementLabelText = @"🔐";
+    [self setMinimumPressDurationLabelText:self.minimumPressDurationSlider.value];
     
 }
 
@@ -599,10 +600,16 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
 - (IBAction)minimumPressDurationSliderValueChanged:(UISlider *)sender {
     
-    self.minimumPressDurationLabel.text = [NSString stringWithFormat:@"Minimum Press Duration: %0.2f", sender.value];
+    [self setMinimumPressDurationLabelText:sender.value];
     self.exchangeController.longPressGestureRecognizer.minimumPressDuration = sender.value;
     [self saveControlStates];
     
+}
+
+- (void)setMinimumPressDurationLabelText:(float)value {
+    
+    self.minimumPressDurationLabel.text = [NSString stringWithFormat:@"Minimum Press Duration: %0.2f", value];
+
 }
 
 
