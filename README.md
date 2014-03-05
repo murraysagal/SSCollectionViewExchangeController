@@ -123,7 +123,7 @@ Copy these 8 files to your Xcode project:
  
 1. In your view controller import `SSCollectionViewExchangeController.h`.
 
-        \#import "SSCollectionViewExchangeController.h"   
+        #import "SSCollectionViewExchangeController.h"   
  
 
 2. Adopt the `SSCollectionViewExchangeControllerDelegate` protocol.
