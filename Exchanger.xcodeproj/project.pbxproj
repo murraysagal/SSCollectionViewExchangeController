@@ -60,23 +60,24 @@
 		722D2FE5183291E300F82D12 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		722D2FED183291E300F82D12 /* ExchangerTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ExchangerTests-Info.plist"; sourceTree = "<group>"; };
 		722D2FEF183291E300F82D12 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		722D2FFB1832927100F82D12 /* SSCollectionViewExchangeLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SSCollectionViewExchangeLayout.h; sourceTree = "<group>"; };
-		722D2FFC1832927100F82D12 /* SSCollectionViewExchangeLayout.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SSCollectionViewExchangeLayout.m; sourceTree = "<group>"; };
+		722D2FFB1832927100F82D12 /* SSCollectionViewExchangeLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SSCollectionViewExchangeLayout.h; path = ../SSCollectionViewExchangeLayout.h; sourceTree = "<group>"; };
+		722D2FFC1832927100F82D12 /* SSCollectionViewExchangeLayout.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SSCollectionViewExchangeLayout.m; path = ../SSCollectionViewExchangeLayout.m; sourceTree = "<group>"; };
 		722D2FFD1832927100F82D12 /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		722D2FFE1832927100F82D12 /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		722D2FFF1832927100F82D12 /* ViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ViewController.xib; sourceTree = "<group>"; };
 		722D30001832927100F82D12 /* ItemCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ItemCell.xib; sourceTree = "<group>"; };
 		72493DCD18C7688F00931DAE /* README.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
 		72493DCE18C7688F00931DAE /* SSCollectionViewExchangeController.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; path = SSCollectionViewExchangeController.podspec; sourceTree = "<group>"; };
-		72553951187EFBDC000338BB /* SSCollectionViewExchangeController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SSCollectionViewExchangeController.h; sourceTree = "<group>"; };
-		72553952187EFBDC000338BB /* SSCollectionViewExchangeController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SSCollectionViewExchangeController.m; sourceTree = "<group>"; };
+		72493DD318C79B5700931DAE /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		72553951187EFBDC000338BB /* SSCollectionViewExchangeController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SSCollectionViewExchangeController.h; path = ../SSCollectionViewExchangeController.h; sourceTree = "<group>"; };
+		72553952187EFBDC000338BB /* SSCollectionViewExchangeController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SSCollectionViewExchangeController.m; path = ../SSCollectionViewExchangeController.m; sourceTree = "<group>"; };
 		72871BD718BB6EEF006A9F87 /* MSStringifyMacro.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSStringifyMacro.h; sourceTree = "<group>"; };
-		72ACF56218A268F9003DEF34 /* UIView+SSCollectionViewExchangeControllerAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIView+SSCollectionViewExchangeControllerAdditions.h"; sourceTree = "<group>"; };
-		72ACF56318A268F9003DEF34 /* UIView+SSCollectionViewExchangeControllerAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+SSCollectionViewExchangeControllerAdditions.m"; sourceTree = "<group>"; };
+		72ACF56218A268F9003DEF34 /* UIView+SSCollectionViewExchangeControllerAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "UIView+SSCollectionViewExchangeControllerAdditions.h"; path = "../UIView+SSCollectionViewExchangeControllerAdditions.h"; sourceTree = "<group>"; };
+		72ACF56318A268F9003DEF34 /* UIView+SSCollectionViewExchangeControllerAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "UIView+SSCollectionViewExchangeControllerAdditions.m"; path = "../UIView+SSCollectionViewExchangeControllerAdditions.m"; sourceTree = "<group>"; };
 		72DA905D18A81CF2000E98EA /* NSMutableSet+AddObjectIfNotNil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableSet+AddObjectIfNotNil.h"; sourceTree = "<group>"; };
 		72DA905E18A81CF2000E98EA /* NSMutableSet+AddObjectIfNotNil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableSet+AddObjectIfNotNil.m"; sourceTree = "<group>"; };
-		72FF890C188044DC00E4DAAB /* NSMutableArray+SSCollectionViewExchangeControllerAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableArray+SSCollectionViewExchangeControllerAdditions.h"; sourceTree = "<group>"; };
-		72FF890D188044DC00E4DAAB /* NSMutableArray+SSCollectionViewExchangeControllerAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableArray+SSCollectionViewExchangeControllerAdditions.m"; sourceTree = "<group>"; };
+		72FF890C188044DC00E4DAAB /* NSMutableArray+SSCollectionViewExchangeControllerAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSMutableArray+SSCollectionViewExchangeControllerAdditions.h"; path = "../NSMutableArray+SSCollectionViewExchangeControllerAdditions.h"; sourceTree = "<group>"; };
+		72FF890D188044DC00E4DAAB /* NSMutableArray+SSCollectionViewExchangeControllerAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSMutableArray+SSCollectionViewExchangeControllerAdditions.m"; path = "../NSMutableArray+SSCollectionViewExchangeControllerAdditions.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -157,6 +158,7 @@
 				722D2FC4183291E300F82D12 /* Products */,
 				72493DCD18C7688F00931DAE /* README.md */,
 				72493DCE18C7688F00931DAE /* SSCollectionViewExchangeController.podspec */,
+				72493DD318C79B5700931DAE /* LICENSE */,
 			);
 			sourceTree = "<group>";
 		};
