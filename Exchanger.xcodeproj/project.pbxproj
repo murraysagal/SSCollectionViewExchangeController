@@ -66,7 +66,7 @@
 		722D2FFE1832927100F82D12 /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		722D2FFF1832927100F82D12 /* ViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ViewController.xib; sourceTree = "<group>"; };
 		722D30001832927100F82D12 /* ItemCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ItemCell.xib; sourceTree = "<group>"; };
-		72493DCD18C7688F00931DAE /* README.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
+		72493DCD18C7688F00931DAE /* README.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; wrapsLines = 1; };
 		72493DCE18C7688F00931DAE /* SSCollectionViewExchangeController.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; path = SSCollectionViewExchangeController.podspec; sourceTree = "<group>"; };
 		72493DD318C79B5700931DAE /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		72553951187EFBDC000338BB /* SSCollectionViewExchangeController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SSCollectionViewExchangeController.h; path = ../SSCollectionViewExchangeController.h; sourceTree = "<group>"; };
