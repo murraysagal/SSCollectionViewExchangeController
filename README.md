@@ -82,20 +82,22 @@ If your view contains multiple collection views you can have an exchange control
 
 
 ## Timeline: Exchange Transactions and Exchange Events
+
 ``` 
-                                            Exchange Transaction
-|------------------------------------------------------------------------------------------------------------>|
-Catch at index path 0,3                                                               Release at index path 1,5
+                                        Exchange Transaction
+|--------------------------------------------------------------------------------------------->|
+Catch at index path 0,3                                                Release at index path 1,5
  
  
-           Exchange Event 1                     Exchange Event 2                     Exchange Event 3
-|---------------------------------->||---------------------------------->||---------------------------------->|
-move from:   0,3 to 1,3                           1,3 to 1,4                           1,4 to 1,5
+        Exchange Event 1                Exchange Event 2               Exchange Event 3
+|----------------------------->||----------------------------->||----------------------------->|
+move from:   0,3 to 1,3                    1,3 to 1,4                      1,4 to 1,5
  
  
-            new exchange               undo previous      new exchange      undo previous      new exchange
-|---------------------------------->||---------------->||--------------->||---------------->||--------------->|
-exchange:   0,3 with 1,3                1,3 with 0,3       0,3 with 1,4      1,4 with 0,3       0,3 and 1,5
+         new exchange            undo previous   new exchange   undo previous    new exchange
+|----------------------------->||------------->||------------>||-------------->||------------->|
+exchange:   0,3 with 1,3          1,3 with 0,3    0,3 with 1,4   1,4 with 0,3     0,3 and 1,5
+
 ``` 
 
 In the timeline you can see that an exchange transaction can include multiple exchange events. An exchange event has either one or two individual exchanges. Where there are two, the first is to undo the previous exchange. Where there is one, there isn't a previous exchange to undo. 
