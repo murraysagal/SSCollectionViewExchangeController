@@ -115,9 +115,8 @@ You can see the demo app for `SSCollectionViewExchangeController` in action [her
 
 ### Cocoapods
 
-1. Add a pod entry for MSRandomIndexPath to your Podfile: `pod 'MSRandomIndexPath'`.
-2. Install the pod(s) by running `pod install`.
-3. Where you need it `#import "NSIndexPath+RandomAdditions.h"`.
+1. Add a pod entry for SSCollectionViewExchangeController to your Podfile: `pod 'SSCollectionViewExchangeController'`
+2. Install the pod(s) by running: `pod install`
 
 
 ### Source Files
