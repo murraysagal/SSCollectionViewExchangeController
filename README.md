@@ -121,36 +121,36 @@ Copy these 8 files to your Xcode project:
 
 ## Usage
  
-1. In your view controller import `SSCollectionViewExchangeController.h`.
+1. In your view controller import `SSCollectionViewExchangeController.h`...
 
-        #import "SSCollectionViewExchangeController.h"   
+        #import "SSCollectionViewExchangeController.h"
  
 
-2. Adopt the `SSCollectionViewExchangeControllerDelegate` protocol.
+1. Adopt the `SSCollectionViewExchangeControllerDelegate` protocol...
 
         @interface MyViewController () <SSCollectionViewExchangeControllerDelegate>
 
  
-3. Create a property for the exchange controller...
+1. Create a property for the exchange controller...
 
         @property (strong, nonatomic) SSCollectionViewExchangeController *exchangeController;
  
-4. In `viewDidLoad` create an instance of `SSCollectionViewExchangeController`...
+1. In `viewDidLoad` create an instance of `SSCollectionViewExchangeController`...
 
         self.exchangeController = [[SSCollectionViewExchangeController alloc] initWithDelegate:self
                                                                                 collectionView:self.collectionView];
 
  
- 5. Get the layout and configure it as required...
+1. Get the layout and configure it as required...
 
         UICollectionViewFlowLayout *layout = self.exchangeController.layout;
         layout.itemSize = CGSizeMake(150, 30);
         ...
  
- 6. Implement the required protocol methods described in the next section.
+1. Implement the required protocol methods described in the next section.
  
  
- 7. Optional. This example app contains a category on `NSMutableArray` that implements a method for
+1. Optional. This example app contains a category on `NSMutableArray` that implements a method for
     exchanging two items that can be in different arrays. You can import that category and use
     the method in your implementation of the `exchangeController:didExchangeItemAtIndexPath1:withItemAtIndexPath2:`
     delegate method. See `ViewController.m` in the demo app for an example implementation.
@@ -163,12 +163,12 @@ Copy these 8 files to your Xcode project:
     collection view sections to arrays. You may need to implement something like this.
  
  
- 8. Optional. The exchange controller provides default animations during the exchange process to provide
+1. Optional. The exchange controller provides default animations during the exchange process to provide
     feedback to the user. Some properties related to those animations are exposed to allow you to configure 
     them to better meet your requirements. Refer to the comments for the property declarations below.
  
  
- 10. Optional. If the exposed properties don't provide you with the control you require you can implement
+1. Optional. If the exposed properties don't provide you with the control you require you can implement
     the optional delegate methods for...
 
     - creating the snapshot
@@ -374,12 +374,14 @@ This method is provided as a convenience. The delegate could ask its collection 
 ```objective-c
 
 @property (nonatomic) double            animationBacklogDelay;
-// When the long press is cancelled, for example by an incoming call, depending on the velocity there
-// may be move animations in progress and pending. Without a delay, the backlog of animations can still
-// be executing when the exchange controller calls reloadData. This prevents reloadData from working
-// properly and restoring the collection view to its previous state. The delay allows the backlog of
-// animations to complete before the exchange controller cancels the exchange. The default is 0.50 and
-// should be sufficient in most cases but is exposed in case that doesn't meet your requirements.
+// When the long press is cancelled, for example by an incoming call, depending on the 
+// velocity there may be move animations in progress and pending. Without a delay, the 
+// backlog of animations can still be executing when the exchange controller calls 
+// reloadData. This prevents reloadData from working properly and restoring the 
+// collection view to its previous state. The delay allows the backlog of animations 
+// to complete before the exchange controller cancels the exchange. The default is 0.50
+// and should be sufficient in most cases but is exposed in case that doesn't meet 
+// your requirements.
 ```
 
 
