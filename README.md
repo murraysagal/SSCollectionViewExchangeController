@@ -109,8 +109,20 @@ You can see the demo app for `SSCollectionViewExchangeController` in action [her
 
 
 ## Installation
- 
-Copy these 8 files to your Xcode project:
+
+`SSCollectionViewExchangeController` uses `UICollectionView` which was available starting with iOS 6.0.
+
+
+### Cocoapods
+
+1. Add a pod entry for MSRandomIndexPath to your Podfile: `pod 'MSRandomIndexPath'`.
+2. Install the pod(s) by running `pod install`.
+3. Where you need it `#import "NSIndexPath+RandomAdditions.h"`.
+
+
+### Source Files
+
+Alternatively, copy these 8 files to your Xcode project:
 
 * SSCollectionViewExchangeController.h and .m
 * SSCollectionViewExchangeLayout.h and .m
