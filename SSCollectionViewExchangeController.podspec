@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name        = 'SSCollectionViewExchangeController'
-  s.version     = '0.0.1'
+  s.version     = '0.1.0'
   s.license     = { :type => "MIT", :file => "LICENSE" }
   s.summary     = 'SSCollectionViewExchangeController manages the process of exchanging 2 items in a collection view.'
   s.homepage    = 'https://github.com/murraysagal/SSCollectionViewExchangeController'

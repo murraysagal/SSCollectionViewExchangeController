@@ -1,9 +1,9 @@
 //
 //  SSCollectionViewExchangeController.h
-//  Exchanger
 //
-//  Created by Murray Sagal on 1/9/2014.
-//  Copyright (c) 2014 Signature Software. All rights reserved.
+// Created by Murray Sagal on 1/9/2014.
+// Copyright (c) 2014 Signature Software and Murray Sagal
+// SSCollectionViewExchangeController: https://github.com/murraysagal/SSCollectionViewExchangeController
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,226 +22,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
-/*
- 
- SSCollectionViewExchangeController: <github url here>
- 
- SSCollectionViewExchangeController manages the process of exchanging 2 items in 
- a collection view. The key word is **exchange** which results in slightly different 
- outcome compared to the more typical move scenario. Consider an example with these 5 items.
- 
-        item1    item2    item3    item4    item5
- 
- In a move scenario, when item1 is moved to item5 this is the result...
- 
-        item2    item3    item4    item5    item1
- 
- With a move, the all items between the *from* and *to* items reposition themselves 
- toward the original location of the *from* item. In an exchange scenario, when item1 
- is moved to item5 this is the result...
- 
-        item5    item2    item3    item4    item1
- 
- With an exchange the items between the *to* and the *from* don't move. Only the *from* and *to* items move.
- 
- 
- Features
-    • Comprehensive protocol keeps the delegate informed and in control.
-    • Support for items that can't be moved or exchanged.
-    • Default animations at the beginning and end of the process or implement your own.
-    • Safely handles interruptions like a phone call in the middle of an exchange.
-
- 
- Conceptual Object Model...
- 
-        ---------------------
-        |                   |       delegate
-     ---|  ViewController   |<----------------------
-    |   |                   |                       |
-    |   ---------------------                       |
-    |        |                           ------------------------------------------
-    |        |  @property (strong, ...   |                                        |
-    |         -------------------------->|   SSCollectionViewExchangeController   |
-    |                                    |                                        |
-    |                                    ------------------------------------------
-    |                                         |                            |
-    |                                         V                            |
-    |                              ----------------------------------      |
-    |                              |                                |      |
-    |                      ------->|  UILongPressGestureRecognizer  |      |
-    |                     |        |                                |      |
-    |                     |        ----------------------------------      |
-    |   ------------------------                                           V
-    |   |                      |            ---------------------------------------
-     -->|   UICollectionView   |----------> |                                     |
-        |                      |            |   SSCollectionViewExchangeLayout    |
-        ------------------------            |                                     |
-                                            ---------------------------------------
- 
- When you initialize an instance of this class it installs a gesture recognizer in your 
- collection view and creates a custom layout object, SSCollectionViewExchangeLayout, 
- that manages the hiding and dimming of items in the collection view during the exchange 
- process. Through the SSCollectionViewExchangeControllerDelegate protocol your view 
- controller is kept informed allowing you to keep your model in sync with the changes 
- occuring on the collection view and perform any kind of live updating required during 
- the process.
- 
- If your view contains multiple collection views you can have an exchange controller 
- for each. But exchanges cannot occur between collection views.
- 
- 
- 
- Terminology...
- 
- Catch: The catch is the beginning of the exchange process. The user initiates the process with 
- a long press on a collection view cell. If the gesture is recognized the catch animation runs 
- (either the default or yours) to indicate a successul catch to the user.
- 
- Release: The user releases, usually over another item, ending the process. The release
- animation runs (again, either the default or yours).
- 
- Exchange Transaction: An exchange transaction begins with a catch and concludes with a release,
- normally over another item, causing the two to be exchanged. However, between the catch and
- the release the user may drag over many items including, possibly, the starting position.
- 
- Exchange Event: An exchange event occurs each time the user drags to a different item during
- an exchange transaction. There can be many exchange events within a single exchange transaction.
- An exchange event contains either one or two individual exchanges. If it is the first exchange
- event in the transaction there is an individual exchange between the item being dragged and
- the item dragged to. If the user keeps dragging to new items subsequent exchange events include 
- two individual exchanges: one to undo the previous exchange and another for the new exchange.
- Refer to the timeline diagram below.
- 
- Displaced Item: When the user drags over a new item that item is displaced. It animates away to 
- the original location of the item being dragged. At the same time, the item that was previously
- displaced animates back to its original location. To indicate the displaced item the layout 
- lowers its alpha.
- 
- Hidden Item: Between the catch and the release the cell for the dragged item is hidden. This is
- managed by the layout. Nevertheless, the hidden item is following the user as the exchange
- transaction proceeds. If you are curios, return nil from indexPathForItemToHide and you will 
- be able to observe this, best viewed in the simulator with slow animations on.
- 
- Snapshot: During the catch a snapshot of the cell is created. The snapshot follows the user's
- finger during the long press. 
- 
- Catch Rectangle: In some implementations, collection view cells can only be caught if the long 
- press occurs over a specific rectangle within the cell. That is the catch rectangle. Refer to the 
- optional exchangeController:viewForCatchRectangleForItemAtIndexPath: delegate method.
- 
- 
- 
- Timeline: Exchange Transactions and Exchange Events ...
- 
-                                            Exchange Transaction
- |------------------------------------------------------------------------------------------------------------>|
- Catch at index path 0,3                                                               Release at index path 1,7
- 
- 
-           Exchange Event 1                     Exchange Event 2                     Exchange Event 3
- |---------------------------------->||---------------------------------->||---------------------------------->|
- move from:   0,3 to 0,5                           0,5 to 1,3                           1,3 to 1,7
- 
- 
-             new exchange               undo previous      new exchange      undo previous      new exchange
- |---------------------------------->||---------------->||--------------->||---------------->||--------------->|
- exchange:   0,3 with 0,5                0,5 with 0,3       0,3 with 1,3      1,3 with 0,3       0,3 and 1,7
- 
- 
- 
- 
- Installation...
- 
-     Copy these 8 files to your Xcode project:
-        - SSCollectionViewExchangeController.h and .m
-        - SSCollectionViewExchangeLayout.h and .m
-        - UIView+SSCollectionViewExchangeControllerAdditions.h and .m
-        - NSMutableArray+SSCollectionViewExchangeControllerAdditions.h and .m
- 
- 
- 
- Usage...
- 
- 1. In your view controller import SSCollectionViewExchangeController...
-        #import "SSCollectionViewExchangeController.h"
- 
- 
- 2. Adopt the SSCollectionViewExchangeControllerDelegate protocol...
-        @interface MyViewController () <SSCollectionViewExchangeControllerDelegate>
-
- 
- 3. Create a property for the exchange controller...
-        @property (strong, nonatomic) SSCollectionViewExchangeController *exchangeController;
- 
- 
- 4. In viewDidLoad create an instance of SSCollectionViewExchangeController...
-        self.exchangeController = [[SSCollectionViewExchangeController alloc] initWithDelegate:self
-                                                                                collectionView:self.collectionView];
-
- 
- 5. Get the layout and configure it as required...
-        UICollectionViewFlowLayout *layout = self.exchangeController.layout;
-        layout.itemSize = CGSizeMake(150, 30);
-        ...
- 
- 
- 6. Implement the required protocol methods described below.
- 
- 
- 7. Optional. This example app contains a category on NSMutableArray that implements a method for
-    exchanging two items that can be in different arrays. You can import that category and use
-    the method in your implementation of the exchangeController:didExchangeItemAtIndexPath1:withItemAtIndexPath2: 
-    delegate method. See ViewController.m for an example implementation.
- 
-        [NSMutableArray exchangeObjectInArray:array       atIndex:indexPath1.item
-                       withObjectInOtherArray:otherArray  atIndex:indexPath2.item];
- 
-    Note: If your collection view has multiple sections with an array for each section refer
-    to the arrayForSection: method in ViewController.m for an example of how to map your
-    collection view sections to arrays. You may need to implement something like this.
- 
- 
- 8. Optional. The exchange controller provides default animations during the exchange process to provide
-    feedback to the user. Some properties related to those animations are exposed to allow you to configure 
-    them to better meet your requirements. Refer to the comments for the property declarations below.
- 
- 
- 10. Optional. If the exposed properties don't provide you with the control you require you can implement
-    the optional delegate methods for...
-        - creating the snapshot
-        - animating the catch
-        - animating the release
-
- 
- 
- Limitations...
- 
-    - If your view contains multiple collection views the exchange controllers do not support exchanges
-        between collection views.
-    - Scrolling is not supported. All the cells that can be exchanged need to be visible on the screen.
-    - The exchange controller does not provide direct support for rotation. But if your view controller
-        allows rotation and manages the layout as required the exchange controller will continue to work
-        (needs testing). But the rotation event should not occur during an exchange transaction. Your 
-        view controller can ask the exchange controller if an exchange transaction is in progress.
- 
- 
- 
- Thanks to...
- 
-    - Bolot Kerimbaev: For pointing out collection views when iOS 6 was released.
-    - Matt Galloway: For taking the time to answer my question, "Can I do that with a collection view?"
-    - Tony Copping: For schooling me on background threads.
-    - Cesare Rocchi: For patiently enduring multiple code walkthroughs and providing excellent suggestions.
-    - Gijs van Klooster: For asking, "Why are those methods so long?" And that great enum suggestion.
- 
- 
- 
- Original Inspiration from...
- 
-    LXReorderableCollectionViewFlowLayout: https://github.com/lxcid/LXReorderableCollectionViewFlowLayout
- 
- */
+//
 
 
 
@@ -258,83 +39,36 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
 - (void)    exchangeController:(SSCollectionViewExchangeController *)exchangeController
    didExchangeItemAtIndexPath1:(NSIndexPath *)indexPath1
           withItemAtIndexPath2:(NSIndexPath *)indexPath2;
-// Called for each individual exchange within an exchange event. There may be one exchange or two per
-// event. In all cases the delegate should just update the model by exchanging the elements at the
-// indicated index paths. Refer to the Exchange Event description and the Exchange Transaction and
-// Event Timeline above. This method provides the delegate with an opportunity to keep its model in
-// sync with changes happening on the view. If you are doing any kind of live updating as the user
-// drags, this is usually not the place to invoke that because this method may be called twice for
-// each exchange event. Live updating should be invoked in exchangeControllerDidFinishExchangeEvent:.
 
 
 - (void)exchangeControllerDidFinishExchangeEvent:(SSCollectionViewExchangeController *)exchangeController;
-// Called when an exchange event finishes within an exchange transaction. This method
-// provides the delegate with an opportunity to perform live updating as the user drags.
 
 
 - (void)exchangeControllerDidFinishExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController
                                         withIndexPath1:(NSIndexPath *)indexPath1
                                             indexPath2:(NSIndexPath *)indexPath2;
-// Called when an exchange transaction completes (the user lifts his/her finger). The
-// index paths represent the two items in the final exchange. Do not exchange these items,
-// you already have. This method allows the delegate to perform any task required at the end
-// of the transaction such as setting up for undo. If the user dragged back to the starting
-// position and released (effectively nothing was exchanged) the index paths will be the same.
 
 
 - (void)exchangeControllerDidCancelExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController;
-// Called when the long press gesture recognizer's state becomes UIGestureRecognizerStateCancelled. Normally,
-// this only happens if the device receives a phone call during the exchange transaction. When this happens the
-// exchange controller helps the delegate return to the state before the exchange transaction started. To do
-// this the exchange controller first calls exchangeController:didExchangeItemAtIndexPath1:withItemAtIndexPath2:
-// on the delegate with the index paths for the last items exchanged so the delegate can restore the model.
-// Then this method is called allowing the delegate to perform the actions required to restore its state.
-// Normally, the delegate will not need to take any action on the collection view. The exchange controller
-// returns the collection view to its previous state. No animation is applied because the view is hidden. 
 
 
 @optional
 
 - (BOOL)exchangeControllerCanBeginExchangeTransaction:(SSCollectionViewExchangeController *)exchangeController
                                   withItemAtIndexPath:(NSIndexPath *)indexPath;
-// If implemented, called before beginning an exchange transaction to determine if it is ok to begin.
-// Implement this method if:
-//  1. The delegate needs to know when an exchange transaction begins so it can prepare (update
-//      its UI, turn off other gestures, etc). If you return YES it is safe to assume that the
-//      exchange transaction will begin.
-//  2. And/or the delegate conditionally allows exchanges. For example, maybe exchanges are allowed
-//      only when editing.
-//  3. And/or some of the items in the collection view can't be moved. The item at indexPath is the
-//      item that will be moved. Important note: Whether an item can be moved is determined here.
-//      Whether an item can be displaced is determined in the canDisplaceItemAtIndexPath: method.
-//      If an item can't be moved and can't be displaced you need to implement both methods.
-// Return NO if you do not want this exchange transaction to begin. If not implemented the
-// exchange controller assumes YES.
 
 
 - (BOOL)          exchangeController:(SSCollectionViewExchangeController *)exchangeController
           canDisplaceItemAtIndexPath:(NSIndexPath *)indexPathOfItemToDisplace
    withItemBeingDraggedFromIndexPath:(NSIndexPath *)indexPathOfItemBeingDragged;
-// If implemented, called throughout the exchange transaction to determine if it’s ok to exchange
-// the two items. Implement this method if your collection view contains items that cannot be
-// exchanged at all or if there may be a situation where the item to displace cannot be exchanged
-// with the particular item being dragged. If not implemented, the default is YES.
 
 
 - (UIView *)           exchangeController:(SSCollectionViewExchangeController *)exchangeController
   viewForCatchRectangleForItemAtIndexPath:(NSIndexPath *)indexPath;
-// If your collection view cells can only be caught if the long press occurs over a specific
-// rectangle then implement this method and return the view representing that rectangle. If
-// this method is not implemented the catch rectangle is assumed to be the entire cell. 
 
 
 - (UIView *)exchangeController:(SSCollectionViewExchangeController *)exchangeController
                snapshotForCell:(UICollectionViewCell *)cell;
-// SSCollectionViewExchangeController implements a default method for creating a snapshot of the
-// cell using a default background color and alpha. If this does not meet your requirements then
-// you may want to implement this delegate method. But before implementing this method remember
-// that the properties for the background colour and alpha used in the default snapshot method
-// are exposed. Consider setting those properties before implementing this method.
 
 
 
@@ -342,33 +76,10 @@ typedef void (^PostReleaseCompletionBlock) (NSTimeInterval animationDuration);
                              withSnapshot:(UIView *)snapshot;
 
 - (void)animateReleaseForExchangeController:(SSCollectionViewExchangeController *)exchangeController
-                               withSnapshot:(UIView *)snapshot                              // this is the view the user has been dragging
-                                    toPoint:(CGPoint)centerOfCell                           // this is the center of the cell where the release occurred
-            originalIndexPathForDraggedItem:(NSIndexPath *)originalIndexPathForDraggedItem  // animate the alpha for the cell at this index path back to 1.0
-                            completionBlock:(PostReleaseCompletionBlock)completionBlock;    // you must execute this completion block in your final completion block
-/*
- To provide feedback to the user SSCollectionViewExchangeController implements default
- animations for the catch and the release. If these implementations don't meet your
- requirements then implement either or both of the animate... delegate methods.
-
-If you implement the animateRelease... method you should do the following...
-    1. Animate snapshot to centerOfCell.
-    2. Animate the alpha for the cell at originalIndexPathForDraggedItem back to 1.0.
-    3. Do not call invalidateLayout or remove the snapshot from its superview.
-    4. In your final completion block, execute completionBlock and pass it an animation duration.
-          ...
-          } completion:^(BOOL finished) {
-              completionBlock(duration);
-          }];
-
-        completionBlock manages the sequencing of the final moments of the exchange transaction.
-        First, it sets some internal state and then calls invalidateLayout which unhides the hidden 
-        cell (where the user dragged to). This unhiding happens immediately and without any animation.
-        But, purposefully, the snapshot the user dragged around is still on the view so the instant
-        unhiding of the cell happens behind the snapshot so no change is visible. Then completionBlock
-        animates the alpha of the snapshot to 0.0, according to the duration you provide, revealing the
-        now unhidden cell. When that animation is finished it removes the snapshot from the collection view.
-*/
+                               withSnapshot:(UIView *)snapshot
+                                    toPoint:(CGPoint)centerOfCell
+            originalIndexPathForDraggedItem:(NSIndexPath *)originalIndexPathForDraggedItem
+                            completionBlock:(PostReleaseCompletionBlock)completionBlock;
 
 @end
 
@@ -378,33 +89,21 @@ If you implement the animateRelease... method you should do the following...
 - (instancetype)initWithDelegate:(id<SSCollectionViewExchangeControllerDelegate>)delegate
                   collectionView:(UICollectionView *)collectionView;
 
-- (UICollectionViewFlowLayout *)layout;  // allows clients to configure the layout.
-// This method is provided as a convenience. The delegate could ask its collection view
-// for its layout but that will be returned as a UICollectionViewLayout and would need
-// to be cast to a UICollectionViewFlowLayout before configuration. This method conveniently
-// returns the layout as a UICollectionViewFlowLayout, ready to be configured.
+- (UICollectionViewFlowLayout *)layout;
 
 
-@property (weak, nonatomic, readonly)   UILongPressGestureRecognizer    *longPressGestureRecognizer; // exposed to allow the delegate to set its properties as required
-// by default minimumPressDuration is 0.15 and delaysTouchesBegan is YES
+@property (weak, nonatomic, readonly)   UILongPressGestureRecognizer    *longPressGestureRecognizer;
 
-@property (nonatomic)                   CGFloat                         alphaForDisplacedItem;      // so the user can distinguish the most recently displaced item, default: 0.60
+@property (nonatomic)                   CGFloat                         alphaForDisplacedItem;
 
-// Exchange process animation related properties...
-@property (nonatomic)                   NSTimeInterval                  animationDuration;          // the duration of each segment of the default animations, default: 0.20
-@property (nonatomic)                   CGFloat                         blinkToScaleForCatch;       // default: 1.20
-@property (nonatomic)                   CGFloat                         blinkToScaleForRelease;     // default: 1.05
-@property (nonatomic)                   CGFloat                         snapshotAlpha;              // default: 0.80
-@property (strong, nonatomic)           UIColor                         *snapshotBackgroundColor;   // if you set to nil, no background color will be applied, default: [UIColor darkGrayColor]
+@property (nonatomic)                   NSTimeInterval                  animationDuration;
+@property (nonatomic)                   CGFloat                         blinkToScaleForCatch;
+@property (nonatomic)                   CGFloat                         blinkToScaleForRelease;
+@property (nonatomic)                   CGFloat                         snapshotAlpha;
+@property (strong, nonatomic)           UIColor                         *snapshotBackgroundColor;
 
-@property (nonatomic, assign, readonly) BOOL                            exchangeTransactionInProgress; // allows clients to determine if there is an exchange transaction in progress
+@property (nonatomic, assign, readonly) BOOL                            exchangeTransactionInProgress;
 
 @property (nonatomic)                   double                          animationBacklogDelay;
-// When the long press is cancelled, for example by an incoming call, depending on the velocity there
-// may be move animations in progress and pending. Without a delay, the backlog of animations can still
-// be executing when the exchange controller calls reloadData. This prevents reloadData from working
-// properly and restoring the collection view to its previous state. The delay allows the backlog of
-// animations to complete before the exchange controller cancels the exchange. The default is 0.50 and
-// should be sufficient in most cases but is exposed in case that doesn't meet your requirements.
 
 @end

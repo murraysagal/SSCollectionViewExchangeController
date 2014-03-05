@@ -2,8 +2,9 @@
 //  NSIndexPath+RandomAdditions.m
 //  Exchanger
 //
-//  Created by Murray Sagal on 2012-10-30.
-//  Copyright (c) 2014 Signature Software. All rights reserved.
+// Created by Murray Sagal on 2012-10-30.
+// Copyright (c) 2014 Signature Software and Murray Sagal
+// SSCollectionViewExchangeController: https://github.com/murraysagal/SSCollectionViewExchangeController
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal

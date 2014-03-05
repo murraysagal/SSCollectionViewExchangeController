@@ -10,7 +10,7 @@ In a move scenario, when item1 is moved to item5 this is the result:
 
 With a move, all the items between the *from* and *to* items reposition themselves toward the original location of the *from* item. 
 
-In an exchange scenario, when item1 is moved to item5 this is the result:
+In an exchange scenario, when item1 is exchanged with item5 this is the result:
 
     item5    item2    item3    item4    item1
 
@@ -81,7 +81,7 @@ If your view contains multiple collection views you can have an exchange control
 
 
 
-## Timeline: Exchange Transactions and Exchange Events
+## Exchange Transactions and Exchange Events: A Timeline View
 
 ``` 
                                         Exchange Transaction
@@ -115,7 +115,7 @@ You can see the demo app for `SSCollectionViewExchangeController` in action [her
 
 ### Cocoapods
 
-1. Add a pod entry for SSCollectionViewExchangeController to your Podfile: `pod 'SSCollectionViewExchangeController'`
+1. Add an entry to your Podfile: `pod 'SSCollectionViewExchangeController'`
 2. Install the pod(s) by running: `pod install`
 
 
@@ -197,7 +197,7 @@ Alternatively, copy these 8 files to your Xcode project:
          withItemAtIndexPath2:(NSIndexPath *)indexPath2;
 ```
 
-Called for each individual exchange within an exchange event. There may be one exchange or two per event. In all cases the delegate should just update the model by exchanging the elements at the indicated index paths. Refer to the Exchange Event description and the Exchange Transaction and Event Timeline above. This method provides the delegate with an opportunity to keep its model in sync with changes happening on the view. If you are doing any kind of live updating as the user drags, this is usually not the place to invoke that because this method may be called twice for each exchange event. Live updating should be invoked in `exchangeControllerDidFinishExchangeEvent:`. 
+Called for each individual exchange within an exchange event. There may be one exchange or two per event. In all cases the delegate should just update the model by exchanging the elements at the indicated index paths. Refer to the Exchange Event description and the Exchange Transactions and Exchange Events: A Timeline View above. This method provides the delegate with an opportunity to keep its model in sync with changes happening on the view. If you are doing any kind of live updating as the user drags, this is usually not the place to invoke that because this method may be called twice for each exchange event. Live updating should be invoked in `exchangeControllerDidFinishExchangeEvent:`.
 
 ---
 
@@ -241,7 +241,7 @@ If implemented, called before beginning an exchange transaction to determine if 
 
 1. The delegate needs to know when an exchange transaction begins so it can prepare (update its UI, turn off other gestures, etc).  If you return YES it is safe to assume that the exchange transaction will begin.
 2. And/or the delegate conditionally allows exchanges. For example, maybe exchanges are allowed only when editing.
-3. And/or some of the items in the collection view can't be moved. The item at indexPath is the item that will be moved. Important note: Whether an item can be moved is determined here. Whether an item can be displaced is determined in the canDisplaceItemAtIndexPath: method. If an item can't be moved and can't be displaced you need to implement both methods.
+3. And/or some of the items in the collection view can't be moved. The item at `indexPath` is the item that will be moved. Important note: Whether an item can be moved is determined here. Whether an item can be displaced is determined in the `canDisplaceItemAtIndexPath:` method. If an item can't be moved and can't be displaced you need to implement both methods.
 
 Return NO if you do not want this exchange transaction to begin. If you return YES it is safe to assume that the exchange transaction will begin. If not implemented the exchange controller assumes YES.
 
@@ -268,8 +268,7 @@ If your collection view cells can only be caught if the long press occurs over a
 
 ---
 
-```
-#!objective-c
+```objective-c
 
 - (UIView *)exchangeController:(SSCollectionViewExchangeController *)exchangeController
                snapshotForCell:(UICollectionViewCell *)cell;
@@ -291,11 +290,11 @@ If your collection view cells can only be caught if the long press occurs over a
                             completionBlock:(PostReleaseCompletionBlock)completionBlock;    // you must execute this completion block in your final completion block
 ```
 
-To provide feedback to the user `SSCollectionViewExchangeController` implements default animations for the catch and the release. If these implementations don't meet your requirements then implement either or both of the animate* delegate methods.
+To provide feedback to the user `SSCollectionViewExchangeController` implements default animations for the catch and the release. If these implementations don't meet your requirements then implement either or both of these delegate methods.
 
-If you implement the animateRelease... method you should do the following:
+If you implement the `animateReleaseForExchangeController` method you should do the following:
 
-1. Animate snapshot to `centerOfCell`.
+1. Animate `snapshot` to `centerOfCell`.
 2. Animate the `alpha` for the cell at `originalIndexPathForDraggedItem` back to 1.0.
 3. Do not call `invalidateLayout` or remove the snapshot from its superview.
 4. In your final completion block, execute `completionBlock` and pass it an animation duration. `completionBlock` manages the sequencing of the final moments of the exchange transaction. First, it sets some internal state and then calls `invalidateLayout` which unhides the hidden cell (where the user dragged to). This unhiding happens immediately and without any animation. But, purposefully, the snapshot the user dragged around is still on the view so the instant unhiding of the cell happens behind the snapshot so no change is visible. Then `completionBlock` animates the alpha of the snapshot to 0.0, according to the duration you provide, revealing the now unhidden cell. When that animation is finished it removes the snapshot from the collection view.
@@ -423,3 +422,8 @@ This method is provided as a convenience. The delegate could ask its collection 
 ## Original Inspiration from...
  
 LXReorderableCollectionViewFlowLayout: <https://github.com/lxcid/LXReorderableCollectionViewFlowLayout>
+
+
+## About the Demo App
+
+You can clone or download the repo to use the demo app. It exercises some but not all of the features of `SSCollectionViewExchangeController`.

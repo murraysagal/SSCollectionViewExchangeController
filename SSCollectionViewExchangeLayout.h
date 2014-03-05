@@ -1,9 +1,9 @@
 //
 //  SSCollectionViewExchangeLayout.h
-//  Exchanger
 //
-//  Created by Murray Sagal on 2012-10-31.
-//  Copyright (c) 2014 Signature Software. All rights reserved.
+// Created by Murray Sagal on 2012-10-31.
+// Copyright (c) 2014 Signature Software and Murray Sagal
+// SSCollectionViewExchangeController: https://github.com/murraysagal/SSCollectionViewExchangeController
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
+//
 
 
 #import <UIKit/UIKit.h>
