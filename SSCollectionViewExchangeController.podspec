@@ -11,5 +11,7 @@ Pod::Spec.new do |s|
   s.source_files = 'SSCollectionViewExchange*.{h,m}', 'UIView+*.{h,m}', 'NSMutableArray+*.{h,m}'
 
   s.ios.deployment_target = '6.0'
+  
+  s.requires_arc = true
 
 end
