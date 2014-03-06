@@ -427,3 +427,14 @@ LXReorderableCollectionViewFlowLayout: <https://github.com/lxcid/LXReorderableCo
 ## About the Demo App
 
 You can clone or download the repo to use the demo app. It exercises some but not all of the features of `SSCollectionViewExchangeController`.
+
+
+## Tests
+
+The demo app contains a set of tests for the `exchangeObjectInArray:atIndex:withObjectInOtherArray:atIndex:` method. If you copy the test file to your project you may need to configure the project so the test target will recognize the files.
+
+1. Select your project in the Project Navigator pane.
+1. Select your project in the Projects and Targets pane.
+1. You must be on the Info tab.
+1. In Configurations expand Debug and your project.
+1. In <yourProjectName>Tests select Pods from the popup.
