@@ -104,7 +104,7 @@ In the timeline you can see that an exchange transaction can include multiple ex
 
 ## Demo
 
-You can see the demo app for `SSCollectionViewExchangeController` in action [here](http://youtu.be/9r7a68C0Np4).
+You can see the demo app for `SSCollectionViewExchangeController` in action [here](http://youtu.be/6YvOK9m5RRA).
 
 
 
@@ -240,8 +240,8 @@ Called when the long press gesture recognizer's state becomes `UIGestureRecogniz
 If implemented, called before beginning an exchange transaction to determine if it is ok to begin. Implement this method if you have any or all of these requirements:
 
 1. The delegate needs to know when an exchange transaction begins so it can prepare (update its UI, turn off other gestures, etc).  If you return YES it is safe to assume that the exchange transaction will begin.
-2. And/or the delegate conditionally allows exchanges. For example, maybe exchanges are allowed only when editing.
-3. And/or some of the items in the collection view can't be moved. The item at `indexPath` is the item that will be moved. Important note: Whether an item can be moved is determined here. Whether an item can be displaced is determined in the `canDisplaceItemAtIndexPath:` method. If an item can't be moved and can't be displaced you need to implement both methods.
+1. And/or the delegate conditionally allows exchanges. For example, maybe exchanges are allowed only when editing.
+1. And/or some of the items in the collection view can't be moved. The item at `indexPath` is the item that will be moved. Important note: Whether an item can be moved is determined here. Whether an item can be displaced is determined in the `canDisplaceItemAtIndexPath:` method. If an item can't be moved and can't be displaced you need to implement both methods.
 
 Return NO if you do not want this exchange transaction to begin. If you return YES it is safe to assume that the exchange transaction will begin. If not implemented the exchange controller assumes YES.
 
@@ -295,9 +295,9 @@ To provide feedback to the user `SSCollectionViewExchangeController` implements 
 If you implement the `animateReleaseForExchangeController` method you should do the following:
 
 1. Animate `snapshot` to `centerOfCell`.
-2. Animate the `alpha` for the cell at `originalIndexPathForDraggedItem` back to 1.0.
-3. Do not call `invalidateLayout` or remove the snapshot from its superview.
-4. In your final completion block, execute `completionBlock` and pass it an animation duration. `completionBlock` manages the sequencing of the final moments of the exchange transaction. First, it sets some internal state and then calls `invalidateLayout` which unhides the hidden cell (where the user dragged to). This unhiding happens immediately and without any animation. But, purposefully, the snapshot the user dragged around is still on the view so the instant unhiding of the cell happens behind the snapshot so no change is visible. Then `completionBlock` animates the alpha of the snapshot to 0.0, according to the duration you provide, revealing the now unhidden cell. When that animation is finished it removes the snapshot from the collection view.
+1. Animate the `alpha` for the cell at `originalIndexPathForDraggedItem` back to 1.0.
+1. Do not call `invalidateLayout` or remove the snapshot from its superview.
+1. In your final completion block, execute `completionBlock` and pass it an animation duration. `completionBlock` manages the sequencing of the final moments of the exchange transaction. First, it sets some internal state and then calls `invalidateLayout` which unhides the hidden cell (where the user dragged to). This unhiding happens immediately and without any animation. But, purposefully, the snapshot the user dragged around is still on the view so the instant unhiding of the cell happens behind the snapshot so no change is visible. Then `completionBlock` animates the alpha of the snapshot to 0.0, according to the duration you provide, revealing the now unhidden cell. When that animation is finished it removes the snapshot from the collection view.
 
 ```objective-c
 
