@@ -52,9 +52,9 @@
     
     do {
         
-        NSInteger randomSection = arc4random_uniform(arrays.count);
+        NSInteger randomSection = arc4random_uniform((u_int32_t)arrays.count);
         NSArray *randomArray = arrays[ randomSection ];
-        NSInteger randomItem = arc4random_uniform(randomArray.count);
+        NSInteger randomItem = arc4random_uniform((u_int32_t)randomArray.count);
         randomIndexPath = [NSIndexPath indexPathForItem:randomItem inSection:randomSection];
         
     } while ([excludedIndexPaths containsObject:randomIndexPath]);
