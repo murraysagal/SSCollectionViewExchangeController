@@ -86,6 +86,11 @@
 
 - (UICollectionViewLayoutAttributes *)layoutAttributesForItem:(UICollectionViewLayoutAttributes *)attributesForItem {
     
+    if (attributesForItem.representedElementKind == UICollectionElementKindSectionHeader || attributesForItem.representedElementKind == UICollectionElementKindSectionFooter)
+    {
+        return attributesForItem;
+    }
+    
     NSIndexPath *indexPathForItemToHide =   [self.delegate indexPathForItemToHide];
     NSIndexPath *indexPathForItemToDim =    [self.delegate indexPathForItemToDim];
     CGFloat alphaForItemToDim =             [self.delegate alphaForItemToDim];
