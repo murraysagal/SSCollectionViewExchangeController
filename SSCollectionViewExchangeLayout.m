@@ -86,6 +86,11 @@
 
 - (UICollectionViewLayoutAttributes *)layoutAttributesForItem:(UICollectionViewLayoutAttributes *)attributesForItem {
     
+    if ([self elementKindIsHeaderOrFooter:attributesForItem.representedElementKind])
+    {
+        return attributesForItem;
+    }
+    
     NSIndexPath *indexPathForItemToHide =   [self.delegate indexPathForItemToHide];
     NSIndexPath *indexPathForItemToDim =    [self.delegate indexPathForItemToDim];
     CGFloat alphaForItemToDim =             [self.delegate alphaForItemToDim];
@@ -94,6 +99,11 @@
     attributesForItem.alpha =  ([attributesForItem.indexPath isEqual:indexPathForItemToDim])?  alphaForItemToDim : 1.0;
 
     return attributesForItem;
+}
+
+- (BOOL)elementKindIsHeaderOrFooter:(NSString *)elementKind {
+    
+    return (elementKind == UICollectionElementKindSectionHeader || elementKind == UICollectionElementKindSectionFooter);
 }
 
 @end
