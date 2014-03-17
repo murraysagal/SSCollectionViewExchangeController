@@ -438,3 +438,9 @@ The demo app contains a set of tests for the `exchangeObjectInArray:atIndex:with
 1. You must be on the Info tab.
 1. In Configurations expand Debug and your project.
 1. In <yourProjectName>Tests select Pods from the popup.
+
+
+## Release History
+
+* 0.1.0 - Mar 5, 2014: Initial release.
+* 0.1.1 - Mar 17, 2014: Merged the pull request from eugenepavlyuk fixing the bug with headers and footers. 
