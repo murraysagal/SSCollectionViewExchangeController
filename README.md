@@ -443,4 +443,4 @@ The demo app contains a set of tests for the `exchangeObjectInArray:atIndex:with
 ## Release History
 
 * 0.1.0 - Mar 5, 2014: Initial release.
-* 0.1.1 - Mar 17, 2014: Merged the pull request from eugenepavlyuk fixing the bug with headers and footers. 
+* 0.1.1 - Mar 17, 2014: Merged the pull request from [eugenepavlyuk](https://github.com/eugenepavlyuk) fixing the bug with headers and footers. 
