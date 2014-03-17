@@ -23,6 +23,7 @@
 		722D30021832927100F82D12 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 722D2FFE1832927100F82D12 /* ViewController.m */; };
 		722D30031832927100F82D12 /* ViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 722D2FFF1832927100F82D12 /* ViewController.xib */; };
 		722D30041832927100F82D12 /* ItemCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 722D30001832927100F82D12 /* ItemCell.xib */; };
+		7249E19118D6F07D00349C2B /* SSCollectionViewHeader.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7249E19018D6F07D00349C2B /* SSCollectionViewHeader.xib */; };
 		72553953187EFBDC000338BB /* SSCollectionViewExchangeController.m in Sources */ = {isa = PBXBuildFile; fileRef = 72553952187EFBDC000338BB /* SSCollectionViewExchangeController.m */; };
 		72ACF56418A268F9003DEF34 /* UIView+SSCollectionViewExchangeControllerAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 72ACF56318A268F9003DEF34 /* UIView+SSCollectionViewExchangeControllerAdditions.m */; };
 		72DA905F18A81CF2000E98EA /* NSMutableSet+AddObjectIfNotNil.m in Sources */ = {isa = PBXBuildFile; fileRef = 72DA905E18A81CF2000E98EA /* NSMutableSet+AddObjectIfNotNil.m */; };
@@ -69,6 +70,7 @@
 		72493DCD18C7688F00931DAE /* README.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; wrapsLines = 1; };
 		72493DCE18C7688F00931DAE /* SSCollectionViewExchangeController.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; path = SSCollectionViewExchangeController.podspec; sourceTree = "<group>"; };
 		72493DD318C79B5700931DAE /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		7249E19018D6F07D00349C2B /* SSCollectionViewHeader.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SSCollectionViewHeader.xib; sourceTree = "<group>"; };
 		72553951187EFBDC000338BB /* SSCollectionViewExchangeController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SSCollectionViewExchangeController.h; path = ../SSCollectionViewExchangeController.h; sourceTree = "<group>"; };
 		72553952187EFBDC000338BB /* SSCollectionViewExchangeController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SSCollectionViewExchangeController.m; path = ../SSCollectionViewExchangeController.m; sourceTree = "<group>"; };
 		72871BD718BB6EEF006A9F87 /* MSStringifyMacro.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MSStringifyMacro.h; sourceTree = "<group>"; };
@@ -133,6 +135,7 @@
 				722D2FFE1832927100F82D12 /* ViewController.m */,
 				722D2FFF1832927100F82D12 /* ViewController.xib */,
 				722D30001832927100F82D12 /* ItemCell.xib */,
+				7249E19018D6F07D00349C2B /* SSCollectionViewHeader.xib */,
 				7207F34A18A51DF9006EF43B /* Categories */,
 			);
 			name = ExampleViewController;
@@ -305,6 +308,7 @@
 			files = (
 				722D30041832927100F82D12 /* ItemCell.xib in Resources */,
 				722D2FDF183291E300F82D12 /* Images.xcassets in Resources */,
+				7249E19118D6F07D00349C2B /* SSCollectionViewHeader.xib in Resources */,
 				722D30031832927100F82D12 /* ViewController.xib in Resources */,
 				722D2FD1183291E300F82D12 /* InfoPlist.strings in Resources */,
 			);

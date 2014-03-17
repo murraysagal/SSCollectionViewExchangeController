@@ -45,7 +45,7 @@
 #import "MSStringifyMacros_Archiving.h"
 
 
-// Constants for keys, tags, and strings...
+// Constants for keys, tags, strings, and identifiers...
 
 static NSString * const kFirstRunKey = @"firstRun";
 
@@ -57,6 +57,8 @@ static NSString * const kUndoText = @"Undo";
 static NSString * const kRedoText = @"Redo";
 
 static NSString * const kCellNibName = @"ItemCell";
+
+static NSString * const kCollectionViewHeader = @"SSCollectionViewHeader";
 
 
 
@@ -163,8 +165,13 @@ NS_ENUM(NSInteger, CollectionViewSection) {
 
 - (void)prepareCollectionView {
     
+    // Register the cell...
     UINib *cellNib = [UINib nibWithNibName:kCellNibName bundle:nil];
     [self.collectionView registerNib:cellNib forCellWithReuseIdentifier:kCellNibName];
+    
+    // Register the header...
+    UINib *headerNib = [UINib nibWithNibName:kCollectionViewHeader bundle:nil];
+    [self.collectionView registerNib:headerNib forSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:kCollectionViewHeader];
     
     self.exchangeController = [[SSCollectionViewExchangeController alloc] initWithDelegate:self
                                                                             collectionView:self.collectionView];
@@ -176,7 +183,7 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     // layout, as a UICollectionViewFlowLayout, which you can configure as required.
     
     UICollectionViewFlowLayout *layout = self.exchangeController.layout;
-    layout.itemSize = CGSizeMake(102.5, 45);
+    layout.itemSize = CGSizeMake(100.75, 45);
     layout.minimumLineSpacing = 1;
     layout.minimumInteritemSpacing = 1;
     layout.sectionInset = UIEdgeInsetsMake(2,2,2,2);
@@ -383,6 +390,22 @@ NS_ENUM(NSInteger, CollectionViewSection) {
     itemLabel.text = [NSString stringWithFormat:@" %@", [self arrayForSection:indexPath.section][ indexPath.item ]];
     
     return cell;
+}
+
+- (CGSize)           collectionView:(UICollectionView *)collectionView
+                             layout:(UICollectionViewLayout*)collectionViewLayout
+    referenceSizeForHeaderInSection:(NSInteger)section {
+    
+    return (section == 0)? CGSizeMake(0, 0) : CGSizeMake(3, 0);
+}
+
+- (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView
+           viewForSupplementaryElementOfKind:(NSString *)kind
+                                 atIndexPath:(NSIndexPath *)indexPath
+{
+    return [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader
+                                              withReuseIdentifier:kCollectionViewHeader
+                                                     forIndexPath:indexPath];
 }
 
 

@@ -86,8 +86,7 @@
 
 - (UICollectionViewLayoutAttributes *)layoutAttributesForItem:(UICollectionViewLayoutAttributes *)attributesForItem {
     
-    if ([self elementKindIsHeaderOrFooter:attributesForItem.representedElementKind])
-    {
+    if ([self elementKindIsHeaderOrFooter:attributesForItem.representedElementKind]) {
         return attributesForItem;
     }
     
