@@ -1,6 +1,6 @@
 # SSCollectionViewExchangeController
 
-`SSCollectionViewExchangeController` manages the process of exchanging 2 items in a collection view. The key word is **exchange** which results in slightly different outcome compared to the more typical move scenario. Consider an example with these 5 items. 
+`SSCollectionViewExchangeController` manages the process of exchanging 2 items in a collection view. The key word is **exchange** which results in a slightly different outcome compared to the more typical move scenario. Consider an example with these 5 items. 
 
     item1    item2    item3    item4    item5
 
