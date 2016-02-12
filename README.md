@@ -113,7 +113,7 @@ You can see the demo app for `SSCollectionViewExchangeController` in action [her
 `SSCollectionViewExchangeController` uses `UICollectionView` which was available starting with iOS 6.0.
 
 
-### Cocoapods
+### CocoaPods
 
 1. Add an entry to your Podfile: `pod 'SSCollectionViewExchangeController'`
 2. Install the pod(s) by running: `pod install`
